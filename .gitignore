@@ -1,0 +1,18 @@
+# Frontend
+node_modules/
+dist/
+.env.local
+
+# Backend
+sdp-api/vendor/
+sdp-api/.env
+sdp-api/storage/logs/
+sdp-api/storage/framework/cache/
+sdp-api/storage/framework/sessions/
+sdp-api/storage/framework/views/
+sdp-api/bootstrap/cache/
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
