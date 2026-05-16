@@ -1,0 +1,84 @@
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
+import { LayoutDashboard, Package, ShoppingCart, Store, LogOut, ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
+import { useAuthStore } from '../stores/useAuthStore'
+import { useVendorProfile } from '../hooks/useVendor'
+import { cn } from '../lib/utils'
+
+export default function VendorLayout() {
+  const user = useAuthStore((s) => s.user)
+  const logout = useAuthStore((s) => s.logout)
+  const navigate = useNavigate()
+  const { data: vendor } = useVendorProfile()
+
+  const items = [
+    { to: '/vendor', icon: <LayoutDashboard size={16} />, label: 'Dashboard', end: true },
+    { to: '/vendor/produk', icon: <Package size={16} />, label: 'Produk' },
+    { to: '/vendor/pesanan', icon: <ShoppingCart size={16} />, label: 'Pesanan' },
+    { to: '/vendor/profil', icon: <Store size={16} />, label: 'Profil Toko' },
+  ]
+
+  const handleLogout = async () => {
+    await logout()
+    toast.success('Berhasil keluar')
+    navigate('/')
+  }
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-paper-soft">
+      <div className="container-page py-8 lg:py-10">
+        <header className="mb-8 pb-6 border-b border-line flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">Vendor Panel</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{vendor?.name || user?.name}</h1>
+            <p className="text-sm text-ink-muted mt-1">{user?.email}</p>
+          </div>
+          {vendor?.slug && (
+            <Link
+              to={`/products?vendor=${vendor.slug}`}
+              target="_blank"
+              className="text-xs inline-flex items-center gap-1.5 text-ink-muted hover:text-ink"
+            >
+              Lihat produk publik <ExternalLink size={12} />
+            </Link>
+          )}
+        </header>
+
+        <div className="grid lg:grid-cols-[220px_1fr] gap-8">
+          <aside>
+            <nav className="space-y-0.5">
+              {items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded text-sm transition',
+                      isActive ? 'bg-ink text-white font-medium' : 'text-ink-soft hover:bg-paper',
+                    )
+                  }
+                >
+                  <span className="shrink-0">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm text-ink-soft hover:bg-paper transition mt-4 pt-4 border-t border-line"
+              >
+                <LogOut size={16} className="shrink-0" />
+                <span>Keluar</span>
+              </button>
+            </nav>
+          </aside>
+
+          <main className="min-w-0">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </div>
+  )
+}

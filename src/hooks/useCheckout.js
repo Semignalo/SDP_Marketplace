@@ -1,0 +1,36 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '../lib/api'
+
+export function useCheckoutOptions() {
+  return useQuery({
+    queryKey: ['checkout', 'options'],
+    queryFn: async () => {
+      const { data } = await api.get('/checkout/options')
+      return data.data
+    },
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useCreateOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { data } = await api.post('/orders', payload)
+      return data.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
+    },
+  })
+}
+
+export function useSnapToken() {
+  return useMutation({
+    mutationFn: async (orderNumber) => {
+      const { data } = await api.post(`/orders/${orderNumber}/snap-token`)
+      return data.data
+    },
+  })
+}

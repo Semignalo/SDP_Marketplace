@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['customer', 'reseller', 'vendor_admin', 'admin'])->default('customer')->after('email');
+            $table->enum('role', ['customer', 'vendor_admin', 'admin'])->default('customer')->after('email');
             $table->string('reseller_code', 12)->nullable()->unique()->after('role');
             $table->foreignId('referrer_id')->nullable()->constrained('users')->nullOnDelete()->after('reseller_code');
             $table->string('phone', 20)->nullable()->after('referrer_id');

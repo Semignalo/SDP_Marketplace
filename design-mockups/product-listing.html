@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDP — Product Listing Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #111111;
+      --gray-dark: #555555;
+      --gray-mid: #999999;
+      --gray-light: #fdf7f6;
+      --gray-border: #ecdcda;
+      --white: #ffffff;
+      --accent: #c4837a;
+      --accent-light: #f5e8e6;
+      --accent-dark: #a8655c;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--black); line-height: 1.5; }
+
+    /* ── NAVBAR (ringkas) ── */
+    .announce-bar {
+      background: var(--gray-light);
+      border-bottom: 1px solid var(--gray-border);
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      padding: 8px 48px;
+    }
+    .announce-item { font-size: 12px; color: var(--gray-dark); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .announce-item .tag { background: var(--accent); color: var(--white); font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; }
+
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-border);
+      padding: 16px 48px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-logo { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: var(--black); text-decoration: none; flex-shrink: 0; text-transform: uppercase; }
+    .nav-search { flex: 1; display: flex; align-items: center; border: 1px solid var(--gray-border); border-radius: 4px; height: 40px; overflow: hidden; }
+    .nav-search input { flex: 1; border: none; padding: 0 16px; font-family: inherit; font-size: 13px; color: var(--black); outline: none; }
+    .nav-search input::placeholder { color: var(--gray-mid); }
+    .nav-search button { background: var(--accent); border: none; width: 44px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .nav-search button svg { color: var(--white); }
+    .nav-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+    .nav-action-item { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; text-decoration: none; color: var(--black); }
+    .nav-action-item span { font-size: 11px; color: var(--gray-dark); }
+    .cart-wrap { position: relative; }
+    .cart-badge { position: absolute; top: -5px; right: -8px; background: #e63946; color: var(--white); font-size: 9px; font-weight: 700; border-radius: 99px; padding: 1px 4px; min-width: 15px; text-align: center; }
+
+    .nav-menu { background: var(--white); border-bottom: 1px solid var(--gray-border); padding: 0 48px; display: flex; }
+    .nav-menu-item { padding: 12px 20px; font-size: 13px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--gray-dark); cursor: pointer; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .nav-menu-item:hover { color: var(--accent); border-bottom-color: var(--accent); }
+    .nav-menu-item.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── BREADCRUMB ── */
+    .breadcrumb {
+      padding: 14px 48px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--gray-mid);
+      border-bottom: 1px solid var(--gray-border);
+    }
+    .breadcrumb a { color: var(--gray-mid); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--black); }
+    .breadcrumb .sep { color: var(--gray-border); }
+    .breadcrumb .current { color: var(--black); font-weight: 500; }
+
+    /* ── LAYOUT ── */
+    .page-layout {
+      display: flex;
+      gap: 0;
+      min-height: calc(100vh - 200px);
+    }
+
+    /* ── SIDEBAR FILTER ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--gray-border);
+      padding: 28px 24px;
+    }
+
+    .filter-section { margin-bottom: 28px; }
+    .filter-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--black);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--gray-border);
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .filter-option input[type="checkbox"] {
+      width: 15px; height: 15px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .filter-option label {
+      font-size: 13px;
+      color: var(--gray-dark);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .filter-option label .count { color: var(--gray-mid); font-size: 12px; }
+
+    .price-range {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .price-input {
+      flex: 1;
+      border: 1px solid var(--gray-border);
+      border-radius: 4px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--black);
+      outline: none;
+    }
+    .price-input:focus { border-color: var(--accent); }
+    .price-sep { font-size: 12px; color: var(--gray-mid); }
+    .btn-apply {
+      width: 100%;
+      margin-top: 10px;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-apply:hover { background: var(--accent-dark); }
+
+    .size-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .size-chip {
+      border: 1px solid var(--gray-border);
+      border-radius: 4px;
+      padding: 6px 4px;
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--gray-dark);
+    }
+    .size-chip:hover, .size-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .color-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-swatch {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .color-swatch:hover, .color-swatch.active { border-color: var(--accent); }
+
+    .filter-clear {
+      font-size: 12px;
+      color: var(--accent);
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main-content { flex: 1; padding: 24px 32px; }
+
+    .listing-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .listing-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .listing-count {
+      font-size: 13px;
+      color: var(--gray-mid);
+      margin-top: 2px;
+    }
+
+    .listing-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sort-select {
+      border: 1px solid var(--gray-border);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      cursor: pointer;
+    }
+    .sort-select:focus { border-color: var(--accent); }
+
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn {
+      width: 32px; height: 32px;
+      border: 1px solid var(--gray-border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: var(--white);
+      color: var(--gray-mid);
+      transition: all 0.15s;
+    }
+    .view-btn.active, .view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* active filters */
+    .active-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .filter-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      border: 1px solid var(--gray-border);
+      border-radius: 99px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--accent-dark);
+      font-weight: 500;
+    }
+    .filter-tag button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray-mid);
+      font-size: 14px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+    }
+    .filter-tag button:hover { color: var(--accent); }
+    .clear-all {
+      font-size: 12px;
+      color: var(--gray-mid);
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 4px 0;
+    }
+    .clear-all:hover { color: var(--black); }
+
+    /* ── PRODUCT GRID ── */
+    .products-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .product-card {
+      cursor: pointer;
+      display: flex;
+      gap: 20px;
+      padding: 16px;
+      border: 1px solid var(--gray-border);
+      border-radius: 8px;
+      transition: box-shadow 0.2s;
+    }
+    .product-card:hover { box-shadow: 0 4px 16px rgba(196,131,122,0.1); }
+    .product-card:hover .pimg img { transform: scale(1.05); }
+
+    .pimg {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--gray-light);
+      width: 140px;
+      height: 180px;
+      flex-shrink: 0;
+    }
+    .pimg img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; display: block; }
+    .pimg-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: #ccc; font-size: 11px;
+    }
+    .pimg-placeholder svg { opacity: 0.4; }
+
+    .pcard-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .pbadge {
+      position: absolute; top: 8px; left: 8px;
+      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 2px;
+      text-transform: uppercase; letter-spacing: 0.3px;
+    }
+    .pbadge-sale { background: #e63946; color: var(--white); }
+    .pbadge-new { background: var(--accent); color: var(--white); }
+
+    .pwishlist {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--white); border: none; border-radius: 50%;
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; opacity: 0; transition: opacity 0.2s;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+      font-size: 14px;
+    }
+    .product-card:hover .pwishlist { opacity: 1; }
+
+    .pvendor { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--gray-mid); margin-bottom: 3px; }
+    .pname { font-size: 13px; font-weight: 400; color: var(--black); margin-bottom: 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .pprice { font-size: 14px; font-weight: 700; color: var(--black); }
+    .pprice-old { font-size: 12px; color: var(--gray-mid); text-decoration: line-through; margin-left: 6px; font-weight: 400; }
+    .pdiscount { font-size: 11px; color: #e63946; font-weight: 600; margin-left: 4px; }
+    .prating { font-size: 11px; color: var(--gray-mid); margin-top: 4px; }
+    .prating span { color: #f4a300; }
+
+    /* ── PAGINATION ── */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      padding: 40px 0 20px;
+    }
+    .page-btn {
+      width: 36px; height: 36px;
+      border: 1px solid var(--gray-border);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--white);
+      color: var(--gray-dark);
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: var(--white); font-weight: 700; }
+    .page-btn.nav { width: auto; padding: 0 14px; gap: 4px; }
+
+    /* ── FOOTER ── */
+    footer { background: var(--gray-light); border-top: 1px solid var(--gray-border); padding: 24px 48px; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { font-size: 16px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    footer p { font-size: 12px; color: var(--gray-mid); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 12px; color: var(--gray-mid); text-decoration: none; }
+    .footer-links a:hover { color: var(--black); }
+  </style>
+</head>
+<body>
+
+<!-- ANNOUNCE BAR -->
+<div class="announce-bar">
+  <div class="announce-item"><span class="tag">NEW</span> Brand baru hadir setiap minggu →</div>
+  <div class="announce-item">Gratis Ongkir min. Rp 150.000 →</div>
+  <div class="announce-item">Download app & hemat lebih banyak →</div>
+</div>
+
+<!-- NAVBAR -->
+<nav>
+  <a class="nav-logo" href="homepage.html">SDP</a>
+  <div class="nav-search">
+    <input type="text" placeholder="Cari produk atau brand..." value="Kecantikan" />
+    <button>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </button>
+  </div>
+  <div class="nav-actions">
+    <a class="nav-action-item" href="#">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span>Masuk / Daftar</span>
+    </a>
+    <a class="nav-action-item" href="#">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      <span>Wishlist</span>
+    </a>
+    <a class="nav-action-item cart-wrap" href="#">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+      <span class="cart-badge">3</span>
+      <span>Keranjang</span>
+    </a>
+  </div>
+</nav>
+
+<!-- NAV MENU -->
+<div class="nav-menu">
+  <a class="nav-menu-item" href="#">Wanita</a>
+  <a class="nav-menu-item" href="#">Pria</a>
+  <a class="nav-menu-item active" href="#">Kecantikan</a>
+  <a class="nav-menu-item" href="#">Skincare</a>
+  <a class="nav-menu-item" href="#">Anak</a>
+  <a class="nav-menu-item" href="#">Sport</a>
+  <a class="nav-menu-item" href="#">Aksesoris</a>
+  <a class="nav-menu-item" href="#" style="color:#e63946;">🔥 Sale</a>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="homepage.html">Beranda</a>
+  <span class="sep">›</span>
+  <span class="current">Kecantikan</span>
+</div>
+
+<!-- PAGE LAYOUT -->
+<div class="page-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Brand -->
+    <div class="filter-section">
+      <div class="filter-title" style="display:flex;justify-content:space-between;align-items:center;">
+        Brand <button class="filter-clear">Reset</button>
+      </div>
+      <div class="filter-option"><input type="checkbox" id="b1" checked /><label for="b1">Brand A <span class="count">(42)</span></label></div>
+      <div class="filter-option"><input type="checkbox" id="b2" /><label for="b2">Brand B <span class="count">(28)</span></label></div>
+      <div class="filter-option"><input type="checkbox" id="b3" /><label for="b3">Brand C <span class="count">(19)</span></label></div>
+      <div class="filter-option"><input type="checkbox" id="b4" /><label for="b4">Brand D <span class="count">(15)</span></label></div>
+      <div class="filter-option"><input type="checkbox" id="b5" /><label for="b5">Brand E <span class="count">(11)</span></label></div>
+    </div>
+
+    <!-- Harga -->
+    <div class="filter-section">
+      <div class="filter-title">Harga</div>
+      <div class="price-range">
+        <input type="text" class="price-input" placeholder="Min" value="50.000" />
+        <span class="price-sep">—</span>
+        <input type="text" class="price-input" placeholder="Max" value="500.000" />
+      </div>
+      <button class="btn-apply">Terapkan</button>
+    </div>
+
+    <!-- Rating -->
+    <div class="filter-section">
+      <div class="filter-title">Rating</div>
+      <div class="filter-option"><input type="checkbox" id="r4" checked /><label for="r4">★★★★☆ ke atas <span class="count">(68)</span></label></div>
+      <div class="filter-option"><input type="checkbox" id="r3" /><label for="r3">★★★☆☆ ke atas <span class="count">(92)</span></label></div>
+    </div>
+
+    <!-- Warna -->
+    <div class="filter-section">
+      <div class="filter-title">Warna</div>
+      <div class="color-swatches">
+        <div class="color-swatch active" style="background:#f5c6c0;" title="Rose"></div>
+        <div class="color-swatch" style="background:#c4837a;" title="Mauve"></div>
+        <div class="color-swatch" style="background:#f0e0c8;" title="Nude"></div>
+        <div class="color-swatch" style="background:#d4e8d0;" title="Hijau"></div>
+        <div class="color-swatch" style="background:#c8d4e8;" title="Biru"></div>
+        <div class="color-swatch" style="background:#111111;" title="Hitam"></div>
+        <div class="color-swatch" style="background:#ffffff;border:1px solid #ddd;" title="Putih"></div>
+      </div>
+    </div>
+
+    <!-- Kondisi -->
+    <div class="filter-section">
+      <div class="filter-title">Kondisi</div>
+      <div class="filter-option"><input type="checkbox" id="c1" checked /><label for="c1">Baru</label></div>
+      <div class="filter-option"><input type="checkbox" id="c2" /><label for="c2">Sale / Diskon</label></div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <div class="listing-header">
+      <div>
+        <div class="listing-title">Kecantikan</div>
+        <div class="listing-count">115 produk ditemukan</div>
+      </div>
+      <div class="listing-controls">
+        <select class="sort-select">
+          <option>Paling Relevan</option>
+          <option>Terbaru</option>
+          <option>Harga: Rendah ke Tinggi</option>
+          <option>Harga: Tinggi ke Rendah</option>
+          <option>Rating Tertinggi</option>
+        </select>
+        <div class="view-toggle">
+          <button class="view-btn active" title="Grid">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7z"/>
+            </svg>
+          </button>
+          <button class="view-btn" title="List">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Filters -->
+    <div class="active-filters">
+      <div class="filter-tag">Brand A <button>×</button></div>
+      <div class="filter-tag">★★★★☆ ke atas <button>×</button></div>
+      <div class="filter-tag">Warna: Rose <button>×</button></div>
+      <button class="clear-all">Hapus semua filter</button>
+    </div>
+
+    <!-- Products -->
+    <div class="products-grid">
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <span class="pbadge pbadge-new">Baru</span>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Serum Vitamin C Brightening 30ml</div>
+            <div class="prating"><span>★★★★</span>★ (128)</div>
+          </div>
+          <div><span class="pprice">Rp 189.000</span></div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <span class="pbadge pbadge-sale">-25%</span>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Lip Serum Plumping Effect Rose</div>
+            <div class="prating"><span>★★★★★</span> (64)</div>
+          </div>
+          <div><span class="pprice">Rp 120.000</span><span class="pprice-old">Rp 160.000</span><span class="pdiscount">-25%</span></div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Moisturizer Daily Glow SPF 30</div>
+            <div class="prating"><span>★★★★</span>★ (47)</div>
+          </div>
+          <div><span class="pprice">Rp 312.000</span></div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <span class="pbadge pbadge-sale">-30%</span>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Face Wash Gentle Foam Cleanser</div>
+            <div class="prating"><span>★★★★★</span> (203)</div>
+          </div>
+          <div><span class="pprice">Rp 84.000</span><span class="pprice-old">Rp 120.000</span><span class="pdiscount">-30%</span></div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <span class="pbadge pbadge-new">Baru</span>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Toner Hydrating Rose Water 150ml</div>
+            <div class="prating"><span>★★★★</span>☆ (31)</div>
+          </div>
+          <div><span class="pprice">Rp 145.000</span></div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="pimg">
+          <div class="pimg-placeholder">
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+            </svg>Foto Produk
+          </div>
+          <button class="pwishlist">♡</button>
+        </div>
+        <div class="pcard-body">
+          <div>
+            <div class="pvendor">Brand A</div>
+            <div class="pname">Sunscreen Mineral SPF 50 PA++++</div>
+            <div class="prating"><span>★★★★★</span> (89)</div>
+          </div>
+          <div><span class="pprice">Rp 225.000</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <button class="page-btn nav">← Prev</button>
+      <button class="page-btn active">1</button>
+      <button class="page-btn">2</button>
+      <button class="page-btn">3</button>
+      <button class="page-btn">4</button>
+      <span style="color:var(--gray-mid);padding:0 4px;">...</span>
+      <button class="page-btn">12</button>
+      <button class="page-btn nav">Next →</button>
+    </div>
+
+  </main>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">SDP</div>
+  <p>© 2026 SDP Marketplace. All rights reserved.</p>
+  <div class="footer-links">
+    <a href="#">Tentang Kami</a>
+    <a href="#">Kebijakan Privasi</a>
+    <a href="#">Kontak</a>
+  </div>
+</footer>
+
+</body>
+</html>

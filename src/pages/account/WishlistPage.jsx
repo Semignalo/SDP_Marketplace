@@ -1,0 +1,37 @@
+import { Link } from 'react-router-dom'
+import { Heart } from 'lucide-react'
+import { useWishlist } from '../../hooks/useAccount'
+import ProductCard from '../../components/ProductCard'
+import { Button, EmptyState, SkeletonProductCard } from '../../components/ui'
+
+export default function WishlistPage() {
+  const { data: products = [], isLoading } = useWishlist()
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-base font-semibold text-ink">Wishlist Saya</h2>
+        <p className="text-sm text-ink-muted mt-1">
+          {isLoading ? 'Memuat…' : `${products.length} produk tersimpan`}
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonProductCard key={i} />)}
+        </div>
+      ) : products.length === 0 ? (
+        <EmptyState
+          icon={<Heart size={40} strokeWidth={1.2} />}
+          title="Wishlist masih kosong"
+          description="Simpan produk favoritmu dengan klik ikon hati di halaman produk."
+          action={<Link to="/products"><Button variant="outline">Jelajahi Produk</Button></Link>}
+        />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">
+          {products.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
+      )}
+    </div>
+  )
+}

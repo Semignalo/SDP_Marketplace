@@ -15,6 +15,8 @@ return new class extends Migration {
             $table->enum('status', ['pending_payment', 'processing', 'shipped', 'completed', 'cancelled'])->default('pending_payment');
             $table->decimal('subtotal', 12, 2);
             $table->decimal('shipping_cost', 12, 2)->default(0);
+            $table->decimal('tier_discount', 12, 2)->default(0);
+            $table->string('tier_name', 40)->nullable();
             $table->decimal('total', 12, 2);
             $table->string('shipping_name');
             $table->text('shipping_address');

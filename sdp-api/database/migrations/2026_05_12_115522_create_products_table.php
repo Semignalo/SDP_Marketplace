@@ -15,10 +15,9 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->decimal('price', 12, 2);
-            $table->decimal('price_reseller', 12, 2)->nullable();
             $table->unsignedInteger('stock')->default(0);
             $table->string('sku')->nullable()->unique();
-            $table->enum('status', ['active', 'inactive', 'draft'])->default('draft');
+            $table->enum('status', ['active', 'draft', 'archived'])->default('draft');
             $table->timestamps();
         });
     }
