@@ -1,20 +1,53 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, MapPin, Truck } from 'lucide-react'
+import { ArrowLeft, MapPin, Truck, Copy, CheckCircle2, RefreshCw, AlertCircle, FileText } from 'lucide-react'
+import { toast } from 'sonner'
 import { useOrder } from '../../hooks/useAccount'
+import { useConfirmPayment } from '../../hooks/useCheckout'
+import { usePublicSettings } from '../../hooks/useProducts'
 import { Badge, Skeleton, EmptyState, Button } from '../../components/ui'
+import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS = {
   pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning' },
-  processing: { label: 'Diproses', variant: 'neutral' },
-  shipped: { label: 'Dikirim', variant: 'neutral' },
-  completed: { label: 'Selesai', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  processing:      { label: 'Diproses',            variant: 'neutral' },
+  shipped:         { label: 'Dikirim',             variant: 'neutral' },
+  completed:       { label: 'Selesai',             variant: 'success' },
+  cancelled:       { label: 'Dibatalkan',          variant: 'danger'  },
 }
 
 export default function OrderDetailPage() {
   const { orderNumber } = useParams()
-  const { data: order, isLoading, error } = useOrder(orderNumber)
+  const { data: order, isLoading, error, refetch, isRefetching } = useOrder(orderNumber)
+  const { data: settings } = usePublicSettings()
+  const confirmMut = useConfirmPayment()
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    toast.success('Nomor rekening disalin')
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleCheckStatus = async () => {
+    await refetch()
+    if (order?.status === 'pending_payment') {
+      toast.message('Status masih menunggu pembayaran')
+    } else {
+      toast.success('Status pembayaran diperbarui')
+    }
+  }
+
+  const handleConfirm = async () => {
+    try {
+      await confirmMut.mutateAsync(orderNumber)
+      toast.success('Pembayaran dikonfirmasi! Pesanan sedang diproses.')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
 
   if (isLoading) {
     return (
@@ -36,6 +69,11 @@ export default function OrderDetailPage() {
   }
 
   const statusInfo = STATUS[order.status] || { label: order.status, variant: 'neutral' }
+  const isPending = order.status === 'pending_payment'
+
+  const bankName   = settings?.bank_name          || 'BCA'
+  const bankNumber = settings?.bank_account_number || '—'
+  const bankHolder = settings?.bank_account_name   || '—'
 
   return (
     <div className="space-y-6">
@@ -43,6 +81,7 @@ export default function OrderDetailPage() {
         <ArrowLeft size={14} /> Kembali
       </Link>
 
+      {/* Header pesanan */}
       <div className="border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -50,9 +89,104 @@ export default function OrderDetailPage() {
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
-          <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+            <Link
+              to={`/akun/pesanan/${orderNumber}/invoice`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 text-xs border border-line rounded px-3 py-1.5 text-ink-muted hover:text-ink hover:bg-paper-soft transition-colors"
+            >
+              <FileText size={12} /> Invoice
+            </Link>
+          </div>
         </div>
       </div>
+
+      {/* ── Panel Pembayaran (hanya saat pending) ── */}
+      {isPending && (
+        <div className="border border-line rounded-lg overflow-hidden">
+          {/* Total tagihan */}
+          <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p className="text-2xs uppercase tracking-widest text-ink-faint">Total Tagihan</p>
+              <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatRupiah(order.total)}</p>
+            </div>
+            <button
+              onClick={handleCheckStatus}
+              disabled={isRefetching}
+              className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink border border-line rounded px-3 py-1.5 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={12} className={isRefetching ? 'animate-spin' : ''} />
+              Cek Status Pembayaran
+            </button>
+          </div>
+
+          {/* Info rekening */}
+          <div className="px-5 py-4 space-y-4">
+            <p className="text-sm text-ink-soft">
+              Transfer ke rekening berikut, lalu klik <strong>Konfirmasi Pembayaran</strong> di bawah.
+            </p>
+
+            <div className="bg-paper-warm rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xs uppercase tracking-widest text-ink-faint mb-1">Bank</p>
+                  <p className="text-base font-bold text-ink">{bankName}</p>
+                </div>
+              </div>
+
+              <div className="h-px bg-line" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xs uppercase tracking-widest text-ink-faint mb-1">Nomor Rekening</p>
+                  <p className="text-lg font-bold text-ink tabular-nums tracking-wider">{bankNumber}</p>
+                  <p className="text-xs text-ink-muted mt-0.5">a.n. {bankHolder}</p>
+                </div>
+                <button
+                  onClick={() => handleCopy(bankNumber)}
+                  className="inline-flex items-center gap-1.5 text-xs border border-line rounded px-3 py-1.5 hover:bg-paper-soft transition-colors"
+                >
+                  {copied ? <CheckCircle2 size={12} className="text-state-success" /> : <Copy size={12} />}
+                  {copied ? 'Disalin' : 'Salin'}
+                </button>
+              </div>
+
+              <div className="h-px bg-line" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-2xs uppercase tracking-widest text-ink-faint mb-1">Jumlah Transfer</p>
+                  <p className="text-base font-bold text-ink tabular-nums">{formatRupiah(order.total)}</p>
+                </div>
+                <button
+                  onClick={() => handleCopy(String(order.total))}
+                  className="inline-flex items-center gap-1.5 text-xs border border-line rounded px-3 py-1.5 hover:bg-paper-soft transition-colors"
+                >
+                  <Copy size={12} /> Salin
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 text-xs text-ink-muted bg-paper-soft rounded p-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" />
+              <span>Transfer sesuai nominal di atas agar pembayaran mudah diverifikasi. Pesanan akan diproses setelah admin mengkonfirmasi.</span>
+            </div>
+          </div>
+
+          {/* Tombol konfirmasi */}
+          <div className="px-5 pb-5">
+            <Button
+              fullWidth
+              onClick={handleConfirm}
+              loading={confirmMut.isPending}
+              leadingIcon={<CheckCircle2 size={15} />}
+            >
+              Konfirmasi Pembayaran
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-4">
         <InfoCard icon={<MapPin size={16} />} title="Alamat Pengiriman">
@@ -61,9 +195,7 @@ export default function OrderDetailPage() {
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">{order.shipping_address}</p>
         </InfoCard>
         <InfoCard icon={<Truck size={16} />} title="Pengiriman">
-          <p className="text-sm">
-            {order.shipping_courier || 'Kurir belum dipilih'}
-          </p>
+          <p className="text-sm">{order.shipping_courier || 'Kurir belum dipilih'}</p>
           {order.tracking_number && (
             <p className="text-xs text-ink-muted mt-1">No. Resi: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>
           )}

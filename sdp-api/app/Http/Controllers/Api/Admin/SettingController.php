@@ -22,6 +22,9 @@ class SettingController extends Controller
         'announce_bar_1' => ['Announce Bar 1', 'text', 'Tampilan'],
         'announce_bar_2' => ['Announce Bar 2', 'text', 'Tampilan'],
         'whatsapp_cs' => ['WhatsApp CS', 'text', 'Kontak'],
+        'bank_name' => ['Nama Bank', 'text', 'Pembayaran'],
+        'bank_account_number' => ['Nomor Rekening', 'text', 'Pembayaran'],
+        'bank_account_name' => ['Nama Pemilik Rekening', 'text', 'Pembayaran'],
 
         // Tier Loyalty (5 tier × 3 field) — admin bisa custom semua
         'tier_1_name' => ['Tier 1 — Nama', 'text', 'Tier Loyalty'],

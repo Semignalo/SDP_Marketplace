@@ -15,6 +15,9 @@ class SettingController extends Controller
         'announce_bar_1',
         'announce_bar_2',
         'whatsapp_cs',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
     ];
 
     public function publicIndex()

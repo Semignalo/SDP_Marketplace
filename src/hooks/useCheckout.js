@@ -34,3 +34,17 @@ export function useSnapToken() {
     },
   })
 }
+
+export function useConfirmPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (orderNumber) => {
+      const { data } = await api.post(`/orders/${orderNumber}/confirm-payment`)
+      return data
+    },
+    onSuccess: (_, orderNumber) => {
+      qc.invalidateQueries({ queryKey: ['order', orderNumber] })
+      qc.invalidateQueries({ queryKey: ['orders'] })
+    },
+  })
+}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Package, X, Image as ImageIcon } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   useVendorProducts,
@@ -10,6 +10,7 @@ import { useCategories } from '../../hooks/useProducts'
 import { Button, Input, Textarea, Select, Badge, Modal, EmptyState, Pagination, Skeleton } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, cn } from '../../lib/utils'
+import ImagesEditor from '../../components/ImagesEditor'
 
 const EMPTY = {
   name: '',
@@ -260,69 +261,6 @@ export default function VendorProductsPage() {
   )
 }
 
-function ImagesEditor({ images, onChange, error }) {
-  const [draft, setDraft] = useState('')
-
-  const add = () => {
-    const url = draft.trim()
-    if (!url) return
-    if (images.length >= 8) {
-      toast.error('Maksimal 8 gambar')
-      return
-    }
-    onChange([...images, url])
-    setDraft('')
-  }
-
-  const remove = (i) => onChange(images.filter((_, idx) => idx !== i))
-
-  return (
-    <div>
-      <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-2">
-        Gambar Produk
-      </label>
-      <p className="text-xs text-ink-muted mb-3">Tempel URL gambar (max 8). Yang pertama jadi gambar utama.</p>
-
-      <div className="flex gap-2">
-        <Input
-          placeholder="https://..."
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add() } }}
-        />
-        <Button type="button" variant="outline" onClick={add}>Tambah</Button>
-      </div>
-
-      {error && <p className="text-xs text-state-danger mt-1">{error}</p>}
-
-      {images.length > 0 ? (
-        <ul className="mt-4 grid grid-cols-4 gap-2">
-          {images.map((url, i) => (
-            <li key={`${url}-${i}`} className="relative group">
-              <div className="aspect-square bg-paper-warm rounded overflow-hidden border border-line">
-                <img src={url} alt="" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.opacity = 0.2 }} />
-              </div>
-              {i === 0 && <span className="absolute top-1 left-1 text-2xs bg-ink text-white px-1.5 py-0.5 rounded">Utama</span>}
-              <button
-                type="button"
-                onClick={() => remove(i)}
-                className="absolute top-1 right-1 h-6 w-6 bg-paper border border-line rounded text-ink hover:text-state-danger inline-flex items-center justify-center"
-                aria-label="Hapus"
-              >
-                <X size={12} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="mt-4 border border-dashed border-line rounded p-6 text-center">
-          <ImageIcon size={28} className="mx-auto text-ink-faint mb-2" strokeWidth={1.2} />
-          <p className="text-xs text-ink-muted">Belum ada gambar</p>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function flatten(categories, depth = 0) {
   const result = []

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ResellerController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -56,9 +57,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [CheckoutController::class, 'store']);
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
     Route::post('/orders/{orderNumber}/snap-token', [PaymentController::class, 'snapToken']);
+    Route::post('/orders/{orderNumber}/confirm-payment', [PaymentController::class, 'confirmPayment']);
 
     Route::get('/reseller/summary', [ResellerController::class, 'summary']);
     Route::get('/reseller/commissions', [ResellerController::class, 'commissions']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/upload/image', [UploadController::class, 'image']);
 });
 
 Route::middleware(['auth:sanctum', 'vendor_admin'])->prefix('vendor')->group(function () {
@@ -98,6 +104,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::delete('/categories/{category}', [\App\Http\Controllers\Api\Admin\CategoryController::class, 'destroy']);
 
     Route::get('/products', [\App\Http\Controllers\Api\Admin\ProductController::class, 'index']);
+    Route::post('/products', [\App\Http\Controllers\Api\Admin\ProductController::class, 'store']);
+    Route::put('/products/{product}', [\App\Http\Controllers\Api\Admin\ProductController::class, 'update']);
     Route::put('/products/{product}/status', [\App\Http\Controllers\Api\Admin\ProductController::class, 'updateStatus']);
     Route::delete('/products/{product}', [\App\Http\Controllers\Api\Admin\ProductController::class, 'destroy']);
 

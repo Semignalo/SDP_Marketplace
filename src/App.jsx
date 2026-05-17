@@ -24,6 +24,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const StyleGuidePage = lazy(() => import('./pages/StyleGuidePage'))
 const ReferralRedirectPage = lazy(() => import('./pages/ReferralRedirectPage'))
+const VendorPage = lazy(() => import('./pages/VendorPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 const AccountLayout = lazy(() => import('./layouts/AccountLayout'))
@@ -32,6 +33,7 @@ const AddressPage = lazy(() => import('./pages/account/AddressPage'))
 const WishlistPage = lazy(() => import('./pages/account/WishlistPage'))
 const OrdersPage = lazy(() => import('./pages/account/OrdersPage'))
 const OrderDetailPage = lazy(() => import('./pages/account/OrderDetailPage'))
+const InvoicePage = lazy(() => import('./pages/account/InvoicePage'))
 const ResellerDashboardPage = lazy(() => import('./pages/account/ResellerDashboardPage'))
 
 const VendorLayout = lazy(() => import('./layouts/VendorLayout'))
@@ -55,7 +57,21 @@ const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 export default function App() {
   return (
     <BrowserRouter>
-      <AppShell />
+      <Routes>
+        {/* Standalone pages — tanpa Navbar/Footer */}
+        <Route
+          path="/akun/pesanan/:orderNumber/invoice"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={null}>
+                <InvoicePage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        {/* Semua halaman lain pakai AppShell */}
+        <Route path="*" element={<AppShell />} />
+      </Routes>
     </BrowserRouter>
   )
 }
@@ -85,6 +101,7 @@ function AppShell() {
               <Route path="/" element={<HomePage />} />
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/products/:slug" element={<ProductDetailPage />} />
+              <Route path="/vendor/:slug" element={<VendorPage />} />
               <Route path="/keranjang" element={<CartPage />} />
               <Route
                 path="/checkout"

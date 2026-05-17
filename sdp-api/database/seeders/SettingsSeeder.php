@@ -18,6 +18,9 @@ class SettingsSeeder extends Seeder
             'announce_bar_1' => 'Gratis Ongkir min. Rp 150.000',
             'announce_bar_2' => 'Brand baru hadir setiap minggu',
             'whatsapp_cs' => '+6281234567890',
+            'bank_name' => 'BCA',
+            'bank_account_number' => '1234567890',
+            'bank_account_name' => 'PT SDP Marketplace',
 
             // Tier Loyalty — 5 tier × 3 field
             'tier_1_name' => 'Member',   'tier_1_min_spend' => '5000000',  'tier_1_discount' => '10',

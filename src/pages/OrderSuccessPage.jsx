@@ -1,76 +1,43 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { CheckCircle2, Package, ArrowRight, CreditCard, Clock, AlertTriangle } from 'lucide-react'
+import { CheckCircle2, Package, ArrowRight, Clock, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrder } from '../hooks/useAccount'
-import { useSnapToken } from '../hooks/useCheckout'
-import { usePublicSettings } from '../hooks/useProducts'
+import { useConfirmPayment } from '../hooks/useCheckout'
 import { Button, Skeleton, Badge } from '../components/ui'
 import { extractErrorMessage } from '../lib/api'
-import { loadSnap } from '../lib/snap'
 import { formatRupiah } from '../lib/utils'
 
 const STATUS_META = {
   pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
-  processing: { label: 'Dibayar — Diproses', variant: 'success', icon: CheckCircle2 },
-  shipped: { label: 'Dikirim', variant: 'info', icon: Package },
-  completed: { label: 'Selesai', variant: 'success', icon: CheckCircle2 },
-  cancelled: { label: 'Dibatalkan', variant: 'danger', icon: AlertTriangle },
+  processing:      { label: 'Dibayar — Diproses',  variant: 'success', icon: CheckCircle2 },
+  shipped:         { label: 'Dikirim',              variant: 'info',    icon: Package },
+  completed:       { label: 'Selesai',              variant: 'success', icon: CheckCircle2 },
+  cancelled:       { label: 'Dibatalkan',           variant: 'danger',  icon: AlertTriangle },
 }
 
 export default function OrderSuccessPage() {
   const { orderNumber } = useParams()
   const { data: order, isLoading, error, refetch } = useOrder(orderNumber)
-  const snapTokenMut = useSnapToken()
-  const { data: settings } = usePublicSettings()
+  const confirmMut = useConfirmPayment()
 
-  const [paying, setPaying] = useState(false)
   const isPending = order?.status === 'pending_payment'
 
-  // Polling order status setiap 4 detik selama pending_payment
+  // Polling saat pending
   useEffect(() => {
     if (!isPending) return
     const id = setInterval(() => refetch(), 4000)
     return () => clearInterval(id)
   }, [isPending, refetch])
 
-  const handlePay = async () => {
-    setPaying(true)
+  const handleConfirm = async () => {
     try {
-      const { token, client_key, is_production } = await snapTokenMut.mutateAsync(orderNumber)
-
-      const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
-
-      snap.pay(token, {
-        onSuccess: () => {
-          toast.success('Pembayaran berhasil!')
-          refetch()
-        },
-        onPending: () => {
-          toast.message('Pembayaran tertunda, menunggu konfirmasi bank')
-          refetch()
-        },
-        onError: () => {
-          toast.error('Pembayaran gagal')
-          refetch()
-        },
-        onClose: () => {
-          // user menutup popup tanpa selesai
-        },
-      })
+      await confirmMut.mutateAsync(orderNumber)
+      toast.success('Pembayaran dikonfirmasi! Pesanan sedang diproses.')
     } catch (err) {
-      const status = err.response?.status
-      if (status === 503) {
-        toast.error('Midtrans belum dikonfigurasi. Admin perlu set MIDTRANS_SERVER_KEY & MIDTRANS_CLIENT_KEY di .env')
-      } else {
-        toast.error(extractErrorMessage(err))
-      }
-    } finally {
-      setPaying(false)
+      toast.error(extractErrorMessage(err))
     }
   }
-
-  const midtransConfigured = !!settings?.midtrans_client_key
 
   return (
     <div className="container-page py-12 lg:py-20">
@@ -106,11 +73,23 @@ export default function OrderSuccessPage() {
               </dl>
 
               {isPending && (
-                <PaymentSection
-                  configured={midtransConfigured}
-                  loading={paying || snapTokenMut.isPending}
-                  onPay={handlePay}
-                />
+                <div className="mt-6 pt-6 border-t border-line space-y-3">
+                  <p className="text-sm text-ink-muted">
+                    Setelah melakukan transfer / pembayaran, klik tombol di bawah untuk konfirmasi.
+                  </p>
+                  <Button
+                    fullWidth
+                    size="lg"
+                    onClick={handleConfirm}
+                    loading={confirmMut.isPending}
+                    leadingIcon={<CheckCircle2 size={16} />}
+                  >
+                    Saya Sudah Bayar
+                  </Button>
+                  <p className="text-2xs text-ink-faint text-center">
+                    Admin akan memverifikasi pembayaran dan memproses pesananmu.
+                  </p>
+                </div>
               )}
 
               {order.status === 'processing' && (
@@ -164,7 +143,6 @@ function Header({ order }) {
       </div>
     )
   }
-  // pending_payment / loading
   return (
     <div className="text-center">
       <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-ink text-white mb-6">
@@ -172,24 +150,6 @@ function Header({ order }) {
       </div>
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Pesanan Diterima</h1>
       <p className="mt-2 text-sm text-ink-muted">Selesaikan pembayaran untuk memproses pesananmu.</p>
-    </div>
-  )
-}
-
-function PaymentSection({ configured, loading, onPay }) {
-  return (
-    <div className="mt-6 pt-6 border-t border-line">
-      <p className="text-2xs uppercase tracking-widest text-ink-muted mb-3">Pembayaran</p>
-      {configured ? (
-        <Button fullWidth size="lg" onClick={onPay} loading={loading} leadingIcon={<CreditCard size={16} />}>
-          Bayar Sekarang
-        </Button>
-      ) : (
-        <div className="px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft leading-relaxed">
-          <strong>Mode dev:</strong> Midtrans belum dikonfigurasi. Set <code className="text-ink">MIDTRANS_SERVER_KEY</code> dan <code className="text-ink">MIDTRANS_CLIENT_KEY</code> di <code className="text-ink">sdp-api/.env</code> (sandbox keys dari dashboard.midtrans.com), lalu refresh.
-        </div>
-      )}
-      <p className="mt-2 text-2xs text-ink-faint text-center">Pembayaran via Midtrans (Snap). Status akan auto-refresh setelah bayar.</p>
     </div>
   )
 }

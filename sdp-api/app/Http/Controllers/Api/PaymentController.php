@@ -49,6 +49,24 @@ class PaymentController extends Controller
         }
     }
 
+    public function confirmPayment(Request $request, string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if ($order->status !== 'pending_payment') {
+            return response()->json(['message' => 'Pesanan tidak menunggu pembayaran'], 422);
+        }
+
+        $order->update([
+            'status' => 'processing',
+            'payment_verified_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Pembayaran dikonfirmasi', 'data' => ['status' => 'processing']]);
+    }
+
     public function notification(MidtransService $midtrans): JsonResponse
     {
         try {

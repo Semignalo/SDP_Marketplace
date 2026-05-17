@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Upload, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useVendorProfile, useUpdateVendorProfile } from '../../hooks/useVendor'
 import { Button, Input, Textarea, Skeleton } from '../../components/ui'
-import { extractErrorMessage } from '../../lib/api'
+import { api, extractErrorMessage } from '../../lib/api'
 
 const EMPTY = { name: '', logo: '', description: '', email: '', phone: '' }
 
@@ -12,6 +13,8 @@ export default function VendorProfilePage() {
 
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const logoRef = useRef(null)
 
   useEffect(() => {
     if (profile) {
@@ -24,6 +27,21 @@ export default function VendorProfilePage() {
       })
     }
   }, [profile])
+
+  const handleLogoUpload = async (file) => {
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const res = await api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setForm((f) => ({ ...f, logo: res.data.url }))
+    } catch (err) {
+      toast.error(`Gagal upload logo: ${extractErrorMessage(err)}`)
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
 
   const handleSave = async (e) => {
     e.preventDefault()
@@ -57,19 +75,38 @@ export default function VendorProfilePage() {
 
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-5">
           <div className="sm:col-span-2 flex items-center gap-5">
-            <div className="h-20 w-20 rounded-pill bg-paper-warm border border-line overflow-hidden shrink-0 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => logoRef.current?.click()}
+              disabled={uploadingLogo}
+              className="h-20 w-20 rounded-full bg-paper-warm border-2 border-dashed border-line overflow-hidden shrink-0 flex items-center justify-center hover:border-ink-muted transition-colors group relative disabled:opacity-60"
+              title="Klik untuk ganti logo"
+            >
               {form.logo ? (
                 <img src={form.logo} alt="logo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.opacity = 0.2 }} />
               ) : (
                 <span className="text-2xs uppercase tracking-widest text-ink-faint">Logo</span>
               )}
-            </div>
+              <div className="absolute inset-0 bg-ink/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingLogo
+                  ? <Loader2 size={18} className="text-white animate-spin" />
+                  : <Upload size={18} className="text-white" />
+                }
+              </div>
+            </button>
+            <input
+              ref={logoRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(e) => handleLogoUpload(e.target.files?.[0])}
+            />
             <div className="flex-1">
               <Input
                 label="URL Logo"
                 value={form.logo}
                 onChange={(e) => setForm({ ...form, logo: e.target.value })}
-                placeholder="https://..."
+                placeholder="https://... atau klik lingkaran untuk upload"
                 error={errors.logo}
               />
             </div>
@@ -104,7 +141,6 @@ export default function VendorProfilePage() {
         <dl className="grid sm:grid-cols-2 gap-3 text-sm">
           <Row label="Slug Vendor" value={<code className="tabular-nums">{profile?.slug}</code>} />
           <Row label="Status" value={profile?.status} />
-          <Row label="Commission Rate" value={`${profile?.commission_rate || 0}%`} />
         </dl>
         <p className="mt-4 text-2xs text-ink-muted">
           Slug & commission rate hanya bisa diubah oleh admin.

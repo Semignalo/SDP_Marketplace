@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, NavLink } from 'react-router-dom'
-import { Search, Menu, X, User, ShoppingBag, Heart } from 'lucide-react'
+import { Search, Menu, X, User, ShoppingBag, Heart, LayoutDashboard } from 'lucide-react'
 import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -72,6 +72,24 @@ export default function Navbar() {
               </span>
             )}
           </button>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className="h-10 px-3 rounded inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-paper-warm transition"
+            >
+              <LayoutDashboard size={15} strokeWidth={1.6} />
+              <span className="hidden xl:inline">Admin</span>
+            </Link>
+          )}
+          {user?.role === 'vendor_admin' && (
+            <Link
+              to="/vendor"
+              className="h-10 px-3 rounded inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-paper-warm transition"
+            >
+              <LayoutDashboard size={15} strokeWidth={1.6} />
+              <span className="hidden xl:inline">Panel Vendor</span>
+            </Link>
+          )}
           {user ? (
             <Link
               to="/akun"
@@ -243,7 +261,17 @@ export function MobileMenuDrawer() {
           </Link>
         ))}
       </nav>
-      <div className="border-t border-line px-5 py-4">
+      <div className="border-t border-line px-5 py-4 space-y-2">
+        {user?.role === 'admin' && (
+          <Link to="/admin" onClick={close} className="block w-full text-center border border-ink py-3 rounded text-sm font-medium text-ink">
+            Panel Admin
+          </Link>
+        )}
+        {user?.role === 'vendor_admin' && (
+          <Link to="/vendor" onClick={close} className="block w-full text-center border border-ink py-3 rounded text-sm font-medium text-ink">
+            Panel Vendor
+          </Link>
+        )}
         {user ? (
           <Link to="/akun" onClick={close} className="block w-full text-center bg-ink text-white py-3 rounded text-sm font-medium">
             Akun Saya — {user.name}

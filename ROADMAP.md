@@ -1,6 +1,6 @@
 # SDP Marketplace — Roadmap Pengembangan
 
-> Terakhir diperbarui: 16 Mei 2026
+> Terakhir diperbarui: 17 Mei 2026
 
 ---
 
@@ -22,6 +22,7 @@
 | 12 | Testing & QA | ✅ Selesai | 2 hari |
 | 13 | Deploy ke VPS | 🔲 Belum | 1-2 hari |
 | 14 | Tier Loyalty + Role Refactor | ✅ Selesai | 1 hari |
+| 15 | UX Polish + Payment + Invoice | ✅ Selesai | 1 hari |
 
 ---
 
@@ -549,6 +550,72 @@ Frontend:
 
 ---
 
+### ✅ Phase 15 — UX Polish + Payment + Invoice
+**Goal:** Perbaikan tampilan, sistem pembayaran manual sementara, halaman toko vendor publik, dan invoice PDF premium.
+
+**Perubahan UI/UX:**
+- ✅ `ProductCard` — aspect ratio ubah dari `3/4` → `1/1` (square) untuk konsistensi grid
+- ✅ `VendorProfilePage` — logo kini bisa **upload file langsung** (klik lingkaran logo → pilih file → upload ke Cloudinary/local) selain paste URL; spinner saat upload; hover overlay dengan ikon Upload
+- ✅ `VendorProfilePage` — hapus field **Commission Rate** dari Info Akun (field tidak dipakai di sistem komisi)
+- ✅ Navbar — tambah link **Panel Vendor** untuk role `vendor_admin` dan **Admin** untuk role `admin`
+
+**Halaman Toko Publik Vendor:**
+- ✅ **NEW** `src/pages/VendorPage.jsx` — halaman publik `/vendor/:slug`
+  - Header: logo bulat + nama vendor + deskripsi + jumlah produk aktif
+  - Grid produk 2-4 kolom (aspect square), pagination
+  - Empty state jika tidak ada produk
+  - Loading skeleton
+- ✅ Route `/vendor/:slug` ditambahkan di `App.jsx`
+
+**Sistem Pembayaran Manual (sementara — Midtrans akan disambung nanti):**
+- ✅ Midtrans Snap **dinonaktifkan sementara** dari frontend (`OrderSuccessPage` — hapus `useSnapToken`, `loadSnap`, Snap popup)
+- ✅ **Backend:** `POST /api/orders/{orderNumber}/confirm-payment` — customer konfirmasi bayar, order langsung `pending_payment` → `processing`
+- ✅ **Frontend hook:** `useConfirmPayment()` di `useCheckout.js`
+- ✅ **`OrderSuccessPage`** — tombol **"Saya Sudah Bayar"** menggantikan Snap popup
+- ✅ **`OrderDetailPage`** (akun customer) — panel pembayaran ala Tokopedia saat status `pending_payment`:
+  - Total tagihan besar + tombol **"Cek Status Pembayaran"** (refresh live dengan spinner)
+  - Kotak rekening bank: nama bank, nomor rekening + tombol Salin, jumlah transfer + tombol Salin
+  - Info notice transfer sesuai nominal
+  - Tombol **"Konfirmasi Pembayaran"**
+- ✅ Settings rekening bank baru: `bank_name`, `bank_account_number`, `bank_account_name` (group "Pembayaran" di AdminSettingsPage, exposed via `/api/settings/public`)
+- ✅ `SettingsSeeder` — default: BCA / 1234567890 / PT SDP Marketplace
+
+**Invoice PDF Premium:**
+- ✅ **NEW** `src/pages/account/InvoicePage.jsx` — halaman standalone (tanpa Navbar/Footer)
+  - Auto-trigger `window.print()` saat data siap (600ms delay)
+  - Layout A4, monochrome premium typography
+  - Header: brand name besar + tagline / nomor invoice + tanggal
+  - Info: nama & alamat penerima / status badge Lunas atau Menunggu Pembayaran / kurir + resi
+  - Tabel produk: nama, brand, harga satuan, qty, subtotal (zebra stripe)
+  - Ringkasan: subtotal, diskon tier (jika ada), ongkir, **total bold**
+  - Instruksi transfer (hanya tampil jika belum lunas) dengan info rekening dari settings
+  - Footer ucapan terima kasih + tanggal generate
+  - Tombol "Download / Print PDF" + "Kembali" (hilang saat print)
+  - CSS `@media print`: warna exact, hilangkan tombol, A4 page size
+- ✅ Route `/akun/pesanan/:orderNumber/invoice` — **di luar AppShell** (tidak ada Navbar/Footer)
+- ✅ Tombol **Invoice** (ikon FileText) di `OrderDetailPage` → buka tab baru
+
+**File yang dibuat/diubah:**
+
+Backend:
+- `sdp-api/app/Http/Controllers/Api/PaymentController.php` (+ `confirmPayment()`)
+- `sdp-api/app/Http/Controllers/Api/SettingController.php` (+ 3 bank keys di publicKeys)
+- `sdp-api/app/Http/Controllers/Api/Admin/SettingController.php` (+ 3 bank KNOWN_KEYS, group "Pembayaran")
+- `sdp-api/database/seeders/SettingsSeeder.php` (+ bank_name, bank_account_number, bank_account_name)
+- `sdp-api/routes/api.php` (+ `POST /orders/{orderNumber}/confirm-payment`)
+
+Frontend:
+- **NEW** `src/pages/VendorPage.jsx`
+- **NEW** `src/pages/account/InvoicePage.jsx`
+- `src/hooks/useCheckout.js` (+ `useConfirmPayment`)
+- `src/pages/OrderSuccessPage.jsx` (rewrite: drop Snap, + tombol konfirmasi)
+- `src/pages/account/OrderDetailPage.jsx` (+ panel pembayaran Tokopedia-style + tombol Invoice)
+- `src/pages/vendor/VendorProfilePage.jsx` (+ upload logo langsung, hapus commission_rate display)
+- `src/components/ProductCard.jsx` (aspect-square)
+- `src/App.jsx` (+ VendorPage route, + InvoicePage route standalone di luar AppShell)
+
+---
+
 ## Data Dummy (Seeder)
 
 ### Akun Login
@@ -561,6 +628,7 @@ Frontend:
 | Vendor Admin | `aksen-pria@vendor.sdp.local` | `password` | Kelola Aksen Pria |
 | Vendor Admin | `mini-mochi@vendor.sdp.local` | `password` | Kelola Mini Mochi |
 | Vendor Admin | `atelier-goods@vendor.sdp.local` | `password` | Kelola Atelier Goods |
+| Vendor Admin | `starinc@sdp.local` | `password` | Kelola STARINC |
 | Customer | `customer1@sdp.local` | `password` | Punya `reseller_code` (auto-generated) untuk referral link |
 | Customer | `customer2@sdp.local` | `password` | Punya `reseller_code` (auto-generated) untuk referral link |
 | Customer | `customer3@sdp.local` | `password` | Punya `reseller_code` (auto-generated) untuk referral link |

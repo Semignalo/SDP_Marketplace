@@ -113,6 +113,22 @@ export function useAdminProducts(params = {}) {
   })
 }
 
+export function useCreateAdminProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload) => (await api.post('/admin/products', payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'products'] }),
+  })
+}
+
+export function useUpdateAdminProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => (await api.put(`/admin/products/${id}`, payload)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'products'] }),
+  })
+}
+
 export function useUpdateAdminProductStatus() {
   const qc = useQueryClient()
   return useMutation({

@@ -35,10 +35,6 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       setToken(null)
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        const next = encodeURIComponent(window.location.pathname + window.location.search)
-        window.location.href = `/login?next=${next}`
-      }
     }
     return Promise.reject(error)
   },
