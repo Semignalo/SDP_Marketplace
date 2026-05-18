@@ -4,7 +4,6 @@ import Navbar, { MobileMenuDrawer } from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import ProtectedRoute from './components/ProtectedRoute'
-import ReferralBadge from './components/ReferralBadge'
 import MobileBottomNav from './components/MobileBottomNav'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Spinner } from './components/ui'
@@ -93,7 +92,6 @@ function AppShell() {
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <ScrollToTop />
       <Navbar />
-      <ReferralBadge />
       <main id="main-content" className="flex-1 pb-14 lg:pb-0">
         <ErrorBoundary>
           <Suspense fallback={<RouteFallback />}>

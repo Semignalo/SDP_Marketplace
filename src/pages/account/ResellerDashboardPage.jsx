@@ -29,7 +29,7 @@ export default function ResellerDashboardPage() {
   const [copied, setCopied] = useState(false)
 
   const referralUrl = summary?.reseller_code
-    ? `${window.location.origin}/r/${summary.reseller_code}`
+    ? `${window.location.origin}/register?ref=${summary.reseller_code}`
     : ''
 
   const handleCopy = async () => {

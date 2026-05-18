@@ -59,7 +59,6 @@ class CheckoutController extends Controller
             'shipping_phone' => 'required_without:address_id|string|max:30',
             'shipping_address' => 'required_without:address_id|string|max:500',
             'courier' => 'required|string',
-            'reseller_code' => 'nullable|string|max:40',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
@@ -86,15 +85,8 @@ class CheckoutController extends Controller
             throw ValidationException::withMessages(['courier' => 'Kurir tidak valid']);
         }
 
-        // Resolve referrer (jika ada code & bukan user sendiri). Semua user yang punya
-        // reseller_code valid bisa jadi referrer — bukan role-specific.
-        $resellerId = null;
-        if (! empty($data['reseller_code'])) {
-            $reseller = User::where('reseller_code', $data['reseller_code'])->first();
-            if ($reseller && $reseller->id !== $user->id) {
-                $resellerId = $reseller->id;
-            }
-        }
+        // Referrer diambil dari profil user (ditetapkan saat register, permanen).
+        $resellerId = $user->referrer_id ?: null;
 
         $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $courier, $resellerId, $tierService) {
             // Lock & verify products.

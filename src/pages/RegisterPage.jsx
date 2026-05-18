@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -8,6 +8,7 @@ import { Button, Input } from '../components/ui'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const register = useAuthStore((s) => s.register)
   const isLoading = useAuthStore((s) => s.isLoading)
 
@@ -17,6 +18,7 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     password_confirmation: '',
+    ref_code: searchParams.get('ref') || '',
   })
   const [showPass, setShowPass] = useState(false)
   const [errors, setErrors] = useState({})
@@ -47,7 +49,10 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(form)
+      await register({
+        ...form,
+        ref_code: form.ref_code.trim().toUpperCase() || undefined,
+      })
       toast.success('Akun berhasil dibuat')
       navigate('/')
     } catch (err) {
@@ -104,6 +109,19 @@ export default function RegisterPage() {
               placeholder="Ulangi password"
               error={errors.password_confirmation}
             />
+
+            <div>
+              <Input
+                label="Kode Referral (opsional)"
+                value={form.ref_code}
+                onChange={update('ref_code')}
+                placeholder="Masukkan kode referral"
+                error={errors.ref_code}
+              />
+              {form.ref_code && !errors.ref_code && (
+                <p className="text-2xs text-state-success mt-1">✓ Kode referral akan diterapkan</p>
+              )}
+            </div>
 
             {generalError && (
               <p className="text-xs text-state-danger bg-state-danger/5 border border-state-danger/20 rounded px-3 py-2">

@@ -4,7 +4,6 @@ import { Check, MapPin, Truck, ClipboardList, Plus, ShieldCheck } from 'lucide-r
 import { toast } from 'sonner'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
-import { useReferralStore } from '../stores/useReferralStore'
 import { useAddresses, useSaveAddress } from '../hooks/useAccount'
 import { useCheckoutOptions, useCreateOrder } from '../hooks/useCheckout'
 import { Button, Input, Spinner, Modal } from '../components/ui'
@@ -35,8 +34,6 @@ export default function CheckoutPage() {
   const items = useCartStore((s) => s.items)
   const subtotal = useCartStore((s) => s.subtotal())
   const clearCart = useCartStore((s) => s.clear)
-  const referralCode = useReferralStore((s) => s.getActive())
-  const clearReferral = useReferralStore((s) => s.clear)
 
   const { data: addresses = [], isLoading: addrLoading } = useAddresses()
   const { data: options, isLoading: optLoading } = useCheckoutOptions()
@@ -100,11 +97,9 @@ export default function CheckoutPage() {
         address_id: selectedAddressId,
         courier: selectedCourier,
         notes,
-        reseller_code: referralCode || undefined,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       })
       clearCart()
-      clearReferral()
       navigate(`/order/sukses/${order.order_number}`, { replace: true })
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -305,11 +300,6 @@ export default function CheckoutPage() {
                 <Row label="Total" value={formatRupiah(total)} bold />
               </div>
             </dl>
-            {referralCode && (
-              <p className="mt-4 text-2xs text-ink-soft border-t border-line pt-3">
-                Pesanan ini terhubung ke referral <strong className="text-ink tabular-nums">{referralCode}</strong>
-              </p>
-            )}
           </div>
         </aside>
       </div>
