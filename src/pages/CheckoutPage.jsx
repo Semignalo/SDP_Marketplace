@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Check, MapPin, Truck, ClipboardList, Plus, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
@@ -40,6 +40,7 @@ export default function CheckoutPage() {
   const createOrder = useCreateOrder()
   const saveAddress = useSaveAddress()
 
+  const orderPlacedRef = useRef(false)
   const [step, setStep] = useState(1)
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [selectedCourier, setSelectedCourier] = useState('')
@@ -56,7 +57,7 @@ export default function CheckoutPage() {
   }, [addresses, selectedAddressId])
 
   if (isReady && !user) return <Navigate to="/login?next=/checkout" replace />
-  if (items.length === 0) return <Navigate to="/keranjang" replace />
+  if (items.length === 0 && !orderPlacedRef.current) return <Navigate to="/keranjang" replace />
 
   const couriers = options?.couriers || []
   const freeShippingMin = Number(options?.shipping_min_free || 150000)
@@ -99,8 +100,9 @@ export default function CheckoutPage() {
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       })
-      clearCart()
+      orderPlacedRef.current = true
       navigate(`/order/sukses/${order.order_number}`, { replace: true })
+      clearCart()
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/email/resend', [EmailVerificationController::class, 'resend']);
+    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('signed')
+        ->name('api.auth.email.verify');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
@@ -60,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders/{orderNumber}/confirm-payment', [PaymentController::class, 'confirmPayment']);
 
     Route::get('/reseller/summary', [ResellerController::class, 'summary']);
+    Route::get('/reseller/network', [ResellerController::class, 'network']);
     Route::get('/reseller/commissions', [ResellerController::class, 'commissions']);
 });
 
@@ -90,6 +96,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);
 
     Route::get('/users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
+    Route::get('/users/{user}/network', [\App\Http\Controllers\Api\Admin\UserController::class, 'network']);
     Route::put('/users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'update']);
     Route::delete('/users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'destroy']);
 

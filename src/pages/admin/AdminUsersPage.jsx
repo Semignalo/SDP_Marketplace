@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Search, Pencil, Trash2, Users } from 'lucide-react'
+import { Search, Pencil, Trash2, Users, Network } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, useAdminVendors } from '../../hooks/useAdmin'
+import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, useAdminVendors, useAdminUserNetwork } from '../../hooks/useAdmin'
 import { Input, Select, Badge, Modal, Button, Pagination, Skeleton, EmptyState } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
@@ -28,6 +28,9 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_EDIT)
   const [errors, setErrors] = useState({})
+  const [deleting, setDeleting] = useState(null)
+  const [networkUser, setNetworkUser] = useState(null)
+  const { data: networkData, isLoading: networkLoading } = useAdminUserNetwork(networkUser?.id)
 
   const openEdit = (u) => {
     setEditing(u)
@@ -65,11 +68,11 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleDelete = async (u) => {
-    if (!confirm(`Hapus user "${u.name}" (${u.email})?`)) return
+  const handleDelete = async () => {
     try {
-      await del.mutateAsync(u.id)
+      await del.mutateAsync(deleting.id)
       toast.success('User dihapus')
+      setDeleting(null)
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
@@ -129,10 +132,13 @@ export default function AdminUsersPage() {
                   <p className="text-xs text-ink-muted mt-1 md:mt-0">{u.vendor?.name || '—'}</p>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(u.created_at)}</p>
                   <div className="flex items-center gap-1 mt-3 md:mt-0 md:justify-end">
+                    <button onClick={() => setNetworkUser(u)} title="Lihat jaringan" className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                      <Network size={14} />
+                    </button>
                     <button onClick={() => openEdit(u)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(u)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                    <button onClick={() => setDeleting(u)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -180,6 +186,56 @@ export default function AdminUsersPage() {
             <Input label="Password Baru (opsional)" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Kosongkan jika tidak diubah" error={errors.password} />
           </div>
         </form>
+      </Modal>
+      <Modal
+        open={!!networkUser}
+        onClose={() => setNetworkUser(null)}
+        title={`Jaringan: ${networkUser?.name || ''}`}
+        size="lg"
+      >
+        {networkLoading ? (
+          <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+        ) : !networkData?.data?.length ? (
+          <EmptyState icon={<Users size={32} strokeWidth={1.2} />} title="Belum ada referral" description="User ini belum mengajak siapapun." />
+        ) : (
+          <>
+            <p className="text-xs text-ink-muted mb-3">{networkData.data.length} member diajak oleh {networkUser?.name}</p>
+            <ul className="divide-y divide-line border border-line rounded-lg overflow-hidden">
+              <li className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-2 bg-paper-soft text-2xs font-bold uppercase tracking-widest text-ink-muted">
+                <span>Member</span><span>Bergabung</span><span className="text-right">Order</span>
+              </li>
+              {networkData.data.map((u) => (
+                <li key={u.id} className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-3 items-center">
+                  <div>
+                    <p className="text-sm font-medium text-ink">{u.name}</p>
+                    <p className="text-xs text-ink-muted">{u.email}</p>
+                  </div>
+                  <p className="text-xs text-ink-muted tabular-nums">{formatDate(u.joined_at)}</p>
+                  <p className="text-sm font-semibold text-ink text-right tabular-nums">{u.orders_count}</p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Hapus User"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleting(null)}>Batal</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Hapus</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Yakin ingin menghapus user <strong className="text-ink">{deleting?.name}</strong>?
+        </p>
+        <p className="text-xs text-ink-muted mt-1">{deleting?.email}</p>
+        <p className="text-xs text-state-danger mt-3">Tindakan ini tidak bisa dibatalkan.</p>
       </Modal>
     </div>
   )

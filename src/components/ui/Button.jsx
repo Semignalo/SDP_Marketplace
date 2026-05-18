@@ -53,7 +53,7 @@ export const Button = forwardRef(function Button(
       ) : (
         leadingIcon
       )}
-      <span>{children}</span>
+      {children}
       {!loading && trailingIcon}
     </button>
   )

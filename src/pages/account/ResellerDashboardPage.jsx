@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Copy, Check, Wallet, Users, Package, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
-import { useResellerSummary, useResellerCommissions } from '../../hooks/useReseller'
+import { useResellerSummary, useResellerCommissions, useResellerNetwork } from '../../hooks/useReseller'
 import { Badge, Skeleton, EmptyState, Pagination } from '../../components/ui'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
@@ -20,12 +20,19 @@ const FILTERS = [
   { value: 'paid', label: 'Dibayar' },
 ]
 
+const TABS = [
+  { value: 'komisi', label: 'Komisi' },
+  { value: 'jaringan', label: 'Jaringan' },
+]
+
 export default function ResellerDashboardPage() {
   const { data: summary, isLoading: sumLoading } = useResellerSummary()
+  const [tab, setTab] = useState('komisi')
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const params = useMemo(() => ({ page, ...(status && { status }) }), [page, status])
   const { data: commissionData, isLoading: comLoading } = useResellerCommissions(params)
+  const { data: network, isLoading: netLoading } = useResellerNetwork()
   const [copied, setCopied] = useState(false)
 
   const referralUrl = summary?.reseller_code
@@ -102,6 +109,28 @@ export default function ResellerDashboardPage() {
         />
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-line">
+        {TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTab(t.value)}
+            className={cn(
+              'px-4 py-2.5 text-sm font-medium transition border-b-2 -mb-px',
+              tab === t.value ? 'border-ink text-ink' : 'border-transparent text-ink-muted hover:text-ink',
+            )}
+          >
+            {t.label}
+            {t.value === 'jaringan' && network?.length > 0 && (
+              <span className="ml-1.5 text-2xs bg-ink text-white rounded-full px-1.5 py-0.5">{network.length}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab: Komisi */}
+      {tab === 'komisi' && <>
       {/* Filter */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
         {FILTERS.map((f) => (
@@ -177,6 +206,44 @@ export default function ResellerDashboardPage() {
           totalPages={commissionData.meta.last_page}
           onPageChange={setPage}
         />
+      )}
+      </>}
+
+      {/* Tab: Jaringan */}
+      {tab === 'jaringan' && (
+        <section className="border border-line rounded-lg overflow-hidden">
+          <div className="hidden md:grid grid-cols-[2fr_1fr_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+            <span>Member</span>
+            <span>Bergabung</span>
+            <span className="text-right">Order</span>
+          </div>
+          {netLoading ? (
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            </div>
+          ) : !network?.length ? (
+            <div className="p-10">
+              <EmptyState
+                icon={<Users size={40} strokeWidth={1.2} />}
+                title="Belum ada jaringan"
+                description="Bagikan link referral kamu agar orang lain bergabung."
+              />
+            </div>
+          ) : (
+            <ul className="divide-y divide-line">
+              {network.map((u) => (
+                <li key={u.id} className="p-4 md:px-5 md:grid md:grid-cols-[2fr_1fr_80px] md:gap-4 md:items-center">
+                  <div>
+                    <p className="text-sm font-medium text-ink">{u.name}</p>
+                    <p className="text-xs text-ink-muted">{u.email}</p>
+                  </div>
+                  <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(u.joined_at)}</p>
+                  <p className="text-sm font-semibold text-ink md:text-right mt-1 md:mt-0 tabular-nums">{u.orders_count} order</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
     </div>
   )

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ResellerCommission;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,23 @@ class ResellerController extends Controller
                 'rate' => (float) \App\Models\Setting::get('reseller_commission_rate', 10),
             ],
         ]);
+    }
+
+    public function network(Request $request): JsonResponse
+    {
+        $referrals = User::where('referrer_id', $request->user()->id)
+            ->withCount('orders')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn ($u) => [
+                'id'          => $u->id,
+                'name'        => $u->name,
+                'email'       => $u->email,
+                'orders_count' => $u->orders_count,
+                'joined_at'   => $u->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json(['data' => $referrals]);
     }
 
     public function commissions(Request $request)

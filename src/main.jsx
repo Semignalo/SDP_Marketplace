@@ -12,6 +12,7 @@ createRoot(document.getElementById('root')).render(
       <App />
       <Toaster
         position="top-right"
+        closeButton
         toastOptions={{
           style: {
             fontFamily: 'Inter, sans-serif',

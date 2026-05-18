@@ -75,7 +75,17 @@ export default function CartDrawer() {
                     >
                       <Minus size={12} />
                     </button>
-                    <span className="w-8 text-center text-xs font-semibold tabular-nums">{item.quantity}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={item.stock}
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        if (!isNaN(val)) setQuantity(item.product_id, Math.min(Math.max(1, val), item.stock))
+                      }}
+                      className="w-10 text-center text-xs font-semibold tabular-nums bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     <button
                       onClick={() => setQuantity(item.product_id, item.quantity + 1)}
                       disabled={item.quantity >= item.stock}

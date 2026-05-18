@@ -12,6 +12,17 @@ export function useResellerSummary(enabled = true) {
   })
 }
 
+export function useResellerNetwork(enabled = true) {
+  return useQuery({
+    queryKey: ['reseller', 'network'],
+    queryFn: async () => {
+      const { data } = await api.get('/reseller/network')
+      return data.data
+    },
+    enabled,
+  })
+}
+
 export function useResellerCommissions(params = {}, enabled = true) {
   return useQuery({
     queryKey: ['reseller', 'commissions', params],

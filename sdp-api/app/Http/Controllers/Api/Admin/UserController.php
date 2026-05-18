@@ -70,6 +70,26 @@ class UserController extends Controller
         return response()->json(['message' => 'User diperbarui', 'data' => $this->shape($user)]);
     }
 
+    public function network(User $user): JsonResponse
+    {
+        $referrals = User::where('referrer_id', $user->id)
+            ->withCount('orders')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn ($u) => [
+                'id'           => $u->id,
+                'name'         => $u->name,
+                'email'        => $u->email,
+                'orders_count' => $u->orders_count,
+                'joined_at'    => $u->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'user' => $this->shape($user),
+            'data' => $referrals,
+        ]);
+    }
+
     public function destroy(Request $request, User $user): JsonResponse
     {
         if ($user->id === $request->user()->id) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ChevronRight, Minus, Plus, ShieldCheck, Truck, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import ProductCard from '../components/ProductCard'
@@ -15,6 +15,7 @@ export default function ProductDetailPage() {
   const { data, isLoading, error } = useProduct(slug)
   const [qty, setQty] = useState(1)
   const [activeImg, setActiveImg] = useState(0)
+  const navigate = useNavigate()
   const addToCart = useCartStore((s) => s.add)
   const openCart = useUIStore((s) => s.openCart)
 
@@ -43,7 +44,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     addToCart(product, qty)
-    openCart()
+    navigate('/checkout')
   }
 
   return (
@@ -68,13 +69,13 @@ export default function ProductDetailPage() {
             )}
           </div>
           {images.length > 1 && (
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
               {images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
                   className={cn(
-                    'w-20 h-20 rounded overflow-hidden bg-paper-warm border-2 transition',
+                    'shrink-0 w-16 h-16 rounded overflow-hidden bg-paper-warm border-2 transition',
                     activeImg === i ? 'border-ink' : 'border-transparent hover:border-line-strong',
                   )}
                 >
@@ -157,7 +158,19 @@ export default function ProductDetailPage() {
 
           <div className="mt-4 flex items-center gap-4 text-xs text-ink-muted">
             <WishlistButton productId={product.id} variant="inline" />
-            <button type="button" className="inline-flex items-center gap-1.5 hover:text-ink transition">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 hover:text-ink transition"
+              onClick={async () => {
+                const url = window.location.href
+                if (navigator.share) {
+                  await navigator.share({ title: product.name, url })
+                } else {
+                  await navigator.clipboard.writeText(url)
+                  toast.success('Link produk disalin!')
+                }
+              }}
+            >
               <Share2 size={14} /> Bagikan
             </button>
           </div>

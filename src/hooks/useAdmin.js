@@ -40,6 +40,14 @@ export function useDeleteAdminUser() {
   })
 }
 
+export function useAdminUserNetwork(userId) {
+  return useQuery({
+    queryKey: ['admin', 'users', userId, 'network'],
+    queryFn: async () => (await api.get(`/admin/users/${userId}/network`)).data,
+    enabled: !!userId,
+  })
+}
+
 /* ───────── Vendors ───────── */
 export function useAdminVendors(params = {}) {
   return useQuery({

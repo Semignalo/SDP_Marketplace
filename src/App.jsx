@@ -21,6 +21,8 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
+const EmailVerifiedPage = lazy(() => import('./pages/EmailVerifiedPage'))
 const StyleGuidePage = lazy(() => import('./pages/StyleGuidePage'))
 const ReferralRedirectPage = lazy(() => import('./pages/ReferralRedirectPage'))
 const VendorPage = lazy(() => import('./pages/VendorPage'))
@@ -111,6 +113,8 @@ function AppShell() {
               />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/email-verified" element={<EmailVerifiedPage />} />
               <Route path="/style-guide" element={<StyleGuidePage />} />
               <Route path="/r/:code" element={<ReferralRedirectPage />} />
 

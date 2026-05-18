@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
-import { extractErrorMessage } from '../lib/api'
+import { extractErrorMessage, api } from '../lib/api'
 import { Button, Input } from '../components/ui'
 
 export default function LoginPage() {
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [errors, setErrors] = useState({})
   const [generalError, setGeneralError] = useState('')
+  const [unverifiedEmail, setUnverifiedEmail] = useState('')
 
   const update = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }))
@@ -44,7 +45,13 @@ export default function LoginPage() {
         : '/'
       navigate(searchParams.get('next') || fallback)
     } catch (err) {
-      setGeneralError(extractErrorMessage(err, 'Gagal masuk. Coba lagi.'))
+      const data = err.response?.data
+      if (err.response?.status === 403 && data?.unverified) {
+        setUnverifiedEmail(data.email || form.email)
+        setGeneralError(data.message)
+      } else {
+        setGeneralError(extractErrorMessage(err, 'Gagal masuk. Coba lagi.'))
+      }
     }
   }
 
@@ -89,9 +96,25 @@ export default function LoginPage() {
             />
 
             {generalError && (
-              <p className="text-xs text-state-danger bg-state-danger/5 border border-state-danger/20 rounded px-3 py-2">
-                {generalError}
-              </p>
+              <div className="text-xs text-state-danger bg-state-danger/5 border border-state-danger/20 rounded px-3 py-2 space-y-2">
+                <p>{generalError}</p>
+                {unverifiedEmail && (
+                  <button
+                    type="button"
+                    className="underline underline-offset-4 font-semibold hover:opacity-80"
+                    onClick={async () => {
+                      try {
+                        await api.post('/auth/email/resend', { email: unverifiedEmail })
+                        toast.success('Email verifikasi dikirim ulang!')
+                      } catch {
+                        toast.error('Gagal mengirim ulang. Coba lagi.')
+                      }
+                    }}
+                  >
+                    Kirim ulang verifikasi →
+                  </button>
+                )}
+              </div>
             )}
 
             <Button type="submit" fullWidth loading={isLoading} size="lg">

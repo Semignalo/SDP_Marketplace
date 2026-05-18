@@ -35,11 +35,11 @@ class AuthController extends Controller
             'reseller_code' => $this->uniqueReferralCode(),
         ]);
 
-        $token = $user->createToken('sdp-web')->plainTextToken;
+        $user->sendEmailVerificationNotification();
 
         return response()->json([
-            'user' => new UserResource($user),
-            'token' => $token,
+            'message' => 'Akun berhasil dibuat. Cek email untuk verifikasi.',
+            'email' => $user->email,
         ], 201);
     }
 
@@ -53,6 +53,14 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['Email atau password salah.'],
             ]);
+        }
+
+        if (!$user->hasVerifiedEmail() && $user->role !== 'admin') {
+            return response()->json([
+                'message' => 'Email belum diverifikasi. Cek inbox kamu.',
+                'email' => $user->email,
+                'unverified' => true,
+            ], 403);
         }
 
         $token = $user->createToken('sdp-web')->plainTextToken;

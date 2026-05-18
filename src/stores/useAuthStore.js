@@ -25,9 +25,7 @@ export const useAuthStore = create(
         set({ isLoading: true })
         try {
           const { data } = await api.post('/auth/register', payload)
-          setToken(data.token)
-          set({ user: data.user })
-          return data.user
+          return data // { message, email }
         } finally {
           set({ isLoading: false })
         }

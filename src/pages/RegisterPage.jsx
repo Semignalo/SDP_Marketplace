@@ -49,12 +49,11 @@ export default function RegisterPage() {
     }
 
     try {
-      await register({
+      const result = await register({
         ...form,
         ref_code: form.ref_code.trim().toUpperCase() || undefined,
       })
-      toast.success('Akun berhasil dibuat')
-      navigate('/')
+      navigate(`/verify-email?email=${encodeURIComponent(result.email)}`)
     } catch (err) {
       const data = err.response?.data
       if (data?.errors) {
