@@ -15,7 +15,7 @@ export function setToken(token) {
 }
 
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
