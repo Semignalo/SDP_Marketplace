@@ -122,13 +122,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-line text-2xs uppercase tracking-widest text-ink-muted">
-            <p className="mb-2">Demo akun:</p>
-            <ul className="space-y-1 text-ink-faint normal-case tracking-normal text-xs">
-              <li>admin@sdp.local / password</li>
-              <li>customer1@sdp.local / password</li>
-            </ul>
-          </div>
         </div>
       </div>
     </div>
