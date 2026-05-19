@@ -67,6 +67,42 @@ class PaymentController extends Controller
         return response()->json(['message' => 'Pembayaran dikonfirmasi', 'data' => ['status' => 'processing']]);
     }
 
+    public function checkStatus(Request $request, string $orderNumber, MidtransService $midtrans): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        if ($order->status !== 'pending_payment') {
+            return response()->json(['data' => ['status' => $order->status]]);
+        }
+
+        try {
+            $result = $midtrans->checkTransactionStatus($orderNumber);
+        } catch (Throwable $e) {
+            // Transaksi belum ada di Midtrans (belum pernah bayar)
+            return response()->json(['data' => ['status' => $order->status]]);
+        }
+
+        $next = $result['next_status'];
+        if ($next) {
+            DB::transaction(function () use ($order, $next) {
+                $payload = ['status' => $next];
+                if ($next === 'processing') {
+                    $payload['payment_verified_at'] = now();
+                }
+                $order->update($payload);
+
+                $commission = ResellerCommission::where('order_id', $order->id)->first();
+                if ($commission && $next === 'cancelled' && in_array($commission->status, ['pending', 'earned'])) {
+                    $commission->update(['status' => 'cancelled']);
+                }
+            });
+        }
+
+        return response()->json(['data' => ['status' => $order->fresh()->status]]);
+    }
+
     public function notification(MidtransService $midtrans): JsonResponse
     {
         try {

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\ResellerCommission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -39,5 +42,31 @@ class OrderController extends Controller
             ->firstOrFail();
 
         return response()->json(['data' => new OrderResource($order)]);
+    }
+
+    public function cancel(Request $request, string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->where('user_id', $request->user()->id)
+            ->with('items')
+            ->firstOrFail();
+
+        if ($order->status !== 'pending_payment') {
+            return response()->json(['message' => 'Pesanan tidak dapat dibatalkan'], 422);
+        }
+
+        DB::transaction(function () use ($order) {
+            foreach ($order->items as $item) {
+                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+            }
+
+            ResellerCommission::where('order_id', $order->id)
+                ->whereIn('status', ['pending', 'earned'])
+                ->update(['status' => 'cancelled']);
+
+            $order->update(['status' => 'cancelled']);
+        });
+
+        return response()->json(['message' => 'Pesanan berhasil dibatalkan']);
     }
 }

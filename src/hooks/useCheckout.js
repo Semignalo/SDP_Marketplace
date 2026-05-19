@@ -48,3 +48,17 @@ export function useConfirmPayment() {
     },
   })
 }
+
+export function useCancelOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (orderNumber) => {
+      const { data } = await api.post(`/orders/${orderNumber}/cancel`)
+      return data
+    },
+    onSuccess: (_, orderNumber) => {
+      qc.invalidateQueries({ queryKey: ['order', orderNumber] })
+      qc.invalidateQueries({ queryKey: ['orders'] })
+    },
+  })
+}

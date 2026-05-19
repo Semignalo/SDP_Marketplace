@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, Settings as SettingsIcon, LogOut, ExternalLink,
+  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, ArrowDownToLine, Settings as SettingsIcon, LogOut, ExternalLink,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -19,6 +19,7 @@ export default function AdminLayout() {
     { to: '/admin/products', icon: <Package size={16} />, label: 'Produk' },
     { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Pesanan' },
     { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Komisi' },
+    { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Penarikan' },
     { to: '/admin/settings', icon: <SettingsIcon size={16} />, label: 'Pengaturan' },
   ]
 

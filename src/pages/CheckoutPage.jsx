@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useAddresses, useSaveAddress } from '../hooks/useAccount'
-import { useCheckoutOptions, useCreateOrder } from '../hooks/useCheckout'
+import { useCheckoutOptions, useCreateOrder, useSnapToken } from '../hooks/useCheckout'
+import { loadSnap } from '../lib/snap'
 import { Button, Input, Spinner, Modal } from '../components/ui'
 import TierBadge from '../components/TierBadge'
 import { extractErrorMessage } from '../lib/api'
@@ -38,6 +39,7 @@ export default function CheckoutPage() {
   const { data: addresses = [], isLoading: addrLoading } = useAddresses()
   const { data: options, isLoading: optLoading } = useCheckoutOptions()
   const createOrder = useCreateOrder()
+  const snapMut = useSnapToken()
   const saveAddress = useSaveAddress()
 
   const orderPlacedRef = useRef(false)
@@ -101,8 +103,19 @@ export default function CheckoutPage() {
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       })
       orderPlacedRef.current = true
-      navigate(`/order/sukses/${order.order_number}`, { replace: true })
       clearCart()
+
+      const { token, client_key, is_production } = await snapMut.mutateAsync(order.order_number)
+      const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
+      snap.pay(token, {
+        onSuccess: () => navigate(`/order/sukses/${order.order_number}?paid=1`, { replace: true }),
+        onPending: () => navigate(`/akun/pesanan/${order.order_number}`, { replace: true }),
+        onError: () => {
+          toast.error('Pembayaran gagal. Selesaikan dari halaman pesanan.')
+          navigate(`/akun/pesanan/${order.order_number}`, { replace: true })
+        },
+        onClose: () => navigate(`/akun/pesanan/${order.order_number}`, { replace: true }),
+      })
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
@@ -268,7 +281,7 @@ export default function CheckoutPage() {
             {step < 3 ? (
               <Button onClick={handleNext} disabled={!canNext(step)}>Lanjutkan →</Button>
             ) : (
-              <Button onClick={handleSubmit} loading={createOrder.isPending} leadingIcon={<ShieldCheck size={16} />}>
+              <Button onClick={handleSubmit} loading={createOrder.isPending || snapMut.isPending} leadingIcon={<ShieldCheck size={16} />}>
                 Bayar Sekarang
               </Button>
             )}

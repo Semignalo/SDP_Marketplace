@@ -14,6 +14,7 @@ class CommissionController extends Controller
         $request->validate([
             'status' => 'nullable|in:pending,earned,paid,cancelled',
             'reseller_id' => 'nullable|integer|exists:users,id',
+            'search' => 'nullable|string|max:100',
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
@@ -26,6 +27,13 @@ class CommissionController extends Controller
         }
         if ($request->filled('reseller_id')) {
             $query->where('reseller_id', $request->input('reseller_id'));
+        }
+        if ($request->filled('search')) {
+            $search = '%' . $request->input('search') . '%';
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('reseller', fn ($r) => $r->where('name', 'like', $search))
+                  ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', $search));
+            });
         }
 
         $items = $query->paginate($request->input('per_page', 20))->withQueryString();

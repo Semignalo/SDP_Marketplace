@@ -6,6 +6,7 @@ use App\Models\Order;
 use Midtrans\Config;
 use Midtrans\Notification;
 use Midtrans\Snap;
+use Midtrans\Transaction;
 use RuntimeException;
 
 class MidtransService
@@ -78,7 +79,48 @@ class MidtransService
             ],
         ];
 
-        return Snap::getSnapToken($payload);
+        try {
+            return Snap::getSnapToken($payload);
+        } catch (\Exception $e) {
+            $msg = $e->getMessage();
+            if (str_contains($msg, 'order_id') && str_contains($msg, '400')) {
+                // Order ID sudah ada di Midtrans — cancel transaksi lama lalu retry
+                try { Transaction::cancel($order->order_number); } catch (\Exception) {}
+                return Snap::getSnapToken($payload);
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * Cek status transaksi langsung ke Midtrans API (untuk fallback saat webhook tidak masuk).
+     * Returns next_status sama seperti resolveNotification.
+     */
+    public function checkTransactionStatus(string $orderNumber): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Midtrans belum dikonfigurasi');
+        }
+
+        $status = Transaction::status($orderNumber);
+
+        $transactionStatus = $status->transaction_status ?? null;
+        $fraudStatus = $status->fraud_status ?? null;
+
+        $next = null;
+        if ($transactionStatus === 'capture') {
+            $next = $fraudStatus === 'accept' ? 'processing' : null;
+        } elseif ($transactionStatus === 'settlement') {
+            $next = 'processing';
+        } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+            $next = 'cancelled';
+        }
+
+        return [
+            'transaction_status' => $transactionStatus,
+            'fraud_status' => $fraudStatus,
+            'next_status' => $next,
+        ];
     }
 
     /**

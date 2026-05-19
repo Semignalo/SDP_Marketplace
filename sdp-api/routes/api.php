@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ResellerController;
+use App\Http\Controllers\Api\ResellerWithdrawalController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\VendorController;
@@ -63,10 +64,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
     Route::post('/orders/{orderNumber}/snap-token', [PaymentController::class, 'snapToken']);
     Route::post('/orders/{orderNumber}/confirm-payment', [PaymentController::class, 'confirmPayment']);
+    Route::get('/orders/{orderNumber}/check-status', [PaymentController::class, 'checkStatus']);
+    Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel']);
 
     Route::get('/reseller/summary', [ResellerController::class, 'summary']);
     Route::get('/reseller/network', [ResellerController::class, 'network']);
     Route::get('/reseller/commissions', [ResellerController::class, 'commissions']);
+    Route::get('/reseller/withdrawals', [ResellerWithdrawalController::class, 'index']);
+    Route::post('/reseller/withdrawals', [ResellerWithdrawalController::class, 'store']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -123,6 +128,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/commissions', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'index']);
     Route::put('/commissions/{commission}/status', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'updateStatus']);
     Route::post('/commissions/bulk-mark-paid', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'bulkMarkPaid']);
+    Route::get('/withdrawals', [\App\Http\Controllers\Api\Admin\WithdrawalController::class, 'index']);
+    Route::put('/withdrawals/{withdrawal}/status', [\App\Http\Controllers\Api\Admin\WithdrawalController::class, 'updateStatus']);
 
     Route::get('/settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'index']);
     Route::put('/settings', [\App\Http\Controllers\Api\Admin\SettingController::class, 'update']);

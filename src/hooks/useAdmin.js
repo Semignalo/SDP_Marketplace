@@ -223,3 +223,20 @@ export function useUpdateAdminSettings() {
     },
   })
 }
+
+/* ───────── Withdrawals ───────── */
+export function useAdminWithdrawals(params = {}) {
+  return useQuery({
+    queryKey: ['admin', 'withdrawals', params],
+    queryFn: async () => (await api.get('/admin/withdrawals', { params })).data,
+  })
+}
+
+export function useUpdateWithdrawalStatus() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, status, admin_notes }) =>
+      (await api.put(`/admin/withdrawals/${id}/status`, { status, admin_notes })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] }),
+  })
+}

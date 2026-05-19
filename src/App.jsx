@@ -53,9 +53,21 @@ const AdminProductsPage = lazy(() => import('./pages/admin/AdminProductsPage'))
 const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'))
 const AdminOrderDetailPage = lazy(() => import('./pages/admin/AdminOrderDetailPage'))
 const AdminCommissionsPage = lazy(() => import('./pages/admin/AdminCommissionsPage'))
+const AdminWithdrawalsPage = lazy(() => import('./pages/admin/AdminWithdrawalsPage'))
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 
 export default function App() {
+  const fetchMe = useAuthStore((s) => s.fetchMe)
+  const setReady = useAuthStore((s) => s.setReady)
+
+  useEffect(() => {
+    if (getToken()) {
+      fetchMe()
+    } else {
+      setReady(true)
+    }
+  }, [fetchMe, setReady])
+
   return (
     <BrowserRouter>
       <Routes>
@@ -78,16 +90,6 @@ export default function App() {
 }
 
 function AppShell() {
-  const fetchMe = useAuthStore((s) => s.fetchMe)
-  const setReady = useAuthStore((s) => s.setReady)
-
-  useEffect(() => {
-    if (getToken()) {
-      fetchMe()
-    } else {
-      setReady(true)
-    }
-  }, [fetchMe, setReady])
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
@@ -166,6 +168,7 @@ function AppShell() {
                 <Route path="orders" element={<AdminOrdersPage />} />
                 <Route path="pesanan/:orderNumber" element={<AdminOrderDetailPage />} />
                 <Route path="commissions" element={<AdminCommissionsPage />} />
+                <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
               </Route>
 

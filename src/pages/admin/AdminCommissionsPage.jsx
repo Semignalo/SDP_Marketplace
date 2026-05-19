@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Wallet, Check } from 'lucide-react'
+import { Wallet, Check, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   useAdminCommissions,
@@ -29,7 +29,20 @@ const FILTERS = [
 export default function AdminCommissionsPage() {
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
-  const params = useMemo(() => ({ page, ...(status && { status }) }), [page, status])
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+
+  // Debounce search 400ms
+  useEffect(() => {
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1) }, 400)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
+  const params = useMemo(() => ({
+    page,
+    ...(status && { status }),
+    ...(search && { search }),
+  }), [page, status, search])
 
   const { data, isLoading } = useAdminCommissions(params)
   const updateStatus = useUpdateAdminCommissionStatus()
@@ -87,27 +100,39 @@ export default function AdminCommissionsPage() {
         <SummaryCard label="Sudah Dibayar" value={summary ? formatRupiah(summary.paid) : null} />
       </div>
 
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-          {FILTERS.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => { setStatus(f.value); setPage(1); setSelected(new Set()) }}
-              className={cn(
-                'shrink-0 px-3.5 py-1.5 rounded-pill text-xs font-medium transition border',
-                status === f.value ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-soft border-line hover:border-ink',
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+            {FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => { setStatus(f.value); setPage(1); setSelected(new Set()) }}
+                className={cn(
+                  'shrink-0 px-3.5 py-1.5 rounded-pill text-xs font-medium transition border',
+                  status === f.value ? 'bg-ink text-white border-ink' : 'bg-paper text-ink-soft border-line hover:border-ink',
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {selected.size > 0 && (
+            <Button leadingIcon={<Check size={16} />} onClick={handleBulkPaid} loading={bulkPaid.isPending}>
+              Tandai {selected.size} sebagai Paid
+            </Button>
+          )}
         </div>
-        {selected.size > 0 && (
-          <Button leadingIcon={<Check size={16} />} onClick={handleBulkPaid} loading={bulkPaid.isPending}>
-            Tandai {selected.size} sebagai Paid
-          </Button>
-        )}
+        <div className="relative max-w-xs">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Cari nama reseller / customer..."
+            className="w-full pl-8 pr-3 h-9 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink bg-paper"
+          />
+        </div>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
