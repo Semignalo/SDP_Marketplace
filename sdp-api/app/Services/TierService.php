@@ -10,21 +10,19 @@ class TierService
 {
     /**
      * Load semua 5 tier config dari settings.
-     * Return: [{ level, name, min_spend, discount }, ...] sorted desc by min_spend (highest first).
+     * Return sorted desc by min_spend (tertinggi duluan).
      */
     public function tiers(): array
     {
         $tiers = [];
         for ($i = 1; $i <= 5; $i++) {
             $tiers[] = [
-                'level' => $i,
-                'name' => (string) Setting::get("tier_{$i}_name", "Tier {$i}"),
-                'min_spend' => (float) Setting::get("tier_{$i}_min_spend", 0),
-                'discount' => (float) Setting::get("tier_{$i}_discount", 0),
+                'level'     => $i,
+                'name'      => (string) Setting::get("tier_{$i}_name", "Tier {$i}"),
+                'min_spend' => (float)  Setting::get("tier_{$i}_min_spend", 0),
+                'discount'  => (float)  Setting::get("tier_{$i}_discount", 0),
             ];
         }
-
-        // Sort desc by min_spend (untuk userTier lookup yang cek tier tertinggi dulu)
         usort($tiers, fn ($a, $b) => $b['min_spend'] <=> $a['min_spend']);
         return $tiers;
     }
@@ -37,30 +35,61 @@ class TierService
     }
 
     /**
-     * Return tier object yang min_spend <= userSpending, atau null kalau di bawah Tier 1.
+     * Hitung tier efektif user dengan dua aturan tambahan:
+     * 1. Minimum tier adalah Silver (level 2) untuk semua user.
+     * 2. Jika pernah beli tapi tidak ada order completed dalam 30 hari terakhir,
+     *    tier turun 1 level (minimum Member / level 1).
      */
     public function userTier(User $user): ?array
     {
-        $spending = $this->userSpending($user);
-        foreach ($this->tiers() as $tier) {
+        $spending  = $this->userSpending($user);
+        $tiers     = $this->tiers();              // desc
+        $ascTiers  = array_reverse($tiers);       // asc: Member → VIP
+
+        // Tier yang didapat berdasarkan spending
+        $earnedLevel = 1;
+        foreach ($tiers as $tier) {
             if ($spending >= $tier['min_spend']) {
+                $earnedLevel = $tier['level'];
+                break;
+            }
+        }
+
+        // Semua user minimum Silver (level 2)
+        $earnedLevel = max($earnedLevel, 2);
+
+        // Penalty inaktivitas: pernah beli tapi > 30 hari tidak ada order completed
+        $lastOrderDate = Order::where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->latest('created_at')
+            ->value('created_at');
+
+        $hasEverPurchased = $lastOrderDate !== null;
+        if ($hasEverPurchased && $lastOrderDate < now()->subDays(30)) {
+            $earnedLevel = max($earnedLevel - 1, 1);
+        }
+
+        foreach ($ascTiers as $tier) {
+            if ($tier['level'] === $earnedLevel) {
                 return $tier;
             }
         }
+
         return null;
     }
 
     /**
-     * Return tier berikutnya (untuk progress display) + remaining amount.
-     * Null kalau user sudah di tier tertinggi.
+     * Tier berikutnya di atas tier efektif user, beserta sisa belanja yang dibutuhkan.
      */
     public function nextTier(User $user): ?array
     {
-        $spending = $this->userSpending($user);
-        // tiers() sorted desc, reverse jadi asc untuk cari first that is above current spending
+        $spending     = $this->userSpending($user);
+        $current      = $this->userTier($user);
+        $currentLevel = $current ? $current['level'] : 0;
+
         $ascTiers = array_reverse($this->tiers());
         foreach ($ascTiers as $tier) {
-            if ($spending < $tier['min_spend']) {
+            if ($tier['level'] > $currentLevel) {
                 return array_merge($tier, [
                     'remaining' => max(0, $tier['min_spend'] - $spending),
                 ]);
@@ -71,7 +100,6 @@ class TierService
 
     /**
      * Apply tier discount ke subtotal.
-     * Return: ['subtotal_after' => float, 'discount' => float, 'tier' => array|null]
      */
     public function applyDiscount(float $subtotal, User $user): array
     {
@@ -79,16 +107,16 @@ class TierService
         if (! $tier || $tier['discount'] <= 0) {
             return [
                 'subtotal_after' => $subtotal,
-                'discount' => 0.0,
-                'tier' => null,
+                'discount'       => 0.0,
+                'tier'           => null,
             ];
         }
 
         $discount = round($subtotal * $tier['discount'] / 100, 2);
         return [
             'subtotal_after' => $subtotal - $discount,
-            'discount' => $discount,
-            'tier' => $tier,
+            'discount'       => $discount,
+            'tier'           => $tier,
         ];
     }
 }

@@ -23,15 +23,15 @@ class SettingsSeeder extends Seeder
             'bank_account_name' => 'PT SDP Marketplace',
 
             // Tier Loyalty — 5 tier × 3 field
-            'tier_1_name' => 'Member',   'tier_1_min_spend' => '5000000',  'tier_1_discount' => '10',
-            'tier_2_name' => 'Silver',   'tier_2_min_spend' => '10000000', 'tier_2_discount' => '15',
-            'tier_3_name' => 'Gold',     'tier_3_min_spend' => '15000000', 'tier_3_discount' => '20',
+            'tier_1_name' => 'Member',   'tier_1_min_spend' => '0',        'tier_1_discount' => '10',
+            'tier_2_name' => 'Silver',   'tier_2_min_spend' => '5000000',  'tier_2_discount' => '15',
+            'tier_3_name' => 'Gold',     'tier_3_min_spend' => '10000000', 'tier_3_discount' => '20',
             'tier_4_name' => 'Platinum', 'tier_4_min_spend' => '20000000', 'tier_4_discount' => '25',
-            'tier_5_name' => 'VIP',      'tier_5_min_spend' => '25000000', 'tier_5_discount' => '30',
+            'tier_5_name' => 'VIP',      'tier_5_min_spend' => '50000000', 'tier_5_discount' => '30',
         ];
 
         foreach ($defaults as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            Setting::set($key, (string) $value);
         }
     }
 }

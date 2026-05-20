@@ -1,6 +1,6 @@
 # SDP Marketplace — Roadmap Pengembangan
 
-> Terakhir diperbarui: 17 Mei 2026
+> Terakhir diperbarui: 19 Mei 2026
 
 ---
 
@@ -23,6 +23,7 @@
 | 13 | Deploy ke VPS | 🔲 Belum | 1-2 hari |
 | 14 | Tier Loyalty + Role Refactor | ✅ Selesai | 1 hari |
 | 15 | UX Polish + Payment + Invoice | ✅ Selesai | 1 hari |
+| 16 | Email Verifikasi + Midtrans + Cancel + Withdrawal | ✅ Selesai | 2 hari |
 
 ---
 
@@ -613,6 +614,106 @@ Frontend:
 - `src/pages/vendor/VendorProfilePage.jsx` (+ upload logo langsung, hapus commission_rate display)
 - `src/components/ProductCard.jsx` (aspect-square)
 - `src/App.jsx` (+ VendorPage route, + InvoicePage route standalone di luar AppShell)
+
+---
+
+### ✅ Phase 16 — Email Verifikasi + Midtrans Snap + Cancel Order + Commission Withdrawal
+**Goal:** Sistem lebih lengkap: verifikasi email wajib, payment Midtrans aktif, customer bisa batalkan pesanan, reseller bisa tarik komisi.
+
+**Email Verifikasi (commit `bc1f84d`):**
+- ✅ Backend `EmailVerificationController`:
+  - `GET /api/auth/email/verify/{id}/{hash}` (signed URL) — verifikasi email, set `email_verified_at`
+  - `POST /api/auth/email/resend` — kirim ulang email verifikasi
+- ✅ Middleware `EnsureEmailVerified` di route yang perlu (checkout, akun)
+- ✅ `VerifyEmailPage` — instruksi cek email + tombol kirim ulang
+- ✅ `EmailVerifiedPage` — halaman sukses setelah klik link di email
+- ✅ `RegisterPage` — setelah register langsung redirect ke `/verify-email?email=...`
+- ✅ Semua akun seeder diberi `email_verified_at` agar lokal tidak perlu verifikasi manual
+- ✅ 19 akun lokal sudah diverifikasi manual via tinker (2026-05-19)
+
+**Referral Network & Checkout Fix (commit `bc1f84d`, `8fd10a9`):**
+- ✅ `ReferralRedirectPage` — `/r/:code` redirect ke `/register?ref={code}` (bukan simpan localStorage)
+- ✅ `RegisterPage` — field kode referral opsional, terisi otomatis dari URL param `?ref=`
+- ✅ `CheckoutController` — referrer dari `user.referrer_id` (permanen dari registrasi), bukan input checkout
+- ✅ `CheckoutPage` — hapus semua kode referral input & `useReferralStore`
+- ✅ `ResellerDashboardPage` — link referral sekarang `/register?ref={code}`
+- ✅ Hapus `useReferralStore` & `ReferralBadge` dari AppShell
+- ✅ `AccountLayout` — menu Komisi tampil untuk semua user (bukan hanya reseller)
+
+**Midtrans Snap Reaktivasi (commit `26fc0d1`):**
+- ✅ Midtrans Snap **kembali aktif** — sandbox keys sudah ada di `sdp-api/.env`
+- ✅ Flow checkout baru: klik "Bayar Sekarang" di checkout → create order → langsung buka Snap popup → setelah bayar → `/order/sukses/:orderNumber?paid=1` (tampil "Pembayaran Berhasil!" langsung)
+- ✅ Jika Snap ditutup tanpa bayar → redirect ke `/akun/pesanan/:orderNumber` untuk bayar nanti
+- ✅ `OrderSuccessPage` — handle `?paid=1` param untuk langsung tampil success state tanpa tombol bayar; jika diakses manual dan masih pending → tampil tombol "Bayar Sekarang"
+- ✅ `GET /api/orders/{orderNumber}/check-status` — fallback cek status ke Midtrans langsung (tanpa webhook); tombol "Cek Status" di OrderDetailPage memanggil endpoint ini
+- ✅ Snap token retry: jika order_id sudah ada di Midtrans → auto-cancel transaksi lama lalu buat token baru
+- ✅ `OrderDetailPage` — tombol "Bayar Sekarang" (Snap popup) + "Cek Status" untuk pesanan `pending_payment`
+- ✅ `onSuccess` callback snap → auto-call check-status untuk update order di DB tanpa tunggu webhook
+
+**Cancel Order (commit `26fc0d1`):**
+- ✅ `POST /api/orders/{orderNumber}/cancel` — customer batalkan pesanan `pending_payment` saja:
+  - Restore stok semua item
+  - Cancel komisi reseller terkait (status → `cancelled`)
+  - Update order status → `cancelled`
+- ✅ Tombol "Batalkan Pesanan" di `OrderDetailPage` dengan modal konfirmasi
+- ✅ Hanya muncul saat status `pending_payment`; hilang otomatis setelah status berubah
+
+**Commission Withdrawal (commit `26fc0d1`):**
+- ✅ **Migration baru:** `commission_withdrawals` table:
+  - `user_id`, `amount`, `bank_name`, `bank_account_number`, `bank_account_name`
+  - `notes` (opsional dari user), `status` (`pending`|`approved`|`rejected`)
+  - `admin_notes`, `processed_at`
+- ✅ **Backend:**
+  - `POST /api/reseller/withdrawals` — ajukan penarikan; validasi saldo `earned` cukup; tolak jika masih ada withdrawal `pending`
+  - `GET /api/reseller/withdrawals` — list riwayat penarikan user
+  - `GET /api/admin/withdrawals` — list semua withdrawal + filter status + summary pending count
+  - `PUT /api/admin/withdrawals/{id}/status` — admin approve/reject + `admin_notes`
+- ✅ **Frontend user** (`ResellerDashboardPage`):
+  - Tombol "Tarik Komisi" di header — disable jika saldo `earned` = 0 atau ada withdrawal pending
+  - Tab baru "Penarikan" — riwayat withdrawal dengan status (Diproses/Disetujui/Ditolak) + admin_notes
+  - Modal form: jumlah, nama bank, nomor rekening, nama pemilik rekening, catatan opsional
+  - Saldo yang bisa ditarik = total komisi status `earned`
+- ✅ **Frontend admin** (`AdminWithdrawalsPage` — halaman baru terpisah):
+  - Menu "Penarikan" di AdminLayout sidebar
+  - List request + filter status + summary pending count
+  - Tombol Setuju/Tolak per row dengan modal konfirmasi + kolom admin notes
+  - Transfer uang tetap **manual** di luar sistem; sistem hanya tracking request
+
+**Perbaikan Lain (commit `26fc0d1`):**
+- ✅ `AdminCommissionsPage` — tambah search input (by nama reseller/customer) dengan debounce 400ms; backend filter via `whereHas` ke relasi reseller/customer
+- ✅ **Invoice fix** — `fetchMe` (auth init) dipindah dari `AppShell` ke level `App` agar halaman invoice (di luar AppShell) tidak stuck loading selamanya di spinner
+
+**File yang dibuat/diubah:**
+
+Backend:
+- **NEW** `sdp-api/app/Http/Controllers/Api/EmailVerificationController.php`
+- **NEW** `sdp-api/database/migrations/2026_05_19_073014_create_commission_withdrawals_table.php`
+- **NEW** `sdp-api/app/Models/CommissionWithdrawal.php`
+- **NEW** `sdp-api/app/Http/Controllers/Api/ResellerWithdrawalController.php`
+- **NEW** `sdp-api/app/Http/Controllers/Api/Admin/WithdrawalController.php`
+- `sdp-api/app/Http/Controllers/Api/PaymentController.php` (+ `checkStatus()`, snap retry logic)
+- `sdp-api/app/Http/Controllers/Api/OrderController.php` (+ `cancel()`)
+- `sdp-api/app/Http/Controllers/Api/Admin/CommissionController.php` (+ `search` filter)
+- `sdp-api/app/Services/MidtransService.php` (+ `checkTransactionStatus()`, retry on 400)
+- `sdp-api/database/seeders/UserSeeder.php` (+ `email_verified_at` semua akun)
+- `sdp-api/routes/api.php` (+ email verify, cancel, check-status, withdrawal routes)
+
+Frontend:
+- **NEW** `src/pages/VerifyEmailPage.jsx`
+- **NEW** `src/pages/EmailVerifiedPage.jsx`
+- **NEW** `src/pages/admin/AdminWithdrawalsPage.jsx`
+- `src/pages/RegisterPage.jsx` (+ ref_code field, redirect ke verify-email)
+- `src/pages/ReferralRedirectPage.jsx` (redirect ke /register?ref=)
+- `src/pages/OrderSuccessPage.jsx` (+ Midtrans Snap flow + `?paid=1` handler)
+- `src/pages/CheckoutPage.jsx` (+ buka Snap langsung setelah create order)
+- `src/pages/account/OrderDetailPage.jsx` (+ Bayar Sekarang + Batalkan Pesanan + Cek Status)
+- `src/pages/account/ResellerDashboardPage.jsx` (+ tab Penarikan + modal Tarik Komisi)
+- `src/pages/admin/AdminCommissionsPage.jsx` (+ search input reseller/customer)
+- `src/hooks/useCheckout.js` (+ `useCancelOrder`)
+- `src/hooks/useReseller.js` (+ `useResellerWithdrawals`, `useSubmitWithdrawal`)
+- `src/hooks/useAdmin.js` (+ `useAdminWithdrawals`, `useUpdateWithdrawalStatus`)
+- `src/layouts/AdminLayout.jsx` (+ menu Penarikan)
+- `src/App.jsx` (+ auth init di level App, + AdminWithdrawalsPage route)
 
 ---
 

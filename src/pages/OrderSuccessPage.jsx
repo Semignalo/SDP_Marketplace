@@ -27,19 +27,24 @@ export default function OrderSuccessPage() {
 
   const isPending = order?.status === 'pending_payment'
 
-  // Polling saat pending (hanya jika bukan dari checkout — sudah bayar)
-  useEffect(() => {
-    if (!isPending || paidFromCheckout) return
-    const id = setInterval(() => refetch(), 4000)
-    return () => clearInterval(id)
-  }, [isPending, paidFromCheckout, refetch])
-
   const checkAndRefresh = async () => {
     try {
       await import('../lib/api').then(m => m.api.get(`/orders/${orderNumber}/check-status`))
     } catch { /* ignore */ }
     refetch()
   }
+
+  // Setelah bayar via Snap, langsung sync status dari Midtrans sekali
+  useEffect(() => {
+    if (paidFromCheckout && orderNumber) checkAndRefresh()
+  }, [paidFromCheckout, orderNumber])
+
+  // Polling saat masih pending (hanya jika akses manual, bukan dari checkout)
+  useEffect(() => {
+    if (!isPending || paidFromCheckout) return
+    const id = setInterval(() => refetch(), 4000)
+    return () => clearInterval(id)
+  }, [isPending, paidFromCheckout, refetch])
 
   const handlePay = async () => {
     try {

@@ -16,6 +16,8 @@ export default function ProfilePage() {
   const [form, setForm] = useState({ name: '', phone: '', address: '' })
   const [errors, setErrors] = useState({})
 
+  useEffect(() => { fetchMe() }, [])
+
   useEffect(() => {
     if (user) {
       setForm({ name: user.name || '', phone: user.phone || '', address: user.address || '' })
@@ -153,31 +155,42 @@ function Section({ title, description, children }) {
   )
 }
 
+// Gradient per tier level: from-ink (hitam) ke aksen warna tier
+const TIER_GRADIENT = {
+  1: 'bg-gradient-to-r from-ink to-orange-950',
+  2: 'bg-gradient-to-r from-ink to-slate-700',
+  3: 'bg-gradient-to-r from-ink to-amber-900',
+  4: 'bg-gradient-to-r from-ink to-blue-950',
+  5: 'bg-gradient-to-r from-ink to-purple-950',
+}
+
 function TierCard({ user }) {
   if (!user) return null
   const tier = user.tier
   const next = user.next_tier
   const spending = Number(user.total_spending || 0)
 
-  // Progress menuju next tier (atau 100% kalau sudah top)
   const progress = next && next.min_spend > 0
     ? Math.min(100, (spending / next.min_spend) * 100)
     : 100
+
+  const headerBg = tier ? (TIER_GRADIENT[tier.level] || TIER_GRADIENT[1]) : 'bg-paper-soft'
 
   return (
     <section className="border border-line rounded-lg overflow-hidden">
       <div className={cn(
         'px-6 py-5 flex items-center justify-between gap-4 flex-wrap',
-        tier ? 'bg-ink text-white' : 'bg-paper-soft',
+        headerBg,
+        tier && 'text-white',
       )}>
         <div>
           <p className={cn('text-2xs uppercase tracking-[0.25em] mb-2', tier ? 'text-white/60' : 'text-ink-muted')}>
             Tier Loyalty Kamu
           </p>
           <div className="flex items-center gap-3">
-            <TierBadge tier={tier} size="lg" />
+            <TierBadge tier={tier} size="lg" onDark={!!tier} />
             {tier && (
-              <span className="text-sm font-medium opacity-90">Diskon {tier.discount}% di setiap order</span>
+              <span className="text-sm font-medium text-white/90">Diskon {tier.discount}% di setiap order</span>
             )}
           </div>
         </div>
@@ -219,11 +232,9 @@ function TierCard({ user }) {
             Lihat semua tier & benefit
           </summary>
           <ul className="mt-3 space-y-1.5">
-            <TierTableRow level={1} name="Member" minSpend={5000000} discount={10} active={tier?.level === 1} />
-            <TierTableRow level={2} name="Silver" minSpend={10000000} discount={15} active={tier?.level === 2} />
-            <TierTableRow level={3} name="Gold" minSpend={15000000} discount={20} active={tier?.level === 3} />
-            <TierTableRow level={4} name="Platinum" minSpend={20000000} discount={25} active={tier?.level === 4} />
-            <TierTableRow level={5} name="VIP" minSpend={25000000} discount={30} active={tier?.level === 5} />
+            {(user?.all_tiers || []).map((t) => (
+              <TierTableRow key={t.level} level={t.level} name={t.name} minSpend={t.min_spend} discount={t.discount} active={tier?.level === t.level} />
+            ))}
           </ul>
           <p className="text-2xs text-ink-faint mt-3">
             Nama & nilai tier bisa diubah admin. Yang ditampilkan di atas adalah default.

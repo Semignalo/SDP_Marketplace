@@ -32,6 +32,7 @@ class UserResource extends JsonResource
             'total_spending' => $spending,
             'tier' => $tier,
             'next_tier' => $next,
+            'all_tiers' => array_reverse($tierService->tiers()),
         ];
     }
 }
