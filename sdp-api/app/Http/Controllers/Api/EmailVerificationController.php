@@ -12,7 +12,7 @@ class EmailVerificationController extends Controller
 {
     public function verify(Request $request, int $id, string $hash): RedirectResponse
     {
-        $frontend = rtrim(env('FRONTEND_URL', 'http://localhost:5174'), '/');
+        $frontend = rtrim(config('app.frontend_url'), '/');
         $user = User::find($id);
 
         if (!$user || !hash_equals($hash, sha1($user->getEmailForVerification()))) {
