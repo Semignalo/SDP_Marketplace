@@ -19,8 +19,9 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
+        // Phase 16: register tidak langsung login — user harus verify email dulu
         $response->assertCreated()
-            ->assertJsonStructure(['user' => ['id', 'name', 'email', 'role'], 'token']);
+            ->assertJsonStructure(['message', 'email']);
 
         $this->assertDatabaseHas('users', [
             'email' => 'test@example.com',

@@ -60,6 +60,15 @@ class OrderController extends Controller
         return response()->json(['data' => $this->shape($order, full: true)]);
     }
 
+    // Transisi status yang diizinkan. Status terminal (completed, cancelled) tidak bisa diubah lagi.
+    private const ALLOWED_TRANSITIONS = [
+        'pending_payment' => ['processing', 'cancelled'],
+        'processing'      => ['shipped', 'cancelled'],
+        'shipped'         => ['completed', 'cancelled'],
+        'completed'       => [],
+        'cancelled'       => [],
+    ];
+
     public function updateStatus(Request $request, string $orderNumber): JsonResponse
     {
         $data = $request->validate([
@@ -68,6 +77,13 @@ class OrderController extends Controller
         ]);
 
         $order = Order::where('order_number', $orderNumber)->firstOrFail();
+
+        $allowed = self::ALLOWED_TRANSITIONS[$order->status] ?? [];
+        if (! in_array($data['status'], $allowed)) {
+            return response()->json([
+                'message' => "Tidak bisa ubah status dari '{$order->status}' ke '{$data['status']}'.",
+            ], 422);
+        }
 
         DB::transaction(function () use ($data, $order) {
             $payload = ['status' => $data['status']];
@@ -79,7 +95,6 @@ class OrderController extends Controller
             }
             $order->update($payload);
 
-            // Sync commission status with order status
             $commission = ResellerCommission::where('order_id', $order->id)->first();
             if ($commission) {
                 if ($data['status'] === 'completed' && $commission->status === 'pending') {
@@ -115,6 +130,10 @@ class OrderController extends Controller
             $base['shipping_phone'] = $o->shipping_phone;
             $base['shipping_address'] = $o->shipping_address;
             $base['payment_verified_at'] = $o->payment_verified_at?->toIso8601String();
+            $base['payment_transaction_id'] = $o->payment_transaction_id;
+            $base['payment_type'] = $o->payment_type;
+            $base['payment_channel'] = $o->payment_channel;
+            $base['payment_gross_amount'] = $o->payment_gross_amount ? (float) $o->payment_gross_amount : null;
             $base['admin_notes'] = $o->admin_notes;
             $base['items'] = $o->items->map(fn ($item) => [
                 'id' => $item->id,

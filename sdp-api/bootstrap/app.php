@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'vendor_admin' => \App\Http\Middleware\EnsureVendorAdmin::class,
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'uploader' => \App\Http\Middleware\EnsureUploader::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

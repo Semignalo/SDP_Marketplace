@@ -26,6 +26,11 @@ const EmailVerifiedPage = lazy(() => import('./pages/EmailVerifiedPage'))
 const StyleGuidePage = lazy(() => import('./pages/StyleGuidePage'))
 const ReferralRedirectPage = lazy(() => import('./pages/ReferralRedirectPage'))
 const VendorPage = lazy(() => import('./pages/VendorPage'))
+const VendorsPage = lazy(() => import('./pages/VendorsPage'))
+const BantuanPage = lazy(() => import('./pages/BantuanPage'))
+const KontakPage = lazy(() => import('./pages/KontakPage'))
+const KebijakanPage = lazy(() => import('./pages/KebijakanPage'))
+const SyaratPage = lazy(() => import('./pages/SyaratPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 const AccountLayout = lazy(() => import('./layouts/AccountLayout'))
@@ -117,8 +122,13 @@ function AppShell() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/email-verified" element={<EmailVerifiedPage />} />
-              <Route path="/style-guide" element={<StyleGuidePage />} />
+              {import.meta.env.DEV && <Route path="/style-guide" element={<StyleGuidePage />} />}
               <Route path="/r/:code" element={<ReferralRedirectPage />} />
+              <Route path="/vendors" element={<VendorsPage />} />
+              <Route path="/bantuan" element={<BantuanPage />} />
+              <Route path="/kontak" element={<KontakPage />} />
+              <Route path="/kebijakan" element={<KebijakanPage />} />
+              <Route path="/syarat" element={<SyaratPage />} />
 
               <Route
                 path="/akun"

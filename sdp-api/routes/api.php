@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\RajaOngkirController;
 use App\Http\Controllers\Api\ResellerController;
 use App\Http\Controllers\Api\ResellerWithdrawalController;
 use App\Http\Controllers\Api\SettingController;
@@ -18,9 +19,9 @@ use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/email/resend', [EmailVerificationController::class, 'resend']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
+    Route::post('/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:email-resend');
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware('signed')
         ->name('api.auth.email.verify');
@@ -42,6 +43,7 @@ Route::get('/vendors/{slug}', [VendorController::class, 'show'])->name('vendors.
 
 Route::get('/settings/public', [SettingController::class, 'publicIndex'])->name('settings.public');
 Route::get('/checkout/options', [CheckoutController::class, 'options']);
+Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'cities'])->middleware('throttle:60,1');
 
 // Midtrans webhook — public (no auth, signature verified inside controller)
 Route::post('/payments/notification', [PaymentController::class, 'notification']);
@@ -59,10 +61,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wishlist/ids', [WishlistController::class, 'ids']);
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle']);
 
+    Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates']);
+
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [CheckoutController::class, 'store']);
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
-    Route::post('/orders/{orderNumber}/snap-token', [PaymentController::class, 'snapToken']);
+    Route::post('/orders/{orderNumber}/snap-token', [PaymentController::class, 'snapToken'])->middleware('throttle:snap-token');
     Route::post('/orders/{orderNumber}/confirm-payment', [PaymentController::class, 'confirmPayment']);
     Route::get('/orders/{orderNumber}/check-status', [PaymentController::class, 'checkStatus']);
     Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel']);
@@ -74,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reseller/withdrawals', [ResellerWithdrawalController::class, 'store']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'uploader', 'throttle:20,1'])->group(function () {
     Route::post('/upload/image', [UploadController::class, 'image']);
 });
 

@@ -86,10 +86,14 @@ class PaymentController extends Controller
 
         $next = $result['next_status'];
         if ($next) {
-            DB::transaction(function () use ($order, $next) {
+            DB::transaction(function () use ($order, $next, $result) {
                 $payload = ['status' => $next];
                 if ($next === 'processing') {
                     $payload['payment_verified_at'] = now();
+                    $payload['payment_transaction_id'] = $result['transaction_id'] ?? null;
+                    $payload['payment_type'] = $result['payment_type'] ?? null;
+                    $payload['payment_channel'] = $result['payment_channel'] ?? null;
+                    $payload['payment_gross_amount'] = $result['gross_amount'] ?? null;
                 }
                 $order->update($payload);
 
@@ -124,7 +128,7 @@ class PaymentController extends Controller
             return response()->json(['message' => 'OK', 'order_status' => $order->status]);
         }
 
-        DB::transaction(function () use ($order, $next) {
+        DB::transaction(function () use ($order, $next, $result) {
             // Idempotent: skip kalau status sudah lebih maju dari pending_payment
             if ($next === 'processing' && $order->status !== 'pending_payment') {
                 return;
@@ -136,6 +140,10 @@ class PaymentController extends Controller
             $payload = ['status' => $next];
             if ($next === 'processing') {
                 $payload['payment_verified_at'] = now();
+                $payload['payment_transaction_id'] = $result['transaction_id'] ?? null;
+                $payload['payment_type'] = $result['payment_type'] ?? null;
+                $payload['payment_channel'] = $result['payment_channel'] ?? null;
+                $payload['payment_gross_amount'] = $result['gross_amount'] ?? null;
             }
             $order->update($payload);
 

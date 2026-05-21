@@ -18,6 +18,9 @@ class SettingController extends Controller
         'bank_name',
         'bank_account_number',
         'bank_account_name',
+        'social_instagram',
+        'social_facebook',
+        'email_cs',
     ];
 
     public function publicIndex()

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\RajaOngkirService;
 use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,29 +22,84 @@ use Illuminate\Validation\ValidationException;
 class CheckoutController extends Controller
 {
     /**
-     * Hardcoded courier options. Replace dengan RajaOngkir nanti jika perlu live rate.
-     */
-    public static function couriers(): array
-    {
-        return [
-            ['code' => 'jne_reg',   'name' => 'JNE',     'service' => 'REG',    'cost' => 18000, 'eta' => '2-3 hari'],
-            ['code' => 'jne_yes',   'name' => 'JNE',     'service' => 'YES',    'cost' => 28000, 'eta' => '1 hari'],
-            ['code' => 'jnt_reg',   'name' => 'J&T',     'service' => 'EZ',     'cost' => 16000, 'eta' => '2-3 hari'],
-            ['code' => 'sicepat',   'name' => 'SiCepat', 'service' => 'REG',    'cost' => 15000, 'eta' => '2-3 hari'],
-            ['code' => 'anteraja',  'name' => 'AnterAja','service' => 'REG',    'cost' => 14000, 'eta' => '2-4 hari'],
-            ['code' => 'pos_kilat', 'name' => 'POS',     'service' => 'Kilat',  'cost' => 12000, 'eta' => '3-5 hari'],
-        ];
-    }
-
-    /**
-     * GET /api/checkout/options — courier list + free shipping threshold.
+     * GET /api/checkout/options — free shipping threshold.
      */
     public function options(): JsonResponse
     {
         return response()->json([
             'data' => [
-                'couriers' => self::couriers(),
                 'shipping_min_free' => (float) Setting::get('shipping_min_free', 150000),
+                'shipping_max_free' => (float) Setting::get('shipping_max_free', 20000),
+            ],
+        ]);
+    }
+
+    /**
+     * POST /api/checkout/shipping-rates — hitung ongkos kirim via RajaOngkir.
+     */
+    public function shippingRates(Request $request, RajaOngkirService $rajaOngkir): JsonResponse
+    {
+        $data = $request->validate([
+            'address_id' => 'required|integer|exists:addresses,id',
+            'items'      => 'required|array|min:1',
+            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.quantity'   => 'required|integer|min:1',
+        ]);
+
+        $user    = $request->user();
+        $address = Address::where('user_id', $user->id)->find($data['address_id']);
+
+        if (! $address) {
+            return response()->json(['message' => 'Alamat tidak ditemukan'], 404);
+        }
+
+        if (! $address->city_id) {
+            return response()->json([
+                'message' => 'Alamat belum punya city ID RajaOngkir. Perbarui alamat.',
+                'data'    => [
+                    'rates'             => RajaOngkirService::fallbackRates(),
+                    'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
+                    'total_weight'      => 300,
+                    'is_fallback'       => true,
+                ],
+            ], 422);
+        }
+
+        // Hitung total berat
+        $productIds = collect($data['items'])->pluck('product_id')->all();
+        $products   = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+        $totalWeight = 0;
+        foreach ($data['items'] as $line) {
+            $product = $products->get($line['product_id']);
+            if ($product) {
+                $totalWeight += ($product->weight_gram ?? 300) * $line['quantity'];
+            }
+        }
+        $totalWeight = max(1, $totalWeight);
+
+        $originCityId = (int) Setting::get('rajaongkir_origin_city_id', 23);
+        $destCityId   = (int) $address->city_id;
+
+        $rates   = [];
+        $hasLive = false;
+
+        if ($rajaOngkir->isConfigured()) {
+            $rates   = $rajaOngkir->getCost($originCityId, $destCityId, $totalWeight);
+            $hasLive = count($rates) > 0;
+        }
+
+        if (! $hasLive) {
+            $rates = RajaOngkirService::fallbackRates();
+        }
+
+        return response()->json([
+            'data' => [
+                'rates'             => $rates,
+                'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
+                'free_shipping_max' => (float) Setting::get('shipping_max_free', 20000),
+                'total_weight'      => $totalWeight,
+                'is_fallback'       => ! $hasLive,
             ],
         ]);
     }
@@ -58,7 +114,9 @@ class CheckoutController extends Controller
             'shipping_name' => 'required_without:address_id|string|max:120',
             'shipping_phone' => 'required_without:address_id|string|max:30',
             'shipping_address' => 'required_without:address_id|string|max:500',
-            'courier' => 'required|string',
+            'courier' => 'nullable|string',
+            'courier_name' => 'required|string|max:100',
+            'shipping_cost' => 'required|integer|min:0',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
@@ -79,16 +137,13 @@ class CheckoutController extends Controller
             $shippingAddress = $data['shipping_address'];
         }
 
-        // Validate courier.
-        $courier = collect(self::couriers())->firstWhere('code', $data['courier']);
-        if (! $courier) {
-            throw ValidationException::withMessages(['courier' => 'Kurir tidak valid']);
-        }
-
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
         $resellerId = $user->referrer_id ?: null;
 
-        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $courier, $resellerId, $tierService) {
+        $requestedShippingCost = (int) $data['shipping_cost'];
+        $courierName = $data['courier_name'];
+
+        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $courierName, $requestedShippingCost, $resellerId, $tierService) {
             // Lock & verify products.
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
@@ -135,9 +190,12 @@ class CheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            // Shipping cost — gratis jika subtotal setelah diskon lewat threshold.
+            // Shipping cost — subsidi max Rp shipping_max_free jika subtotal >= threshold.
             $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
-            $shippingCost = $subtotal >= $shippingMinFree ? 0 : (float) $courier['cost'];
+            $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
+            $shippingCost = $subtotal >= $shippingMinFree
+                ? max(0, $requestedShippingCost - $shippingMaxFree)
+                : $requestedShippingCost;
             $total = $subtotal + $shippingCost;
 
             $order = Order::create([
@@ -153,7 +211,7 @@ class CheckoutController extends Controller
                 'shipping_name' => $shippingName,
                 'shipping_phone' => $shippingPhone,
                 'shipping_address' => $shippingAddress,
-                'shipping_courier' => "{$courier['name']} {$courier['service']}",
+                'shipping_courier' => $courierName,
             ]);
 
             foreach ($orderItemsData as $line) {

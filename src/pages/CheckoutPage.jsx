@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { Check, MapPin, Truck, ClipboardList, Plus, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useAddresses, useSaveAddress } from '../hooks/useAccount'
-import { useCheckoutOptions, useCreateOrder, useSnapToken } from '../hooks/useCheckout'
+import { useCheckoutOptions, useCreateOrder, useSnapToken, useShippingRates } from '../hooks/useCheckout'
 import { loadSnap } from '../lib/snap'
 import { Button, Input, Spinner, Modal } from '../components/ui'
 import TierBadge from '../components/TierBadge'
+import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
 import { formatRupiah, cn } from '../lib/utils'
 
@@ -24,6 +25,7 @@ const EMPTY_ADDR = {
   phone: '',
   address: '',
   city: '',
+  city_id: null,
   postal_code: '',
   is_default: true,
 }
@@ -37,19 +39,21 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((s) => s.clear)
 
   const { data: addresses = [], isLoading: addrLoading } = useAddresses()
-  const { data: options, isLoading: optLoading } = useCheckoutOptions()
+  const { data: options } = useCheckoutOptions()
   const createOrder = useCreateOrder()
   const snapMut = useSnapToken()
   const saveAddress = useSaveAddress()
+  const shippingRatesMut = useShippingRates()
 
   const orderPlacedRef = useRef(false)
   const [step, setStep] = useState(1)
   const [selectedAddressId, setSelectedAddressId] = useState(null)
-  const [selectedCourier, setSelectedCourier] = useState('')
+  const [selectedCourier, setSelectedCourier] = useState(null) // {code, name, service, cost, eta}
   const [notes, setNotes] = useState('')
   const [addrModalOpen, setAddrModalOpen] = useState(false)
   const [addrForm, setAddrForm] = useState(EMPTY_ADDR)
   const [addrErrors, setAddrErrors] = useState({})
+  const [shippingRates, setShippingRates] = useState(null) // null = belum dimuat
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
@@ -61,8 +65,8 @@ export default function CheckoutPage() {
   if (isReady && !user) return <Navigate to="/login?next=/checkout" replace />
   if (items.length === 0 && !orderPlacedRef.current) return <Navigate to="/keranjang" replace />
 
-  const couriers = options?.couriers || []
   const freeShippingMin = Number(options?.shipping_min_free || 150000)
+  const freeShippingMax = Number(options?.shipping_max_free || 20000)
 
   // Apply tier discount preview (sync with backend logic)
   const tier = user?.tier || null
@@ -71,8 +75,9 @@ export default function CheckoutPage() {
   const subtotalAfterTier = subtotal - tierDiscount
 
   const isFreeShipping = subtotalAfterTier >= freeShippingMin
-  const courier = couriers.find((c) => c.code === selectedCourier)
-  const shippingCost = isFreeShipping ? 0 : Number(courier?.cost || 0)
+  const courierCost = Number(selectedCourier?.cost || 0)
+  // Jika free shipping aktif, subsidi max freeShippingMax — sisa ditanggung customer
+  const shippingCost = isFreeShipping ? Math.max(0, courierCost - freeShippingMax) : courierCost
   const total = subtotalAfterTier + shippingCost
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
 
@@ -82,12 +87,44 @@ export default function CheckoutPage() {
     return true
   }
 
+  const fetchShippingRates = (addressId) => {
+    setShippingRates(null)
+    setSelectedCourier(null)
+    shippingRatesMut.mutate(
+      {
+        address_id: addressId,
+        items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
+      },
+      {
+        onSuccess: (data) => setShippingRates(data),
+        onError: () => {
+          // Gunakan fallback hardcoded
+          setShippingRates({
+            rates: [
+              { code: 'jne_reg',   name: 'JNE',  service: 'REG',   cost: 18000, eta: '2-3 hari' },
+              { code: 'jne_yes',   name: 'JNE',  service: 'YES',   cost: 28000, eta: '1 hari' },
+              { code: 'tiki_reg',  name: 'TIKI', service: 'REG',   cost: 16000, eta: '2-3 hari' },
+              { code: 'pos_kilat', name: 'POS',  service: 'Kilat', cost: 12000, eta: '3-5 hari' },
+            ],
+            free_shipping_min: freeShippingMin,
+            total_weight: 300,
+            is_fallback: true,
+          })
+        },
+      }
+    )
+  }
+
   const handleNext = () => {
     if (!canNext(step)) {
       toast.error(step === 1 ? 'Pilih alamat pengiriman dulu' : 'Pilih kurir dulu')
       return
     }
-    setStep(Math.min(3, step + 1))
+    const nextStep = Math.min(3, step + 1)
+    if (nextStep === 2 && selectedAddressId) {
+      fetchShippingRates(selectedAddressId)
+    }
+    setStep(nextStep)
   }
 
   const handleSubmit = async () => {
@@ -98,7 +135,8 @@ export default function CheckoutPage() {
     try {
       const order = await createOrder.mutateAsync({
         address_id: selectedAddressId,
-        courier: selectedCourier,
+        courier_name: selectedCourier ? `${selectedCourier.name} ${selectedCourier.service}` : 'Kurir',
+        shipping_cost: selectedCourier?.cost || 0,
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       })
@@ -188,23 +226,34 @@ export default function CheckoutPage() {
 
           {step === 2 && (
             <StepCard title="Pilih Kurir">
-              {optLoading ? (
-                <div className="py-8 flex justify-center"><Spinner /></div>
+              {shippingRatesMut.isPending ? (
+                <div className="py-8 flex flex-col items-center gap-3">
+                  <Spinner />
+                  <p className="text-sm text-ink-muted">Menghitung ongkir...</p>
+                </div>
               ) : (
                 <>
+                  {shippingRates?.is_fallback && (
+                    <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                      {selectedAddress && !selectedAddress.city_id
+                        ? 'Perbarui alamat dulu untuk hitung ongkir otomatis. Tarif di bawah adalah estimasi.'
+                        : 'Tarif ongkir estimasi (layanan cek ongkir sedang tidak tersedia).'}
+                    </div>
+                  )}
                   {isFreeShipping && (
                     <div className="mb-4 px-4 py-3 bg-paper-soft border border-line rounded text-xs text-ink-soft">
                       Gratis ongkir aktif — kurir tetap perlu dipilih untuk pengiriman.
                     </div>
                   )}
                   <div className="space-y-2">
-                    {couriers.map((c) => (
+                    {(shippingRates?.rates || []).map((c) => (
                       <CourierOption
                         key={c.code}
                         courier={c}
-                        selected={selectedCourier === c.code}
-                        free={isFreeShipping}
-                        onSelect={() => setSelectedCourier(c.code)}
+                        selected={selectedCourier?.code === c.code}
+                        freeShipping={isFreeShipping}
+                        freeMax={freeShippingMax}
+                        onSelect={() => setSelectedCourier(c)}
                       />
                     ))}
                   </div>
@@ -226,14 +275,16 @@ export default function CheckoutPage() {
               </StepCard>
 
               <StepCard title="Kurir" action={<button onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Ubah</button>}>
-                {courier && (
+                {selectedCourier && (
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">{courier.name} — {courier.service}</p>
-                      <p className="text-xs text-ink-muted mt-0.5">Estimasi {courier.eta}</p>
+                      <p className="text-sm font-semibold">{selectedCourier.name} — {selectedCourier.service}</p>
+                      <p className="text-xs text-ink-muted mt-0.5">Estimasi {selectedCourier.eta}</p>
                     </div>
                     <p className="text-sm font-semibold tabular-nums">
-                      {isFreeShipping ? <span className="text-state-success">GRATIS</span> : formatRupiah(courier.cost)}
+                      {shippingCost === 0
+                        ? <span className="text-state-success">GRATIS</span>
+                        : formatRupiah(shippingCost)}
                     </p>
                   </div>
                 )}
@@ -307,8 +358,10 @@ export default function CheckoutPage() {
               )}
               <Row
                 label="Ongkir"
-                value={courier
-                  ? (isFreeShipping ? <span className="text-state-success">GRATIS</span> : formatRupiah(shippingCost))
+                value={selectedCourier
+                  ? (shippingCost === 0
+                      ? <span className="text-state-success">GRATIS</span>
+                      : formatRupiah(shippingCost))
                   : <span className="text-ink-muted text-xs">Pilih kurir</span>}
               />
               <div className="pt-3 border-t border-line">
@@ -335,9 +388,9 @@ export default function CheckoutPage() {
           <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Rumah/Kantor" error={addrErrors.label} />
           <Input label="Nama Penerima" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
           <Input label="Nomor HP" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
-          <Input label="Kota" value={addrForm.city} onChange={(e) => setAddrForm({ ...addrForm, city: e.target.value })} error={addrErrors.city} />
+          <CitySearchInput value={addrForm.city} cityId={addrForm.city_id} onChange={({ name, id }) => setAddrForm({ ...addrForm, city: name, city_id: id })} error={addrErrors.city} />
           <div className="sm:col-span-2">
-            <Input label="Alamat Lengkap" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={addrErrors.address} />
+            <Input label="Detail Alamat" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={addrErrors.address} />
           </div>
           <Input label="Kode Pos" value={addrForm.postal_code} onChange={(e) => setAddrForm({ ...addrForm, postal_code: e.target.value })} error={addrErrors.postal_code} />
         </form>
@@ -425,7 +478,10 @@ function AddressOption({ addr, selected, onSelect }) {
   )
 }
 
-function CourierOption({ courier, selected, free, onSelect }) {
+function CourierOption({ courier, selected, freeShipping, freeMax, onSelect }) {
+  const afterSubsidy = freeShipping ? Math.max(0, courier.cost - freeMax) : courier.cost
+  const isFullyFree = freeShipping && afterSubsidy === 0
+
   return (
     <label
       className={cn(
@@ -443,9 +499,15 @@ function CourierOption({ courier, selected, free, onSelect }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-ink">{courier.name} — {courier.service}</p>
-          <p className="text-sm font-semibold tabular-nums">
-            {free ? <span className="text-state-success">GRATIS</span> : formatRupiah(courier.cost)}
-          </p>
+          <div className="text-right">
+            {isFullyFree
+              ? <span className="text-sm font-semibold text-state-success">GRATIS</span>
+              : <span className="text-sm font-semibold tabular-nums">{formatRupiah(afterSubsidy)}</span>
+            }
+            {freeShipping && !isFullyFree && (
+              <p className="text-2xs text-ink-faint line-through">{formatRupiah(courier.cost)}</p>
+            )}
+          </div>
         </div>
         <p className="text-xs text-ink-muted mt-0.5">Estimasi {courier.eta}</p>
       </div>

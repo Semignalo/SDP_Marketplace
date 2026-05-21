@@ -12,6 +12,15 @@ export function useCheckoutOptions() {
   })
 }
 
+export function useShippingRates() {
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { data } = await api.post('/checkout/shipping-rates', payload)
+      return data.data
+    },
+  })
+}
+
 export function useCreateOrder() {
   const qc = useQueryClient()
   return useMutation({

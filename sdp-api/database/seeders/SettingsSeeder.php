@@ -12,15 +12,22 @@ class SettingsSeeder extends Seeder
         $defaults = [
             'reseller_commission_rate' => '10',
             'shipping_min_free' => '150000',
+            'shipping_max_free' => '20000',
             'shipping_flat_default' => '15000',
             'site_name' => 'SDP Marketplace',
             'site_tagline' => 'Marketplace multi-brand pilihan kamu',
             'announce_bar_1' => 'Gratis Ongkir min. Rp 150.000',
             'announce_bar_2' => 'Brand baru hadir setiap minggu',
-            'whatsapp_cs' => '+6281234567890',
+            'whatsapp_cs' => '62811253599',
+            'email_cs' => 'cs@sdp.id',
+            'social_instagram' => '',
+            'social_facebook' => '',
             'bank_name' => 'BCA',
             'bank_account_number' => '1234567890',
             'bank_account_name' => 'PT SDP Marketplace',
+
+            // RajaOngkir
+            'rajaongkir_origin_city_id' => '23',
 
             // Tier Loyalty — 5 tier × 3 field
             'tier_1_name' => 'Member',   'tier_1_min_spend' => '0',        'tier_1_discount' => '10',

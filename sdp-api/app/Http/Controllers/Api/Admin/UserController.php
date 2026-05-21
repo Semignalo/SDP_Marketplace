@@ -50,7 +50,7 @@ class UserController extends Controller
             'role' => 'sometimes|in:customer,vendor_admin,admin',
             'vendor_id' => 'nullable|integer|exists:vendors,id',
             'phone' => 'nullable|string|max:30',
-            'password' => 'nullable|string|min:6',
+            'password' => 'nullable|string|min:8',
         ]);
 
         // Cek vendor_admin harus punya vendor_id

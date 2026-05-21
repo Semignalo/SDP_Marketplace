@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CommissionWithdrawal;
+use App\Models\ResellerCommission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class WithdrawalController extends Controller
 {
@@ -50,11 +52,36 @@ class WithdrawalController extends Controller
             return response()->json(['message' => 'Permintaan ini sudah diproses.'], 422);
         }
 
-        $withdrawal->update([
-            'status'       => $data['status'],
-            'admin_notes'  => $data['admin_notes'] ?? null,
-            'processed_at' => now(),
-        ]);
+        DB::transaction(function () use ($withdrawal, $data) {
+            $withdrawal->update([
+                'status'       => $data['status'],
+                'admin_notes'  => $data['admin_notes'] ?? null,
+                'processed_at' => now(),
+            ]);
+
+            // Saat approved: kurangi saldo komisi earned milik reseller sebesar amount withdrawal.
+            // Ambil komisi earned dengan lock agar tidak ada race condition.
+            if ($data['status'] === 'approved') {
+                $remaining = (float) $withdrawal->amount;
+
+                $commissions = ResellerCommission::where('reseller_id', $withdrawal->user_id)
+                    ->where('status', 'earned')
+                    ->orderBy('created_at')
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($commissions as $commission) {
+                    if ($remaining <= 0) break;
+                    $commission->update(['status' => 'paid', 'paid_at' => now()]);
+                    $remaining -= (float) $commission->amount;
+                }
+
+                // Jika saldo earned ternyata kurang (edge case: race condition terlambat terdeteksi), tolak.
+                if ($remaining > 0.01) {
+                    throw new \RuntimeException('Saldo komisi earned tidak mencukupi untuk penarikan ini.');
+                }
+            }
+        });
 
         return response()->json(['message' => 'Status penarikan diperbarui.', 'data' => $this->shape($withdrawal->fresh('user'))]);
     }

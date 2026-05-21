@@ -42,4 +42,8 @@ return [
         'folder'     => env('CLOUDINARY_FOLDER', 'sdp/products'),
     ],
 
+    'rajaongkir' => [
+        'api_key' => env('RAJAONGKIR_API_KEY', ''),
+    ],
+
 ];

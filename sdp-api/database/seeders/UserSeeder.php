@@ -11,7 +11,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $verified = now()
+        $verified = now();
 
         User::create([
             'name' => 'Admin SDP',

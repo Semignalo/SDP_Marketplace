@@ -1,6 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 
+export function useRajaOngkirCities(search = '') {
+  return useQuery({
+    queryKey: ['rajaongkir', 'cities', search],
+    queryFn: async () => {
+      const params = search ? { search } : {}
+      const { data } = await api.get('/rajaongkir/cities', { params })
+      return data.data || []
+    },
+    staleTime: 24 * 60 * 60_000,
+    enabled: search.length === 0 || search.length >= 2,
+  })
+}
+
 export function useAddresses() {
   return useQuery({
     queryKey: ['addresses'],

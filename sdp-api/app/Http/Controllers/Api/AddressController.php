@@ -71,7 +71,8 @@ class AddressController extends Controller
             'recipient_name' => 'required|string|max:120',
             'phone' => 'required|string|max:20',
             'address' => 'required|string|max:500',
-            'city' => 'required|string|max:80',
+            'city' => 'required|string|max:255',
+            'city_id' => 'nullable|integer',
             'postal_code' => 'nullable|string|max:10',
             'is_default' => 'nullable|boolean',
         ]);

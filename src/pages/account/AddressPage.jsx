@@ -3,7 +3,8 @@ import { Plus, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAddresses, useSaveAddress, useDeleteAddress } from '../../hooks/useAccount'
 import { extractErrorMessage } from '../../lib/api'
-import { Button, Input, Modal, Badge, EmptyState, Spinner } from '../../components/ui'
+import { Button, Input, Modal, Badge, EmptyState } from '../../components/ui'
+import CitySearchInput from '../../components/CitySearchInput'
 
 const EMPTY_FORM = {
   label: 'Rumah',
@@ -11,9 +12,11 @@ const EMPTY_FORM = {
   phone: '',
   address: '',
   city: '',
+  city_id: null,
   postal_code: '',
   is_default: false,
 }
+
 
 export default function AddressPage() {
   const { data: addresses = [], isLoading } = useAddresses()
@@ -40,6 +43,7 @@ export default function AddressPage() {
       phone: addr.phone,
       address: addr.address,
       city: addr.city,
+      city_id: addr.city_id || null,
       postal_code: addr.postal_code || '',
       is_default: addr.is_default,
     })
@@ -139,9 +143,14 @@ export default function AddressPage() {
           <Input label="Label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Rumah/Kantor" error={errors.label} />
           <Input label="Nama Penerima" value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} error={errors.recipient_name} />
           <Input label="Nomor HP" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
-          <Input label="Kota" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} error={errors.city} />
+          <CitySearchInput
+            value={form.city}
+            cityId={form.city_id}
+            onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })}
+            error={errors.city}
+          />
           <div className="sm:col-span-2">
-            <Input label="Alamat Lengkap" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={errors.address} />
+            <Input label="Detail Alamat" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Nama jalan, nomor rumah, RT/RW" error={errors.address} />
           </div>
           <Input label="Kode Pos" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} error={errors.postal_code} />
           <div className="flex items-end">

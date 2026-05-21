@@ -17,6 +17,7 @@ class Address extends Model
         'phone',
         'address',
         'city',
+        'city_id',
         'postal_code',
         'is_default',
     ];

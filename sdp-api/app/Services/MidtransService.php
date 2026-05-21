@@ -120,6 +120,10 @@ class MidtransService
             'transaction_status' => $transactionStatus,
             'fraud_status' => $fraudStatus,
             'next_status' => $next,
+            'transaction_id' => $status->transaction_id ?? null,
+            'payment_type' => $status->payment_type ?? null,
+            'payment_channel' => $status->va_numbers[0]->bank ?? $status->payment_type ?? null,
+            'gross_amount' => isset($status->gross_amount) ? (float) $status->gross_amount : null,
         ];
     }
 
@@ -154,6 +158,10 @@ class MidtransService
             'transaction_status' => $transactionStatus,
             'fraud_status' => $fraudStatus,
             'next_status' => $next,
+            'transaction_id' => $notif->transaction_id ?? null,
+            'payment_type' => $notif->payment_type ?? null,
+            'payment_channel' => $notif->va_numbers[0]->bank ?? $notif->payment_type ?? null,
+            'gross_amount' => isset($notif->gross_amount) ? (float) $notif->gross_amount : null,
         ];
     }
 }

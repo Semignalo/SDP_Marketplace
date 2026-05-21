@@ -7,6 +7,7 @@ use App\Models\CommissionWithdrawal;
 use App\Models\ResellerCommission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ResellerWithdrawalController extends Controller
 {
@@ -38,30 +39,36 @@ class ResellerWithdrawalController extends Controller
 
         $userId = $request->user()->id;
 
-        $available = ResellerCommission::where('reseller_id', $userId)
-            ->where('status', 'earned')
-            ->sum('amount');
+        $withdrawal = DB::transaction(function () use ($data, $userId) {
+            // Lock semua komisi earned milik user ini agar tidak bisa double-submit paralel
+            $available = ResellerCommission::where('reseller_id', $userId)
+                ->where('status', 'earned')
+                ->lockForUpdate()
+                ->sum('amount');
 
-        if ($data['amount'] > $available) {
-            return response()->json([
-                'message' => 'Jumlah melebihi saldo tersedia.',
-                'errors' => ['amount' => ["Saldo tersedia: Rp " . number_format($available, 0, ',', '.')]],
-            ], 422);
-        }
+            if ($data['amount'] > $available) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'amount' => ["Saldo tersedia: Rp " . number_format($available, 0, ',', '.')],
+                ]);
+            }
 
-        // Cek tidak ada withdrawal pending yang belum diproses
-        $hasPending = CommissionWithdrawal::where('user_id', $userId)
-            ->where('status', 'pending')
-            ->exists();
+            // Cek tidak ada withdrawal pending yang belum diproses
+            $hasPending = CommissionWithdrawal::where('user_id', $userId)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->exists();
 
-        if ($hasPending) {
-            return response()->json(['message' => 'Masih ada permintaan penarikan yang sedang diproses.'], 422);
-        }
+            if ($hasPending) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'amount' => ['Masih ada permintaan penarikan yang sedang diproses.'],
+                ]);
+            }
 
-        $withdrawal = CommissionWithdrawal::create([
-            'user_id' => $userId,
-            ...$data,
-        ]);
+            return CommissionWithdrawal::create([
+                'user_id' => $userId,
+                ...$data,
+            ]);
+        });
 
         return response()->json(['message' => 'Permintaan penarikan berhasil dikirim.', 'data' => $this->shape($withdrawal)], 201);
     }

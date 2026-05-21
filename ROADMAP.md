@@ -1,6 +1,6 @@
 # SDP Marketplace — Roadmap Pengembangan
 
-> Terakhir diperbarui: 19 Mei 2026
+> Terakhir diperbarui: 21 Mei 2026 (sesi 2)
 
 ---
 
@@ -24,6 +24,8 @@
 | 14 | Tier Loyalty + Role Refactor | ✅ Selesai | 1 hari |
 | 15 | UX Polish + Payment + Invoice | ✅ Selesai | 1 hari |
 | 16 | Email Verifikasi + Midtrans + Cancel + Withdrawal | ✅ Selesai | 2 hari |
+| 17 | Security & Pre-publish Audit | 🔄 Kode selesai, sisanya saat deploy | 2-3 hari |
+| 18 | RajaOngkir Integration + Tier Enhancements | ✅ Selesai | 1 hari |
 
 ---
 
@@ -461,11 +463,13 @@ php artisan test
 
 | Tier | Nama | Min Spend | Diskon |
 |---|---|---|---|
-| 1 | Member | Rp 5.000.000 | 10% |
-| 2 | Silver | Rp 10.000.000 | 15% |
-| 3 | Gold | Rp 15.000.000 | 20% |
+| 1 | Member | Rp 0 | 10% |
+| 2 | Silver | Rp 5.000.000 | 15% |
+| 3 | Gold | Rp 10.000.000 | 20% |
 | 4 | Platinum | Rp 20.000.000 | 25% |
-| 5 | VIP | Rp 25.000.000 | 30% |
+| 5 | VIP | Rp 50.000.000 | 30% |
+
+> Nilai diperbarui di Phase 18. Semua user baru otomatis masuk Silver (15%). Inactivity 30 hari turun 1 tier.
 
 **Implementasi:**
 
@@ -717,6 +721,206 @@ Frontend:
 
 ---
 
+### 🔄 Phase 17 — Security & Pre-publish Audit
+**Goal:** Tutup semua celah keamanan & bug keuangan sebelum go-live.
+
+> Hasil full scan project tanggal 21 Mei 2026. Urutkan dari paling kritis.
+
+---
+
+#### 🚨 CRITICAL — Bug Keuangan (wajib sebelum publish)
+
+**✅ 1. Double-withdrawal exploit — saldo komisi tidak pernah di-deduct**
+
+- `ResellerWithdrawalController::store()` sekarang dalam `DB::transaction()` + `lockForUpdate()`.
+- `Admin/WithdrawalController::updateStatus()` saat `approved` langsung mark komisi `earned` → `paid` (FIFO, dalam satu transaction).
+
+**✅ 2. Race condition double-withdrawal**
+
+- Cek saldo & cek pending withdrawal pakai `lockForUpdate()` dalam satu transaction — paralel request tidak bisa lolos bersamaan.
+
+**✅ 3. Admin bisa ubah status order ke arah mana saja tanpa validasi transisi**
+
+- Ditambahkan `ALLOWED_TRANSITIONS` constant di `Admin/OrderController`. Status terminal (`completed`, `cancelled`) tidak bisa diubah lagi. Transisi ilegal → 422.
+
+**🔲 4. Tier discount tanpa cap maksimum Rupiah**
+
+- **File:** `sdp-api/app/Services/TierService.php` (applyDiscount)
+- Diskon 30% × order Rp 100jt = potong Rp 30jt. Tidak ada batas atas.
+- **Fix:** Tambahkan setting `tier_max_discount_rupiah` per tier atau global cap.
+
+**🔲 5. Data Midtrans tidak disimpan untuk rekonsiliasi**
+
+- Webhook hanya update `status`. Tidak menyimpan `transaction_id`, `payment_type`, `va_number`.
+- **Fix:** Tambah kolom di tabel `orders` atau tabel `payment_logs` terpisah.
+
+**🔲 6. Tidak ada audit trail keuangan**
+
+- Tidak ada log siapa admin yang ubah status order/komisi/withdrawal dan kapan.
+- **Fix:** Tambahkan tabel `activity_logs` atau gunakan `spatie/laravel-activitylog`.
+
+**✅ 7. UserSeeder parse error**
+
+- `$verified = now()` tanpa `;` di baris 14 — sudah diperbaiki.
+
+---
+
+#### 🔒 Security (wajib sebelum publish)
+
+| # | Issue | Lokasi | Fix |
+|---|---|---|---|
+| 1 | `APP_DEBUG=true` → stack trace bocor di production | `sdp-api/.env:4` | Set `false` di .env production |
+| 2 | Secrets (RESEND, MIDTRANS, CLOUDINARY) di `.env` — pastikan tidak ter-commit ke git | `sdp-api/.env` | Cek `.gitignore`, rotate key kalau pernah ter-push |
+| 3 | ✅ Upload endpoint `POST /api/upload/image` terbuka untuk semua user authenticated | `routes/api.php` | Middleware `EnsureUploader` (admin\|vendor_admin only) + throttle 20/menit |
+| 4 | ✅ Tidak ada rate limit pada `login`, `register`, `email/resend` | `routes/api.php` | `throttle:auth` (5/menit), `throttle:email-resend` (3/menit) via `AppServiceProvider` |
+| 5 | ✅ Inkonsistensi password policy: register min 8, admin edit user min 6 | `Admin/UserController.php` | Seragamkan min 8 |
+| 6 | ✅ `POST .../snap-token` tidak di-throttle | `routes/api.php` | `throttle:snap-token` (10/menit per user) |
+| 7 | ✅ Tidak ada `SoftDeletes` di users/orders/commissions | Models + Migration | `SoftDeletes` di User, Order, ResellerCommission + migration `deleted_at` |
+| 8 | ✅ `/style-guide` accessible publik di production | `src/App.jsx` | Route hanya muncul saat `import.meta.env.DEV` |
+| 9 | Seeder akun `admin@sdp.local` password `password` | `UserSeeder.php` | Ganti password kuat saat setup production |
+
+---
+
+#### 📄 Halaman & Navigasi yang Hilang
+
+Footer di `src/components/Footer.jsx` link ke route yang belum ada → 404:
+
+| Link | Route | Status |
+|---|---|---|
+| "Semua Brand" | `/vendors` | ✅ `VendorsPage.jsx` — grid semua brand dengan logo + jumlah produk |
+| "Wishlist" | `/wishlist` | ✅ Difix → `/akun/wishlist` |
+| "Pusat Bantuan" | `/bantuan` | ✅ `BantuanPage.jsx` — FAQ accordion 10 topik |
+| "Kebijakan Privasi" | `/kebijakan` | ✅ `KebijakanPage.jsx` — sesuai UU PDP 27/2022 |
+| "Syarat & Ketentuan" | `/syarat` | ✅ `SyaratPage.jsx` — lengkap 10 pasal |
+| "Kontak Kami" | `/kontak` | ✅ `KontakPage.jsx` — WA + Email dari settings + jam ops |
+| Social media icons | `href="#"` | ✅ Terhubung ke settings `social_instagram`, `social_facebook`, `email_cs` — hanya tampil jika diisi admin |
+
+---
+
+#### ⚙️ Fitur yang Kurang (nice-to-have sebelum publish)
+
+- 🔲 **Auto-cancel order** `pending_payment` > 24 jam — stok kekunci terus tanpa cron job.
+- 🔲 **Auto-complete order** `shipped` > 7 hari — komisi tidak pernah jadi `earned` kalau admin lupa.
+- 🔲 **Email notifikasi** ke customer: order confirmed, shipped, withdrawal approved/rejected.
+- 🔲 **Link tracking kurir** — saat ini hanya tampil nomor resi, belum ada link ke site kurir.
+- ✅ **Halaman `/vendors`** — `VendorsPage.jsx` grid semua brand sudah dibuat.
+
+---
+
+#### ✅ Pre-publish Checklist
+
+**Wajib sebelum go-live:**
+
+- [x] Fix bug double-withdrawal + race condition (point 1 & 2)
+- [x] Fix admin order state machine (point 3)
+- [x] Fix UserSeeder parse error (point 7)
+- [x] Rate limiting login / register / email resend / snap-token
+- [x] Upload endpoint restricted ke admin & vendor_admin
+- [x] Password policy seragam min 8 karakter
+- [x] SoftDeletes pada User, Order, ResellerCommission
+- [x] Route `/style-guide` disembunyikan di production build
+- [x] Halaman Kebijakan Privasi (UU PDP)
+- [x] Halaman Syarat & Ketentuan
+- [x] Halaman Bantuan, Kontak, Semua Brand
+- [x] Footer: fix link Wishlist + social media terhubung ke settings
+- [x] 3 test outdated diperbaiki — 49/49 pass
+- [ ] `APP_ENV=production`, `APP_DEBUG=false` — saat deploy
+- [ ] Rotate semua API keys ke production (Midtrans, Cloudinary, Resend) — saat deploy
+- [ ] HTTPS + force redirect HTTP → HTTPS — saat deploy
+- [ ] `SESSION_DOMAIN` & `SANCTUM_STATEFUL_DOMAINS` & `CORS allowed_origins` sesuai domain production — saat deploy
+- [ ] Verifikasi SPF + DKIM untuk `starincofficial.id` — saat deploy
+- [ ] Setup backup database otomatis harian — saat deploy
+- [ ] Setup queue worker (Supervisor) — saat deploy
+- [ ] Ganti password admin seeder sebelum seed production — saat deploy
+- [ ] Set Midtrans notification URL production — saat deploy
+- [ ] `php artisan migrate` (SoftDeletes migration) — saat Laragon aktif / deploy
+- [ ] Test golden path end-to-end di production
+- [ ] 🔲 Tier discount max cap (point 4) — opsional
+- [ ] 🔲 Simpan data Midtrans untuk rekonsiliasi (point 5) — opsional
+- [ ] 🔲 Audit trail keuangan / activity log (point 6) — opsional
+
+---
+
+### ✅ Phase 18 — RajaOngkir Integration + Tier System Enhancements
+**Goal:** Estimasi ongkos kirim live via RajaOngkir (Komerce.id), alamat menyimpan city_id, gratis ongkir dengan cap subsidi, dan aturan bisnis tier yang lebih lengkap.
+
+**Tier System Enhancements:**
+- ✅ Threshold tier diperbarui: Member (Rp 0 / 10%), Silver (Rp 5jt / 15%), Gold (Rp 10jt / 20%), Platinum (Rp 20jt / 25%), VIP (Rp 50jt / 30%)
+- ✅ **Semua user baru langsung Silver** (minimal tier level 2) — tidak ada lagi status "Belum Bertier"
+- ✅ **Inactivity penalty:** user yang pernah belanja tapi > 30 hari tidak ada order completed → tier turun 1 level (minimum kembali ke Member)
+- ✅ `TierService::userTier()` rewrite: `max($earnedLevel, 2)` untuk minimum Silver + cek last completed order date
+- ✅ `TierService::nextTier()` rewrite: pakai effective tier level (bukan hanya spending)
+- ✅ `TierBadge` — tambah prop `onDark` dengan LEVEL_STYLE_DARK (warna terang) untuk visibilitas di background gelap
+- ✅ `ProfilePage` TierCard — gradient header per tier (hitam ke warna tier: orange/slate/amber/blue/purple), `TierBadge` pakai `onDark={true}`
+
+**RajaOngkir (Komerce.id) Integration:**
+- ✅ `RajaOngkirService` rewrite total untuk Komerce API (`https://rajaongkir.komerce.id/api/v1`):
+  - Auth header: `key: {api_key}` (bukan Bearer)
+  - `searchDestinations(keyword)` → `GET /destination/domestic-destination?search=X&limit=20&offset=0`
+  - `getCost(origin, dest, weight)` → `POST /calculate/domestic-cost` (form-encoded, loop 6 kurir)
+  - `fallbackRates()` — 3 rate hardcoded jika API tidak dikonfigurasi
+  - `isConfigured()` — cek `RAJAONGKIR_API_KEY` di env
+- ✅ `GET /api/rajaongkir/cities?search=X` — endpoint city search untuk CitySearchInput
+- ✅ `POST /api/checkout/shipping-rates` — hitung ongkos kirim via RajaOngkir; fallback graceful jika city_id belum diisi atau API tidak configured
+- ✅ `GET /api/checkout/options` — tambah `shipping_max_free` ke response
+
+**Free Shipping dengan Cap Subsidi:**
+- ✅ Gratis ongkir bukan benar-benar gratis — subsidi maksimal `shipping_max_free` (Rp 20.000)
+- ✅ Customer tetap bayar kelebihan ongkir di atas subsidi
+- ✅ Formula: `shippingCost = subtotal >= 150.000 ? max(0, originalCost - 20.000) : originalCost`
+- ✅ Backend `CheckoutController::store()` apply formula subsidi; setting `shipping_min_free` & `shipping_max_free`
+- ✅ Frontend `CheckoutPage` — `CourierOption` tampilkan net price dengan strikethrough original; badge "GRATIS" hanya jika selisih ≤ 0
+- ✅ Settings baru: `shipping_max_free = 20000`, `rajaongkir_origin_city_id = 23`
+
+**city_id di Alamat:**
+- ✅ Migration baru: `add_city_id_to_addresses_table` — kolom `city_id UNSIGNED INT NULLABLE`
+- ✅ `Address` model — `city_id` ditambah ke `$fillable`
+- ✅ `AddressController` — `city_id` ditambah ke validation rules (`nullable|integer`)
+- ✅ `AddressResource` — `city_id` disertakan di response
+- ✅ Checkout fallback jika `city_id` null → return fallback rates dengan pesan "perbarui alamat"
+
+**weight_gram di Produk:**
+- ✅ Migration baru: `add_weight_gram_to_products_table` — kolom `weight_gram UNSIGNED INT DEFAULT 300`
+- ✅ `CheckoutController::shippingRates()` — hitung total berat dari `weight_gram × quantity` per item
+
+**CitySearchInput (Shared Component):**
+- ✅ **NEW** `src/components/CitySearchInput.jsx` — searchable dropdown city/kecamatan/kelurahan
+  - Debounce 300ms → call `useRajaOngkirCities(search)` hook
+  - `onMouseDown` untuk select agar tidak konflik dengan `onBlur` dropdown
+  - Label "Alamat *", placeholder "Cari kecamatan, kelurahan, atau kota..."
+  - Dipakai di dua tempat: `AddressPage` dan `CheckoutPage`
+- ✅ `AddressPage` — import `CitySearchInput` dari shared component; kolom "Kota" → "Alamat" (searchable), "Alamat Lengkap" → "Detail Alamat"
+- ✅ `CheckoutPage` — import `CitySearchInput`; ganti `<Input label="Kota">` dengan `<CitySearchInput>`; "Alamat Lengkap" → "Detail Alamat"; `city_id` tersimpan di `addrForm`
+
+**Bug Fix:**
+- ✅ `CitySearchInput` import `Spinner` sebagai named export (`{ Spinner }` bukan default); `size={16}` angka bukan string
+
+**File yang dibuat/diubah:**
+
+Backend:
+- **NEW** `sdp-api/database/migrations/2026_05_21_060000_add_weight_gram_to_products_table.php`
+- **NEW** `sdp-api/database/migrations/2026_05_21_060001_add_city_id_to_addresses_table.php`
+- `sdp-api/app/Services/RajaOngkirService.php` (rewrite total untuk Komerce.id)
+- `sdp-api/app/Services/TierService.php` (+ min Silver, + inactivity penalty)
+- `sdp-api/app/Http/Controllers/Api/CheckoutController.php` (+ shippingRates(), + subsidi cap, + options shipping_max_free)
+- `sdp-api/app/Http/Controllers/Api/SettingController.php` (+ rajaongkir_origin_city_id, + shipping_max_free di publicKeys)
+- `sdp-api/app/Http/Controllers/Api/Admin/SettingController.php` (+ shipping_max_free, + rajaongkir_origin_city_id di KNOWN_KEYS)
+- `sdp-api/app/Models/Address.php` (+ city_id di fillable)
+- `sdp-api/app/Http/Controllers/Api/AddressController.php` (+ city_id di validation)
+- `sdp-api/app/Http/Resources/AddressResource.php` (+ city_id di response)
+- `sdp-api/database/seeders/SettingsSeeder.php` (update tier min_spend + tambah shipping_max_free, rajaongkir_origin_city_id)
+- `sdp-api/routes/api.php` (+ GET /rajaongkir/cities, + POST /checkout/shipping-rates)
+
+Frontend:
+- **NEW** `src/components/CitySearchInput.jsx`
+- `src/components/TierBadge.jsx` (+ onDark prop + LEVEL_STYLE_DARK)
+- `src/pages/account/ProfilePage.jsx` (+ TIER_GRADIENT per level, TierBadge onDark)
+- `src/pages/OrderSuccessPage.jsx` (+ checkAndRefresh() on mount saat paidFromCheckout=true)
+- `src/pages/account/AddressPage.jsx` (import CitySearchInput, label update)
+- `src/pages/CheckoutPage.jsx` (import CitySearchInput, ganti Kota → CitySearchInput, label update, city_id di addrForm)
+
+---
+
 ## Data Dummy (Seeder)
 
 ### Akun Login
@@ -779,8 +983,10 @@ Frontend:
 | Key | Value | Keterangan |
 |---|---|---|
 | `reseller_commission_rate` | `10` | Komisi reseller 10% (global) |
-| `shipping_min_free` | `150000` | Gratis ongkir min. Rp 150.000 |
+| `shipping_min_free` | `150000` | Minimum belanja gratis ongkir Rp 150.000 |
+| `shipping_max_free` | `20000` | Maksimal subsidi ongkir Rp 20.000 |
 | `shipping_flat_default` | `15000` | Ongkir default Rp 15.000 |
+| `rajaongkir_origin_city_id` | `23` | ID kota asal pengiriman di RajaOngkir (default: Bandung) |
 | `site_name` | `SDP Marketplace` | Nama situs |
 | `site_tagline` | `Marketplace multi-brand pilihan kamu` | Tagline |
 | `announce_bar_1` | `Gratis Ongkir min. Rp 150.000` | Info bar atas |
