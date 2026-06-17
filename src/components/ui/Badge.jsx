@@ -8,6 +8,7 @@ const VARIANTS = {
   warning: 'bg-state-warning/10 text-state-warning border border-state-warning/20',
   danger: 'bg-state-danger text-white',
   outline: 'border border-line text-ink-soft bg-paper',
+  accent: 'bg-accent-soft text-accent-hover border border-accent/20',
 }
 
 const SIZES = {

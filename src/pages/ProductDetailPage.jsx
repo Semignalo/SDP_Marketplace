@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, Minus, Plus, ShieldCheck, Truck, Share2 } from 'lucide-react'
+import { ChevronRight, Minus, Plus, ShieldCheck, Truck, Share2, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import ProductCard from '../components/ProductCard'
 import WishlistButton from '../components/WishlistButton'
 import { useProduct } from '../hooks/useProducts'
+import { useProductReviews, useReviewEligibility, useSubmitReview } from '../hooks/useReviews'
 import { useCartStore } from '../stores/useCartStore'
 import { useUIStore } from '../stores/useUIStore'
-import { Button, PriceLabel, Skeleton, EmptyState } from '../components/ui'
+import { useAuthStore } from '../stores/useAuthStore'
+import { Button, PriceLabel, Skeleton, EmptyState, Spinner, Textarea } from '../components/ui'
+import { extractErrorMessage } from '../lib/api'
 import { formatRupiah, cn } from '../lib/utils'
 
 export default function ProductDetailPage() {
@@ -99,17 +102,29 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
 
+          {product.rating_avg && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm">
+              <Star size={14} className="fill-amber-400 text-amber-400" />
+              <span className="font-semibold text-ink">{product.rating_avg}</span>
+              <span className="text-ink-muted">({product.reviews_count} ulasan)</span>
+            </div>
+          )}
+
           <div className="mt-4">
-            <PriceLabel price={price} size="lg" />
+            <PriceLabel price={price} oldPrice={product.compare_at_price} size="lg" />
           </div>
 
-          <div className="mt-3 text-xs text-ink-muted">
+          <div className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
             {product.stock > 0 ? (
-              <span>Stok: {product.stock} tersedia</span>
+              product.stock <= 5 ? (
+                <span className="font-semibold text-state-danger">Stok terbatas — tersisa {product.stock}</span>
+              ) : (
+                <span>Stok: {product.stock} tersedia</span>
+              )
             ) : (
               <span className="text-state-danger">Stok habis</span>
             )}
-            {product.sku && <span className="ml-3">SKU: {product.sku}</span>}
+            {product.sku && <span className="ml-1">SKU: {product.sku}</span>}
           </div>
 
           {product.description && (
@@ -151,7 +166,7 @@ export default function ProductDetailPage() {
             <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!product.in_stock}>
               + Keranjang
             </Button>
-            <Button variant="primary" size="lg" onClick={handleBuyNow} disabled={!product.in_stock}>
+            <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!product.in_stock}>
               Beli Sekarang
             </Button>
           </div>
@@ -182,8 +197,10 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      <ReviewsSection slug={slug} productId={product.id} />
+
       {related.length > 0 && (
-        <section className="border-t border-line pt-12">
+        <section className="border-t border-line pt-12 mt-12">
           <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-6">
             Mungkin Kamu Suka
           </h2>
@@ -202,6 +219,116 @@ function Perk({ icon, text }) {
       <span className="text-ink shrink-0">{icon}</span>
       <span>{text}</span>
     </div>
+  )
+}
+
+function ReviewsSection({ slug, productId }) {
+  const user = useAuthStore((s) => s.user)
+  const { data, isLoading } = useProductReviews(slug)
+  const { data: eligibility } = useReviewEligibility(slug)
+
+  const reviews = data?.data || []
+  const ratingAvg = data?.meta_extra?.rating_avg
+  const reviewsCount = data?.meta_extra?.reviews_count || 0
+
+  return (
+    <section className="border-t border-line pt-12 mt-12">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted">
+          Ulasan Pembeli
+        </h2>
+        {ratingAvg && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <Star size={14} className="fill-amber-400 text-amber-400" />
+            <span className="font-semibold text-ink">{ratingAvg}</span>
+            <span className="text-ink-muted">({reviewsCount})</span>
+          </div>
+        )}
+      </div>
+
+      {user && eligibility?.eligible && (
+        <ReviewForm slug={slug} productId={productId} orderId={eligibility.order_id} />
+      )}
+
+      {isLoading ? (
+        <div className="py-8 flex justify-center"><Spinner /></div>
+      ) : reviews.length === 0 ? (
+        <p className="text-sm text-ink-muted py-4">Belum ada ulasan untuk produk ini.</p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {reviews.map((r) => <ReviewItem key={r.id} review={r} />)}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+function ReviewItem({ review }) {
+  return (
+    <li className="py-4">
+      <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star
+              key={i}
+              size={13}
+              className={i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-line-strong'}
+            />
+          ))}
+        </div>
+        <p className="text-sm font-semibold text-ink">{review.user_name}</p>
+      </div>
+      {review.comment && <p className="text-sm text-ink-soft leading-relaxed">{review.comment}</p>}
+    </li>
+  )
+}
+
+function ReviewForm({ slug, productId, orderId }) {
+  const [rating, setRating] = useState(5)
+  const [comment, setComment] = useState('')
+  const submitReview = useSubmitReview(slug)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await submitReview.mutateAsync({ product_id: productId, order_id: orderId, rating, comment: comment || undefined })
+      setComment('')
+      toast.success('Ulasan berhasil dikirim, terima kasih!')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mb-8 p-5 border border-line rounded-lg space-y-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-ink-muted">Beri Ulasan</p>
+      <div className="flex items-center gap-1">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setRating(i + 1)}
+            className="p-0.5"
+            aria-label={`${i + 1} bintang`}
+          >
+            <Star
+              size={22}
+              className={i < rating ? 'fill-amber-400 text-amber-400' : 'text-line-strong hover:text-amber-300'}
+            />
+          </button>
+        ))}
+      </div>
+      <Textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        rows={3}
+        maxLength={1000}
+        placeholder="Bagaimana pengalamanmu dengan produk ini? (opsional)"
+      />
+      <Button type="submit" size="sm" loading={submitReview.isPending}>
+        Kirim Ulasan
+      </Button>
+    </form>
   )
 }
 

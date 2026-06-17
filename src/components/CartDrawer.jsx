@@ -26,7 +26,7 @@ export default function CartDrawer() {
           </div>
           <p className="text-2xs text-ink-muted">Ongkir & pajak dihitung di checkout</p>
           <Link to="/checkout" onClick={close}>
-            <Button fullWidth size="lg">Checkout</Button>
+            <Button variant="accent" fullWidth size="lg">Checkout</Button>
           </Link>
           <button
             onClick={close}

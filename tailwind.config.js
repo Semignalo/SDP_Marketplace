@@ -28,6 +28,11 @@ export default {
           danger: '#b91c1c',
           info: '#1d4ed8',
         },
+        accent: {
+          DEFAULT: '#ea580c',
+          hover: '#c2410c',
+          soft: '#fff7ed',
+        },
       },
       borderRadius: {
         DEFAULT: '4px',

@@ -1,34 +1,65 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Search, Star } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
-import { SkeletonProductCard } from '../components/ui'
+import { Badge, SkeletonProductCard } from '../components/ui'
 import { useProducts, useVendors, useCategories } from '../hooks/useProducts'
+import { formatRupiah, calcDiscount } from '../lib/utils'
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
 
 export default function HomePage() {
-  const { data: featured, isLoading: loadingFeatured } = useProducts({ per_page: 10, sort: 'newest' })
+  const { data: featured, isLoading: loadingFeatured } = useProducts({ per_page: 60, sort: 'newest' })
   const { data: vendors = [], isLoading: loadingVendors } = useVendors()
   const { data: categories = [] } = useCategories()
 
+  const products = featured?.data || []
+  const promoProducts = products.filter(
+    (p) => p.compare_at_price && Number(p.compare_at_price) > Number(p.price),
+  )
+  const ratedProducts = products.filter((p) => p.rating_avg)
+  const topRated = [...ratedProducts].sort((a, b) => b.rating_avg - a.rating_avg).slice(0, 5)
+  const totalReviews = products.reduce((sum, p) => sum + (p.reviews_count || 0), 0)
+  const avgRating = ratedProducts.length
+    ? (ratedProducts.reduce((sum, p) => sum + p.rating_avg, 0) / ratedProducts.length).toFixed(1)
+    : null
+
   return (
     <div className="bg-paper">
-      <Hero />
+      <Hero
+        productCount={featured?.meta?.total}
+        vendorCount={vendors.length}
+        avgRating={avgRating}
+        totalReviews={totalReviews}
+      />
+
+      <ValueStrip />
 
       <BrandStrip vendors={vendors} isLoading={loadingVendors} />
 
       <CategoryGrid categories={categories} />
 
-      <FeaturedSection products={featured?.data || []} isLoading={loadingFeatured} />
+      <PromoSection products={promoProducts} />
 
-      <ValueStrip />
+      <FeaturedSection products={products} isLoading={loadingFeatured} />
+
+      <TopRatedSection products={topRated} />
 
       <EditorialBlock />
     </div>
   )
 }
 
-function Hero() {
+function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    const q = query.trim()
+    navigate(q ? `/products?search=${encodeURIComponent(q)}` : '/products')
+  }
+
   return (
     <section className="relative">
       <div className="grid lg:grid-cols-2 min-h-[560px] lg:min-h-[640px]">
@@ -44,7 +75,27 @@ function Hero() {
             <p className="mt-6 text-base text-ink-muted max-w-md leading-relaxed">
               Marketplace multi-brand untuk fashion, beauty, dan kebutuhan harian dari kurator terpercaya.
             </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-3">
+
+            <form onSubmit={handleSearch} className="mt-8 max-w-md">
+              <div className="relative">
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint" />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cari produk, brand, atau kategori..."
+                  className="w-full h-12 pl-11 pr-24 text-sm bg-white border border-line rounded focus:outline-none focus:border-ink transition"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-1.5 top-1.5 h-9 px-4 bg-ink text-white text-2xs font-semibold uppercase tracking-widest rounded hover:bg-ink-soft transition"
+                >
+                  Cari
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/products"
                 className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-ink text-white text-xs font-semibold uppercase tracking-widest hover:bg-ink-soft transition rounded"
@@ -59,6 +110,28 @@ function Hero() {
                 Jelajahi Brand
               </Link>
             </div>
+
+            {(vendorCount > 0 || productCount > 0) && (
+              <div className="mt-8 flex items-center gap-6 text-xs text-ink-muted">
+                {vendorCount > 0 && (
+                  <span>
+                    <strong className="text-ink tabular-nums">{vendorCount}+</strong> Brand Terpercaya
+                  </span>
+                )}
+                {productCount > 0 && (
+                  <span>
+                    <strong className="text-ink tabular-nums">{productCount}+</strong> Produk
+                  </span>
+                )}
+                {avgRating && (
+                  <span className="inline-flex items-center gap-1">
+                    <Star size={13} className="fill-amber-400 text-amber-400" />
+                    <strong className="text-ink tabular-nums">{avgRating}</strong>
+                    {totalReviews > 0 && <span>({totalReviews} ulasan)</span>}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -155,6 +228,8 @@ function CategoryGrid({ categories }) {
 }
 
 function FeaturedSection({ products, isLoading }) {
+  const visible = products.slice(0, 10)
+
   return (
     <section className="container-page pb-16">
       <div className="flex items-end justify-between mb-8">
@@ -175,7 +250,7 @@ function FeaturedSection({ products, isLoading }) {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
         {isLoading
           ? Array.from({ length: 10 }).map((_, i) => <SkeletonProductCard key={i} />)
-          : products.map((p) => <ProductCard key={p.id} product={p} />)}
+          : visible.map((p) => <ProductCard key={p.id} product={p} />)}
       </div>
 
       <div className="mt-8 sm:hidden">
@@ -185,6 +260,92 @@ function FeaturedSection({ products, isLoading }) {
         >
           Lihat Semua Produk
         </Link>
+      </div>
+    </section>
+  )
+}
+
+function PromoSection({ products }) {
+  if (products.length < 3) return null
+  const [big, ...rest] = products
+  const small = rest.slice(0, 4)
+  const bigDiscount = calcDiscount(big.price, big.compare_at_price)
+
+  return (
+    <section className="bg-accent-soft border-y border-accent/20">
+      <div className="container-page py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[420px]">
+          <Link
+            to={`/products/${big.slug}`}
+            className="group relative col-span-2 md:row-span-2 aspect-[16/10] md:aspect-auto overflow-hidden rounded-lg bg-paper-warm"
+          >
+            <img
+              src={big.primary_image || big.images?.[0]?.url}
+              alt={big.name}
+              className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
+            <div className="absolute top-3 left-3">
+              <Badge variant="accent">-{bigDiscount}%</Badge>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
+              <p className="text-white text-2xs uppercase tracking-widest opacity-80 mb-1">{big.vendor?.name}</p>
+              <h3 className="text-white text-base md:text-lg font-semibold leading-snug mb-1.5 line-clamp-2">
+                {big.name}
+              </h3>
+              <p className="text-white font-bold tabular-nums">{formatRupiah(big.price)}</p>
+            </div>
+          </Link>
+
+          {small.map((p) => {
+            const pct = calcDiscount(p.price, p.compare_at_price)
+            return (
+              <Link
+                key={p.id}
+                to={`/products/${p.slug}`}
+                className="group relative col-span-1 aspect-square md:aspect-auto overflow-hidden rounded-lg bg-paper-warm"
+              >
+                <img
+                  src={p.primary_image || p.images?.[0]?.url}
+                  alt={p.name}
+                  className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/5 to-transparent" />
+                <div className="absolute top-2 left-2">
+                  <Badge variant="accent" size="sm">-{pct}%</Badge>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-2.5">
+                  <p className="text-white text-xs font-semibold leading-snug line-clamp-1">{p.name}</p>
+                  <p className="text-white text-xs font-bold tabular-nums">{formatRupiah(p.price)}</p>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TopRatedSection({ products }) {
+  if (products.length < 3) return null
+  return (
+    <section className="container-page pb-16">
+      <div className="flex items-end justify-between mb-8">
+        <div className="flex items-center gap-2.5">
+          <Star size={20} className="fill-amber-400 text-amber-400" />
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-1">
+              Disukai Pembeli
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight">Produk Terlaris</h2>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
       </div>
     </section>
   )

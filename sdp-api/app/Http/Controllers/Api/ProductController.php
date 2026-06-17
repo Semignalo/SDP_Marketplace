@@ -25,7 +25,9 @@ class ProductController extends Controller
 
         $query = Product::query()
             ->active()
-            ->with(['vendor', 'category', 'images']);
+            ->with(['vendor', 'category', 'images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews');
 
         if (!empty($validated['category'])) {
             $category = Category::where('slug', $validated['category'])->first();
@@ -77,6 +79,8 @@ class ProductController extends Controller
         $product = Product::query()
             ->active()
             ->with(['vendor', 'category', 'images'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->where('slug', $slug)
             ->firstOrFail();
 

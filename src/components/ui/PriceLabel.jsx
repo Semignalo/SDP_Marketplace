@@ -14,7 +14,7 @@ export function PriceLabel({ price, oldPrice, size = 'md', className = '' }) {
 
   return (
     <div className={cn('flex items-baseline flex-wrap gap-x-2 gap-y-0', className)}>
-      <span className={cn('font-bold text-ink tabular-nums', s.price)}>
+      <span className={cn('font-bold tabular-nums', hasDiscount ? 'text-accent' : 'text-ink', s.price)}>
         {formatRupiah(price)}
       </span>
       {hasDiscount && (
@@ -22,7 +22,7 @@ export function PriceLabel({ price, oldPrice, size = 'md', className = '' }) {
           <span className={cn('text-ink-faint line-through tabular-nums', s.old)}>
             {formatRupiah(oldPrice)}
           </span>
-          <span className={cn('font-semibold text-state-danger', s.discount)}>
+          <span className={cn('font-semibold bg-accent-soft text-accent-hover rounded-sm px-1', s.discount)}>
             -{discountPct}%
           </span>
         </>

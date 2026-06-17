@@ -7,6 +7,7 @@ const VARIANTS = {
   outline: 'border border-line bg-paper text-ink hover:bg-paper-soft hover:border-line-strong',
   ghost: 'text-ink hover:bg-paper-warm',
   danger: 'bg-state-danger text-white hover:opacity-90',
+  accent: 'bg-accent text-white hover:bg-accent-hover active:bg-accent-hover',
   link: 'text-ink underline-offset-4 hover:underline px-0 py-0 h-auto',
 }
 

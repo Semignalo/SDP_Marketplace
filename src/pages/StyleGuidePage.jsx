@@ -95,6 +95,7 @@ export default function StyleGuidePage() {
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="danger">Danger</Button>
+            <Button variant="accent">Accent (CTA beli)</Button>
             <Button variant="link">Link style</Button>
           </div>
           <div className="flex flex-wrap gap-3 items-center">

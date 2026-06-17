@@ -20,7 +20,7 @@ const STATUS_BADGE = {
 
 const EMPTY_FORM = {
   vendor_id: '', name: '', slug: '', category_id: '', description: '',
-  price: '', stock: '', sku: '', status: 'active', images: [],
+  price: '', compare_at_price: '', stock: '', sku: '', status: 'active', images: [],
 }
 
 export default function AdminProductsPage() {
@@ -66,6 +66,7 @@ export default function AdminProductsPage() {
       category_id: String(p.category?.id || ''),
       description: p.description || '',
       price:       String(p.price || ''),
+      compare_at_price: p.compare_at_price ? String(p.compare_at_price) : '',
       stock:       String(p.stock ?? ''),
       sku:         p.sku || '',
       status:      p.status || 'active',
@@ -85,6 +86,7 @@ export default function AdminProductsPage() {
       category_id: Number(form.category_id),
       description: form.description || undefined,
       price:       Number(form.price),
+      compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
       stock:       Number(form.stock),
       sku:         form.sku || undefined,
       status:      form.status,
@@ -264,6 +266,13 @@ export default function AdminProductsPage() {
               <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Harga *</label>
               <Input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" required />
               {errors.price && <p className="text-xs text-state-danger mt-1">{errors.price[0]}</p>}
+            </div>
+
+            {/* Harga Coret (diskon) */}
+            <div>
+              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Harga Coret</label>
+              <Input type="number" min="0" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: e.target.value })} placeholder="Opsional, harus lebih besar dari harga" />
+              {errors.compare_at_price && <p className="text-xs text-state-danger mt-1">{errors.compare_at_price[0]}</p>}
             </div>
 
             {/* Stok */}

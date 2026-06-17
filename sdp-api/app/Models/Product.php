@@ -18,6 +18,7 @@ class Product extends Model
         'slug',
         'description',
         'price',
+        'compare_at_price',
         'stock',
         'sku',
         'status',
@@ -25,6 +26,7 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'compare_at_price' => 'decimal:2',
         'stock' => 'integer',
     ];
 
@@ -53,13 +55,13 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
-    }
-
-    public function scopeInStock($query)
-    {
-        return $query->where('stock', '>', 0);
     }
 }
