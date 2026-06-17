@@ -55,7 +55,7 @@ export function Drawer({ open, onClose, title, children, footer, side = 'right' 
                   type="button"
                   onClick={onClose}
                   className="text-ink-faint hover:text-ink transition"
-                  aria-label="Tutup"
+                  aria-label="Close"
                 >
                   <X size={20} />
                 </button>

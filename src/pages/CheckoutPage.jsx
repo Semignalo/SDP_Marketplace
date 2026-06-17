@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { Check, MapPin, Truck, ClipboardList, Plus, ShieldCheck } from 'lucide-react'
+import { Plus, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useAddresses, useSaveAddress } from '../hooks/useAccount'
 import { useCheckoutOptions, useCreateOrder, useSnapToken, useShippingRates } from '../hooks/useCheckout'
 import { loadSnap } from '../lib/snap'
-import { Button, Input, Spinner, Modal } from '../components/ui'
+import { Button, Card, Input, Spinner, Modal } from '../components/ui'
+import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '../components/checkout/shared'
 import TierBadge from '../components/TierBadge'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
@@ -15,13 +16,13 @@ import { formatRupiah, cn } from '../lib/utils'
 import { calcTierDiscount, calcShippingCost } from '../lib/pricing'
 
 const STEPS = [
-  { id: 1, title: 'Alamat', icon: MapPin },
-  { id: 2, title: 'Pengiriman', icon: Truck },
-  { id: 3, title: 'Review', icon: ClipboardList },
+  { id: 1, title: 'Address' },
+  { id: 2, title: 'Shipping' },
+  { id: 3, title: 'Review' },
 ]
 
 const EMPTY_ADDR = {
-  label: 'Rumah',
+  label: 'Home',
   recipient_name: '',
   phone: '',
   address: '',
@@ -99,14 +100,8 @@ export default function CheckoutPage() {
       {
         onSuccess: (data) => setShippingRates(data),
         onError: () => {
-          // Gunakan fallback hardcoded
           setShippingRates({
-            rates: [
-              { code: 'jne_reg',   name: 'JNE',  service: 'REG',   cost: 18000, eta: '2-3 hari' },
-              { code: 'jne_yes',   name: 'JNE',  service: 'YES',   cost: 28000, eta: '1 hari' },
-              { code: 'tiki_reg',  name: 'TIKI', service: 'REG',   cost: 16000, eta: '2-3 hari' },
-              { code: 'pos_kilat', name: 'POS',  service: 'Kilat', cost: 12000, eta: '3-5 hari' },
-            ],
+            rates: FALLBACK_COURIER_RATES,
             free_shipping_min: freeShippingMin,
             total_weight: 300,
             is_fallback: true,
@@ -118,7 +113,7 @@ export default function CheckoutPage() {
 
   const handleNext = () => {
     if (!canNext(step)) {
-      toast.error(step === 1 ? 'Pilih alamat pengiriman dulu' : 'Pilih kurir dulu')
+      toast.error(step === 1 ? 'Pick a shipping address first' : 'Choose a courier first')
       return
     }
     const nextStep = Math.min(3, step + 1)
@@ -130,13 +125,13 @@ export default function CheckoutPage() {
 
   const handleSubmit = async () => {
     if (!selectedAddressId || !selectedCourier) {
-      toast.error('Lengkapi alamat & kurir')
+      toast.error('Add your address and courier first')
       return
     }
     try {
       const order = await createOrder.mutateAsync({
         address_id: selectedAddressId,
-        courier_name: selectedCourier ? `${selectedCourier.name} ${selectedCourier.service}` : 'Kurir',
+        courier_name: selectedCourier ? `${selectedCourier.name} ${selectedCourier.service}` : 'Courier',
         shipping_cost: selectedCourier?.cost || 0,
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
@@ -150,7 +145,7 @@ export default function CheckoutPage() {
         onSuccess: () => navigate(`/order/sukses/${order.order_number}?paid=1`, { replace: true }),
         onPending: () => navigate(`/akun/pesanan/${order.order_number}`, { replace: true }),
         onError: () => {
-          toast.error('Pembayaran gagal. Selesaikan dari halaman pesanan.')
+          toast.error('Payment failed. Finish it from your order page.')
           navigate(`/akun/pesanan/${order.order_number}`, { replace: true })
         },
         onClose: () => navigate(`/akun/pesanan/${order.order_number}`, { replace: true }),
@@ -165,7 +160,7 @@ export default function CheckoutPage() {
     setAddrErrors({})
     try {
       const saved = await saveAddress.mutateAsync(addrForm)
-      toast.success('Alamat ditambahkan')
+      toast.success('Address added')
       setAddrModalOpen(false)
       setAddrForm(EMPTY_ADDR)
       setSelectedAddressId(saved.id)
@@ -184,21 +179,21 @@ export default function CheckoutPage() {
   return (
     <div className="container-page py-8 lg:py-12">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink mb-1">Checkout</h1>
-      <p className="text-sm text-ink-muted mb-8">Selesaikan pesananmu</p>
+      <p className="text-sm text-ink-muted mb-8">Let's get this to you.</p>
 
-      <Stepper current={step} onJump={(s) => s < step && setStep(s)} />
+      <Stepper steps={STEPS} current={step} onJump={(s) => s < step && setStep(s)} />
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-8">
         <div className="space-y-6">
           {step === 1 && (
-            <StepCard title="Alamat Pengiriman">
+            <StepCard title="Shipping Address">
               {addrLoading ? (
                 <div className="py-8 flex justify-center"><Spinner /></div>
               ) : addresses.length === 0 ? (
                 <div className="py-6 text-center">
-                  <p className="text-sm text-ink-muted mb-4">Belum ada alamat tersimpan.</p>
+                  <p className="text-sm text-ink-muted mb-4">No saved addresses yet.</p>
                   <Button leadingIcon={<Plus size={16} />} onClick={() => setAddrModalOpen(true)}>
-                    Tambah Alamat
+                    Add address
                   </Button>
                 </div>
               ) : (
@@ -218,7 +213,7 @@ export default function CheckoutPage() {
                     onClick={() => setAddrModalOpen(true)}
                     className="mt-4 w-full border border-dashed border-line rounded-lg py-3 text-sm text-ink-muted hover:text-ink hover:border-line-strong inline-flex items-center justify-center gap-1.5 transition"
                   >
-                    <Plus size={14} /> Tambah Alamat Baru
+                    <Plus size={14} /> Add a new address
                   </button>
                 </>
               )}
@@ -226,24 +221,24 @@ export default function CheckoutPage() {
           )}
 
           {step === 2 && (
-            <StepCard title="Pilih Kurir">
+            <StepCard title="Choose a Courier">
               {shippingRatesMut.isPending ? (
                 <div className="py-8 flex flex-col items-center gap-3">
                   <Spinner />
-                  <p className="text-sm text-ink-muted">Menghitung ongkir...</p>
+                  <p className="text-sm text-ink-muted">Calculating shipping...</p>
                 </div>
               ) : (
                 <>
                   {shippingRates?.is_fallback && (
-                    <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-700">
+                    <div className="mb-4 px-4 py-3 bg-state-warning/10 rounded text-xs text-state-warning">
                       {selectedAddress && !selectedAddress.city_id
-                        ? 'Perbarui alamat dulu untuk hitung ongkir otomatis. Tarif di bawah adalah estimasi.'
-                        : 'Tarif ongkir estimasi (layanan cek ongkir sedang tidak tersedia).'}
+                        ? 'Update your address for automatic rates. Rates below are estimates.'
+                        : 'Estimated shipping rates (live rate check is temporarily unavailable).'}
                     </div>
                   )}
                   {isFreeShipping && (
-                    <div className="mb-4 px-4 py-3 bg-paper-soft border border-line rounded text-xs text-ink-soft">
-                      Gratis ongkir aktif — kurir tetap perlu dipilih untuk pengiriman.
+                    <div className="mb-4 px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft shadow-card">
+                      Free shipping is active — still pick a courier to ship your order.
                     </div>
                   )}
                   <div className="space-y-2">
@@ -265,7 +260,7 @@ export default function CheckoutPage() {
 
           {step === 3 && (
             <>
-              <StepCard title="Alamat" action={<button onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Ubah</button>}>
+              <StepCard title="Address" action={<button onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
                 {selectedAddress && (
                   <div>
                     <p className="text-sm font-semibold">{selectedAddress.recipient_name}</p>
@@ -275,23 +270,23 @@ export default function CheckoutPage() {
                 )}
               </StepCard>
 
-              <StepCard title="Kurir" action={<button onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Ubah</button>}>
+              <StepCard title="Courier" action={<button onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
                 {selectedCourier && (
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold">{selectedCourier.name} — {selectedCourier.service}</p>
-                      <p className="text-xs text-ink-muted mt-0.5">Estimasi {selectedCourier.eta}</p>
+                      <p className="text-xs text-ink-muted mt-0.5">Estimated {selectedCourier.eta}</p>
                     </div>
                     <p className="text-sm font-semibold tabular-nums">
                       {shippingCost === 0
-                        ? <span className="text-state-success">GRATIS</span>
+                        ? <span className="text-state-success">FREE</span>
                         : formatRupiah(shippingCost)}
                     </p>
                   </div>
                 )}
               </StepCard>
 
-              <StepCard title={`Item (${items.length})`}>
+              <StepCard title={`Items (${items.length})`}>
                 <ul className="divide-y divide-line -my-2">
                   {items.map((item) => (
                     <li key={item.product_id} className="py-3 flex gap-3">
@@ -311,13 +306,13 @@ export default function CheckoutPage() {
                 </ul>
               </StepCard>
 
-              <StepCard title="Catatan (opsional)">
+              <StepCard title="Notes (optional)">
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   maxLength={500}
-                  placeholder="Catatan untuk penjual atau kurir"
+                  placeholder="A note for the seller or courier"
                   className="w-full px-3 py-2.5 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink resize-none"
                 />
               </StepCard>
@@ -326,44 +321,44 @@ export default function CheckoutPage() {
 
           <div className="flex justify-between gap-3 pt-2">
             {step > 1 ? (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>← Kembali</Button>
+              <Button variant="outline" onClick={() => setStep(step - 1)}>← Back</Button>
             ) : (
-              <Link to="/keranjang"><Button variant="ghost">← Keranjang</Button></Link>
+              <Link to="/keranjang"><Button variant="ghost">← Cart</Button></Link>
             )}
             {step < 3 ? (
-              <Button onClick={handleNext} disabled={!canNext(step)}>Lanjutkan →</Button>
+              <Button onClick={handleNext} disabled={!canNext(step)}>Continue →</Button>
             ) : (
               <Button variant="accent" onClick={handleSubmit} loading={createOrder.isPending || snapMut.isPending} leadingIcon={<ShieldCheck size={16} />}>
-                Bayar Sekarang
+                Pay now
               </Button>
             )}
           </div>
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <div className="border border-line rounded-lg p-5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Ringkasan</h2>
+          <Card padding="md">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h2>
             {tier && (
               <div className="mb-4 pb-4 border-b border-line flex items-center gap-2">
                 <TierBadge tier={tier} size="sm" />
-                <span className="text-2xs text-ink-muted">diskon {tier.discount}% diterapkan</span>
+                <span className="text-2xs text-ink-muted">{tier.discount}% discount applied</span>
               </div>
             )}
             <dl className="space-y-3 text-sm">
-              <Row label={`Subtotal (${items.length} produk)`} value={formatRupiah(subtotal)} />
+              <Row label={`Subtotal (${items.length} products)`} value={formatRupiah(subtotal)} />
               {tier && tierDiscount > 0 && (
                 <Row
-                  label={`Diskon ${tier.name} (-${tier.discount}%)`}
+                  label={`${tier.name} discount (-${tier.discount}%)`}
                   value={<span className="text-state-success">−{formatRupiah(tierDiscount)}</span>}
                 />
               )}
               <Row
-                label="Ongkir"
+                label="Shipping"
                 value={selectedCourier
                   ? (shippingCost === 0
-                      ? <span className="text-state-success">GRATIS</span>
+                      ? <span className="text-state-success">FREE</span>
                       : formatRupiah(shippingCost))
-                  : <span className="text-ink-muted text-xs">Pilih kurir</span>}
+                  : <span className="text-ink-muted text-xs">Pick a courier</span>}
               />
               <div className="pt-3 border-t border-line">
                 <Row label="Total" value={formatRupiah(total)} bold />
@@ -372,86 +367,37 @@ export default function CheckoutPage() {
 
             {step === 3 && (
               <p className="mt-4 pt-4 border-t border-line text-2xs text-ink-muted flex items-center gap-1.5">
-                <ShieldCheck size={13} className="shrink-0" /> Pembayaran aman terenkripsi via Midtrans
+                <ShieldCheck size={13} className="shrink-0" /> Payments are encrypted and secured via Midtrans
               </p>
             )}
-          </div>
+          </Card>
         </aside>
       </div>
 
       <Modal
         open={addrModalOpen}
         onClose={() => setAddrModalOpen(false)}
-        title="Tambah Alamat Baru"
+        title="Add a New Address"
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setAddrModalOpen(false)}>Batal</Button>
-            <Button onClick={handleSaveAddress} loading={saveAddress.isPending}>Simpan</Button>
+            <Button variant="outline" onClick={() => setAddrModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAddress} loading={saveAddress.isPending}>Save</Button>
           </div>
         }
       >
         <form onSubmit={handleSaveAddress} className="grid sm:grid-cols-2 gap-4">
-          <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Rumah/Kantor" error={addrErrors.label} />
-          <Input label="Nama Penerima *" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
-          <Input label="Nomor HP *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
+          <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Home/Office" error={addrErrors.label} />
+          <Input label="Recipient name *" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
+          <Input label="Phone number *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
           <CitySearchInput value={addrForm.city} cityId={addrForm.city_id} onChange={({ name, id }) => setAddrForm({ ...addrForm, city: name, city_id: id })} error={addrErrors.city} />
           <div className="sm:col-span-2">
-            <Input label="Detail Alamat *" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={addrErrors.address} />
+            <Input label="Address details *" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Street, RT/RW, district, sub-district" error={addrErrors.address} />
           </div>
-          <Input label="Kode Pos" value={addrForm.postal_code} onChange={(e) => setAddrForm({ ...addrForm, postal_code: e.target.value })} error={addrErrors.postal_code} />
+          <Input label="Postal code" value={addrForm.postal_code} onChange={(e) => setAddrForm({ ...addrForm, postal_code: e.target.value })} error={addrErrors.postal_code} />
         </form>
       </Modal>
     </div>
-  )
-}
-
-function Stepper({ current, onJump }) {
-  return (
-    <div className="flex items-center gap-2">
-      {STEPS.map((s, idx) => {
-        const Icon = s.icon
-        const active = s.id === current
-        const done = s.id < current
-        return (
-          <div key={s.id} className="flex items-center gap-2 flex-1">
-            <button
-              type="button"
-              onClick={() => onJump?.(s.id)}
-              className={cn(
-                'flex flex-col sm:flex-row items-center gap-1 sm:gap-2 flex-1 px-1 sm:px-3 py-2 rounded transition',
-                done && 'text-ink hover:bg-paper-warm cursor-pointer',
-                active && 'bg-ink text-white',
-                !done && !active && 'text-ink-faint cursor-default',
-              )}
-            >
-              <span className={cn(
-                'h-7 w-7 inline-flex items-center justify-center rounded-pill text-xs font-bold border shrink-0',
-                done && 'bg-ink text-white border-ink',
-                active && 'bg-white text-ink border-white',
-                !done && !active && 'border-line text-ink-faint',
-              )}>
-                {done ? <Check size={14} /> : s.id}
-              </span>
-              <span className="text-2xs sm:text-sm font-semibold text-center">{s.title}</span>
-            </button>
-            {idx < STEPS.length - 1 && <span className="h-px w-4 bg-line hidden md:block" />}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function StepCard({ title, action, children }) {
-  return (
-    <section className="border border-line rounded-lg p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted">{title}</h2>
-        {action}
-      </div>
-      {children}
-    </section>
   )
 }
 
@@ -459,8 +405,8 @@ function AddressOption({ addr, selected, onSelect }) {
   return (
     <label
       className={cn(
-        'flex items-start gap-3 p-4 border rounded cursor-pointer transition',
-        selected ? 'border-ink bg-paper-soft' : 'border-line hover:border-line-strong',
+        'flex items-start gap-3 p-4 rounded-lg cursor-pointer transition',
+        selected ? 'bg-paper-soft shadow-card' : 'shadow-card hover:shadow-hover',
       )}
     >
       <input
@@ -473,7 +419,7 @@ function AddressOption({ addr, selected, onSelect }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-bold uppercase tracking-widest text-ink-muted">{addr.label}</span>
-          {addr.is_default && <span className="text-2xs px-1.5 py-0.5 bg-ink text-white rounded">Utama</span>}
+          {addr.is_default && <span className="text-2xs px-1.5 py-0.5 bg-ink text-white rounded">Default</span>}
         </div>
         <p className="text-sm font-semibold text-ink">{addr.recipient_name}</p>
         <p className="text-xs text-ink-muted mt-0.5">{addr.phone}</p>
@@ -482,51 +428,5 @@ function AddressOption({ addr, selected, onSelect }) {
         </p>
       </div>
     </label>
-  )
-}
-
-function CourierOption({ courier, selected, freeShipping, freeMax, onSelect }) {
-  const afterSubsidy = freeShipping ? Math.max(0, courier.cost - freeMax) : courier.cost
-  const isFullyFree = freeShipping && afterSubsidy === 0
-
-  return (
-    <label
-      className={cn(
-        'flex items-center gap-3 p-4 border rounded cursor-pointer transition',
-        selected ? 'border-ink bg-paper-soft' : 'border-line hover:border-line-strong',
-      )}
-    >
-      <input
-        type="radio"
-        name="courier"
-        checked={selected}
-        onChange={onSelect}
-        className="h-4 w-4 accent-ink"
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-ink">{courier.name} — {courier.service}</p>
-          <div className="text-right">
-            {isFullyFree
-              ? <span className="text-sm font-semibold text-state-success">GRATIS</span>
-              : <span className="text-sm font-semibold tabular-nums">{formatRupiah(afterSubsidy)}</span>
-            }
-            {freeShipping && !isFullyFree && (
-              <p className="text-2xs text-ink-faint line-through">{formatRupiah(courier.cost)}</p>
-            )}
-          </div>
-        </div>
-        <p className="text-xs text-ink-muted mt-0.5">Estimasi {courier.eta}</p>
-      </div>
-    </label>
-  )
-}
-
-function Row({ label, value, bold }) {
-  return (
-    <div className="flex justify-between items-baseline">
-      <dt className={bold ? 'text-sm font-semibold' : 'text-sm text-ink-muted'}>{label}</dt>
-      <dd className={cn('tabular-nums', bold ? 'text-lg font-bold' : 'text-sm text-ink')}>{value}</dd>
-    </div>
   )
 }

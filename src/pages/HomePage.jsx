@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Search, Star } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
-import { Badge, SkeletonProductCard } from '../components/ui'
+import { Badge, Input, SkeletonProductCard, StarRating } from '../components/ui'
 import { useProducts, useVendors, useCategories } from '../hooks/useProducts'
 import { formatRupiah, calcDiscount } from '../lib/utils'
+import { getCategoryImage } from '../lib/categoryImages'
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
 
@@ -65,32 +66,30 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
       <div className="grid lg:grid-cols-2 min-h-[560px] lg:min-h-[640px]">
         <div className="flex items-center bg-paper-soft order-2 lg:order-1">
           <div className="container-page lg:pr-16 py-16 lg:py-24">
-            <p className="text-2xs font-bold uppercase tracking-[0.3em] text-ink-muted mb-4">
-              Koleksi Pilihan
-            </p>
+            <p className="eyebrow mb-4">Curated Collection</p>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-ink leading-[1.05]">
-              Brand pilihan,<br />
-              <span className="italic font-light">dalam satu tempat.</span>
+              The brands you want —<br />
+              <span className="italic font-light">finally, in one place.</span>
             </h1>
             <p className="mt-6 text-base text-ink-muted max-w-md leading-relaxed">
-              Marketplace multi-brand untuk fashion, beauty, dan kebutuhan harian dari kurator terpercaya.
+              Fashion, beauty, everyday essentials — curated by people who actually use them.
             </p>
 
             <form onSubmit={handleSearch} className="mt-8 max-w-md">
               <div className="relative">
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint" />
-                <input
+                <Input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Cari produk, brand, atau kategori..."
-                  className="w-full h-12 pl-11 pr-24 text-sm bg-white border border-line rounded focus:outline-none focus:border-ink transition"
+                  placeholder="Search products, brands, categories..."
+                  leadingIcon={<Search size={16} />}
+                  className="h-12 pr-24 shadow-card border-none"
                 />
                 <button
                   type="submit"
                   className="absolute right-1.5 top-1.5 h-9 px-4 bg-ink text-white text-2xs font-semibold uppercase tracking-widest rounded hover:bg-ink-soft transition"
                 >
-                  Cari
+                  Search
                 </button>
               </div>
             </form>
@@ -98,16 +97,16 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
             <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/products"
-                className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-ink text-white text-xs font-semibold uppercase tracking-widest hover:bg-ink-soft transition rounded"
+                className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-ink text-white text-xs font-semibold uppercase tracking-widest hover:bg-ink-soft transition rounded shadow-card hover:shadow-hover"
               >
-                Belanja Sekarang
+                Shop now
                 <ArrowRight size={16} />
               </Link>
               <Link
                 to="/vendors"
                 className="inline-flex items-center justify-center h-12 px-8 border border-ink text-ink text-xs font-semibold uppercase tracking-widest hover:bg-ink hover:text-white transition rounded"
               >
-                Jelajahi Brand
+                Explore brands
               </Link>
             </div>
 
@@ -115,21 +114,15 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
               <div className="mt-8 flex items-center gap-6 text-xs text-ink-muted">
                 {vendorCount > 0 && (
                   <span>
-                    <strong className="text-ink tabular-nums">{vendorCount}+</strong> Brand Terpercaya
+                    <strong className="text-ink tabular-nums">{vendorCount}+</strong> trusted brands
                   </span>
                 )}
                 {productCount > 0 && (
                   <span>
-                    <strong className="text-ink tabular-nums">{productCount}+</strong> Produk
+                    <strong className="text-ink tabular-nums">{productCount}+</strong> products
                   </span>
                 )}
-                {avgRating && (
-                  <span className="inline-flex items-center gap-1">
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    <strong className="text-ink tabular-nums">{avgRating}</strong>
-                    {totalReviews > 0 && <span>({totalReviews} ulasan)</span>}
-                  </span>
-                )}
+                {avgRating && <StarRating value={avgRating} count={totalReviews} size="md" />}
               </div>
             )}
           </div>
@@ -138,7 +131,7 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
         <div className="relative bg-paper-warm order-1 lg:order-2 min-h-[320px] lg:min-h-0">
           <img
             src={HERO_IMAGE}
-            alt="Koleksi pilihan"
+            alt="Curated fashion rack"
             className="absolute inset-0 h-full w-full object-cover"
           />
         </div>
@@ -152,11 +145,9 @@ function BrandStrip({ vendors, isLoading }) {
     <section className="border-y border-line bg-paper">
       <div className="container-page py-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted">
-            Brand Pilihan
-          </h2>
+          <h2 className="eyebrow">Featured Brands</h2>
           <Link to="/vendors" className="text-xs text-ink-muted hover:text-ink underline-offset-4 hover:underline">
-            Lihat Semua
+            See all
           </Link>
         </div>
         <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
@@ -192,24 +183,22 @@ function CategoryGrid({ categories }) {
   if (categories.length === 0) return null
   const items = categories.slice(0, 6)
   return (
-    <section className="container-page py-16">
+    <section className="section-md container-page">
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">
-            Kategori
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight">Belanja per Kategori</h2>
+          <p className="eyebrow mb-2">Categories</p>
+          <h2 className="text-2xl font-bold tracking-tight">Shop by category</h2>
         </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        {items.map((cat, i) => (
+        {items.map((cat) => (
           <Link
             key={cat.id}
             to={`/products?category=${cat.slug}`}
-            className="group relative aspect-square overflow-hidden rounded bg-paper-warm"
+            className="group relative aspect-square overflow-hidden rounded-lg bg-paper-warm shadow-card hover:shadow-hover transition-shadow"
           >
             <img
-              src={`https://picsum.photos/seed/cat-${cat.slug}/400/400`}
+              src={getCategoryImage(cat)}
               alt={cat.name}
               className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
             />
@@ -217,7 +206,7 @@ function CategoryGrid({ categories }) {
             <div className="absolute inset-x-0 bottom-0 p-4">
               <p className="text-white text-sm font-semibold tracking-wide">{cat.name}</p>
               <p className="text-white/70 text-2xs uppercase tracking-widest mt-0.5">
-                {cat.children?.length || 0} subkategori
+                {cat.children?.length || 0} subcategories
               </p>
             </div>
           </Link>
@@ -231,19 +220,17 @@ function FeaturedSection({ products, isLoading }) {
   const visible = products.slice(0, 10)
 
   return (
-    <section className="container-page pb-16">
+    <section className="section-md container-page">
       <div className="flex items-end justify-between mb-8">
         <div>
-          <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">
-            Baru Datang
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight">Produk Pilihan</h2>
+          <p className="eyebrow mb-2">New In</p>
+          <h2 className="text-2xl font-bold tracking-tight">Picks for you</h2>
         </div>
         <Link
           to="/products"
           className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
         >
-          Lihat Semua <ArrowRight size={14} />
+          See all <ArrowRight size={14} />
         </Link>
       </div>
 
@@ -258,7 +245,7 @@ function FeaturedSection({ products, isLoading }) {
           to="/products"
           className="block w-full text-center border border-ink text-ink py-3 rounded text-xs font-semibold uppercase tracking-widest hover:bg-ink hover:text-white transition"
         >
-          Lihat Semua Produk
+          See all products
         </Link>
       </div>
     </section>
@@ -273,7 +260,7 @@ function PromoSection({ products }) {
 
   return (
     <section className="bg-accent-soft border-y border-accent/20">
-      <div className="container-page py-12">
+      <div className="container-page section-sm">
         <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[420px]">
           <Link
             to={`/products/${big.slug}`}
@@ -330,15 +317,13 @@ function PromoSection({ products }) {
 function TopRatedSection({ products }) {
   if (products.length < 3) return null
   return (
-    <section className="container-page pb-16">
+    <section className="section-md container-page">
       <div className="flex items-end justify-between mb-8">
         <div className="flex items-center gap-2.5">
-          <Star size={20} className="fill-amber-400 text-amber-400" />
+          <Star size={20} className="fill-rating text-rating" />
           <div>
-            <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-1">
-              Disukai Pembeli
-            </p>
-            <h2 className="text-2xl font-bold tracking-tight">Produk Terlaris</h2>
+            <p className="eyebrow mb-1">Customer Favorites</p>
+            <h2 className="text-2xl font-bold tracking-tight">Best rated</h2>
           </div>
         </div>
       </div>
@@ -353,10 +338,10 @@ function TopRatedSection({ products }) {
 
 function ValueStrip() {
   const items = [
-    { icon: <Truck size={22} strokeWidth={1.5} />, title: 'Gratis Ongkir', desc: 'Min. belanja Rp 150.000' },
-    { icon: <ShieldCheck size={22} strokeWidth={1.5} />, title: 'Produk Original', desc: 'Brand resmi terverifikasi' },
-    { icon: <RotateCcw size={22} strokeWidth={1.5} />, title: 'Retur Mudah', desc: 'Garansi 7 hari' },
-    { icon: <Headset size={22} strokeWidth={1.5} />, title: 'Respon Cepat', desc: 'CS aktif setiap hari' },
+    { icon: <Truck size={22} strokeWidth={1.5} />, title: 'Free shipping', desc: 'On orders over Rp 150,000' },
+    { icon: <ShieldCheck size={22} strokeWidth={1.5} />, title: 'Verified brands', desc: 'No knockoffs, ever' },
+    { icon: <RotateCcw size={22} strokeWidth={1.5} />, title: 'Easy returns', desc: '7-day window' },
+    { icon: <Headset size={22} strokeWidth={1.5} />, title: 'We’re all ears', desc: 'Support, every day' },
   ]
   return (
     <section className="border-y border-line bg-paper-soft">
@@ -377,28 +362,28 @@ function ValueStrip() {
 
 function EditorialBlock() {
   return (
-    <section className="container-page py-20">
+    <section className="section-lg container-page">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded">
+        <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded-lg shadow-card">
           <img
             src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80"
-            alt="Editorial"
+            alt="Curated editorial"
             className="h-full w-full object-cover"
           />
         </div>
         <div className="lg:pl-8">
-          <p className="text-2xs font-bold uppercase tracking-[0.3em] text-ink-muted mb-4">Editorial</p>
+          <p className="eyebrow mb-4">Editorial</p>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight mb-6">
-            Kurasi brand <br />terbaik di Indonesia.
+            The best brands —<br /><span className="italic font-light">handpicked, not just listed.</span>
           </h2>
           <p className="text-base text-ink-muted leading-relaxed max-w-md mb-8">
-            Setiap brand di SDP melewati proses kurasi ketat. Kami percaya pada kualitas, cerita di balik produk, dan pengalaman belanja yang jujur.
+            Every brand on SDP earns its spot. We care about quality, the story behind it, and a shopping experience that doesn't cut corners.
           </p>
           <Link
             to="/vendors"
             className="inline-flex items-center gap-2 text-sm font-semibold text-ink underline underline-offset-4 hover:gap-3 transition-all"
           >
-            Kenali Brand Kami <ArrowRight size={14} />
+            Meet our brands <ArrowRight size={14} />
           </Link>
         </div>
       </div>

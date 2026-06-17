@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Trash2, Minus, Plus, ArrowRight, Truck, Award } from 'lucide-react'
+import { ShoppingBag, Trash2, ArrowRight, Truck, Award } from 'lucide-react'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { usePublicSettings } from '../hooks/useProducts'
-import { Button, EmptyState, PriceLabel } from '../components/ui'
+import { Button, Card, EmptyState, PriceLabel, QuantityStepper } from '../components/ui'
 import TierBadge from '../components/TierBadge'
 import { formatRupiah } from '../lib/utils'
 import { calcTierDiscount } from '../lib/pricing'
@@ -30,11 +30,11 @@ export default function CartPage() {
       <div className="container-page py-20">
         <EmptyState
           icon={<ShoppingBag size={48} strokeWidth={1.2} />}
-          title="Keranjang masih kosong"
-          description="Jelajahi koleksi dan tambahkan favorit kamu ke keranjang."
+          title="Your cart's empty."
+          description="Let's find something you'll love."
           action={
             <Link to="/products">
-              <Button variant="primary">Mulai Belanja</Button>
+              <Button variant="primary">Start shopping</Button>
             </Link>
           }
         />
@@ -44,15 +44,15 @@ export default function CartPage() {
 
   return (
     <div className="container-page py-8 lg:py-12">
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink mb-1">Keranjang Belanja</h1>
-      <p className="text-sm text-ink-muted mb-8">{items.length} produk · {items.reduce((s, i) => s + i.quantity, 0)} item</p>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink mb-1">Your Cart</h1>
+      <p className="text-sm text-ink-muted mb-8">{items.length} products · {items.reduce((s, i) => s + i.quantity, 0)} items</p>
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8">
         <div>
-          <div className="border border-line rounded-lg overflow-hidden">
+          <Card padding="none" className="overflow-hidden">
             <div className="hidden md:grid grid-cols-[1fr_140px_140px_40px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
-              <span>Produk</span>
-              <span className="text-center">Jumlah</span>
+              <span>Product</span>
+              <span className="text-center">Quantity</span>
               <span className="text-right">Subtotal</span>
               <span></span>
             </div>
@@ -78,25 +78,12 @@ export default function CartPage() {
                   </div>
 
                   <div className="mt-3 md:mt-0 flex md:justify-center items-center justify-between">
-                    <div className="inline-flex items-center border border-line rounded">
-                      <button
-                        onClick={() => setQuantity(item.product_id, item.quantity - 1)}
-                        disabled={item.quantity <= 1}
-                        className="h-9 w-9 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                        aria-label="Kurangi"
-                      >
-                        <Minus size={12} />
-                      </button>
-                      <span className="w-10 text-center text-sm font-semibold tabular-nums">{item.quantity}</span>
-                      <button
-                        onClick={() => setQuantity(item.product_id, item.quantity + 1)}
-                        disabled={item.quantity >= item.stock}
-                        className="h-9 w-9 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                        aria-label="Tambah"
-                      >
-                        <Plus size={12} />
-                      </button>
-                    </div>
+                    <QuantityStepper
+                      size="sm"
+                      value={item.quantity}
+                      max={item.stock}
+                      onChange={(n) => setQuantity(item.product_id, Math.min(Math.max(1, n), item.stock))}
+                    />
                     <p className="md:hidden text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
                   </div>
 
@@ -106,7 +93,7 @@ export default function CartPage() {
                     <button
                       onClick={() => removeItem(item.product_id)}
                       className="text-ink-muted hover:text-state-danger transition p-2"
-                      aria-label="Hapus"
+                      aria-label="Remove"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -117,29 +104,29 @@ export default function CartPage() {
                       onClick={() => removeItem(item.product_id)}
                       className="text-xs text-ink-muted hover:text-state-danger inline-flex items-center gap-1.5"
                     >
-                      <Trash2 size={12} /> Hapus
+                      <Trash2 size={12} /> Remove
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
-          </div>
+          </Card>
 
           <div className="mt-4">
             <Link to="/products" className="text-sm text-ink-muted hover:text-ink inline-flex items-center gap-1.5">
-              ← Lanjutkan belanja
+              ← Keep browsing
             </Link>
           </div>
         </div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
-          <div className="border border-line rounded-lg p-5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Ringkasan</h2>
+          <Card padding="md">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h2>
 
             {tier && (
               <div className="mb-4 pb-4 border-b border-line flex items-center gap-2">
                 <TierBadge tier={tier} size="sm" />
-                <span className="text-2xs text-ink-muted">{tier.discount}% off di checkout</span>
+                <span className="text-2xs text-ink-muted">{tier.discount}% off at checkout</span>
               </div>
             )}
 
@@ -150,43 +137,43 @@ export default function CartPage() {
               </div>
               {tier && tierDiscount > 0 && (
                 <div className="flex justify-between">
-                  <dt className="text-ink-muted">Diskon {tier.name}</dt>
+                  <dt className="text-ink-muted">{tier.name} discount</dt>
                   <dd className="text-state-success tabular-nums">−{formatRupiah(tierDiscount)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Ongkir</dt>
-                <dd className="text-ink-muted text-xs">Dihitung di checkout</dd>
+                <dt className="text-ink-muted">Shipping</dt>
+                <dd className="text-ink-muted text-xs">Calculated at checkout</dd>
               </div>
               <div className="pt-3 border-t border-line flex justify-between items-baseline">
-                <dt className="text-sm font-semibold">Total Estimasi</dt>
+                <dt className="text-sm font-semibold">Estimated total</dt>
                 <dd className="text-lg font-bold tabular-nums">{formatRupiah(subtotalAfterTier)}</dd>
               </div>
             </dl>
 
             <Link to="/checkout" className="block mt-5">
               <Button variant="accent" fullWidth size="lg" className="group">
-                Lanjut ke Checkout
+                Continue to checkout
                 <ArrowRight size={16} className="ml-1.5 transition group-hover:translate-x-0.5" />
               </Button>
             </Link>
 
             {!user && (
               <Link to="/login?next=/keranjang" className="block mt-3 text-2xs text-ink-muted hover:text-ink text-center inline-flex items-center justify-center gap-1 w-full">
-                <Award size={11} /> Login untuk dapatkan diskon tier
+                <Award size={11} /> Sign in for tier discounts
               </Link>
             )}
-          </div>
+          </Card>
 
           {freeShippingMin > 0 && (
-            <div className="border border-line rounded-lg p-4 bg-paper-soft">
+            <Card padding="md" className="bg-paper-soft">
               <div className="flex items-start gap-2.5">
                 <Truck size={16} className="text-ink-soft mt-0.5 shrink-0" />
                 <div className="flex-1">
                   {remaining > 0 ? (
                     <>
                       <p className="text-xs text-ink-soft">
-                        Tambah <strong className="text-ink tabular-nums">{formatRupiah(remaining)}</strong> lagi untuk gratis ongkir.
+                        Add <strong className="text-ink tabular-nums">{formatRupiah(remaining)}</strong> more for free shipping.
                       </p>
                       <div className="mt-2 h-1 bg-line rounded-full overflow-hidden">
                         <div className="h-full bg-ink transition-all" style={{ width: `${progress}%` }} />
@@ -194,12 +181,12 @@ export default function CartPage() {
                     </>
                   ) : (
                     <p className="text-xs text-state-success font-semibold">
-                      Selamat! Pesananmu mendapat gratis ongkir.
+                      You've got free shipping on this order.
                     </p>
                   )}
                 </div>
               </div>
-            </div>
+            </Card>
           )}
         </aside>
       </div>

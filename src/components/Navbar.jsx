@@ -6,6 +6,7 @@ import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useCategories, usePublicSettings } from '../hooks/useProducts'
 import { cn } from '../lib/utils'
+import { Input } from './ui'
 
 export default function Navbar() {
   const [search, setSearch] = useState('')
@@ -33,7 +34,7 @@ export default function Navbar() {
           type="button"
           onClick={openMobileMenu}
           className="lg:hidden text-ink"
-          aria-label="Buka menu"
+          aria-label="Open menu"
         >
           <Menu size={22} />
         </button>
@@ -43,16 +44,14 @@ export default function Navbar() {
         </Link>
 
         <form onSubmit={handleSearch} className="hidden lg:flex flex-1 max-w-2xl">
-          <div className="relative w-full">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari produk atau brand..."
-              className="w-full h-10 pl-11 pr-4 text-sm bg-paper-soft border border-line rounded placeholder:text-ink-faint focus:outline-none focus:border-ink transition"
-            />
-          </div>
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products or brands..."
+            leadingIcon={<Search size={16} />}
+            className="h-10 bg-paper-soft"
+          />
         </form>
 
         <nav className="hidden lg:flex items-center gap-1 ml-auto">
@@ -63,7 +62,7 @@ export default function Navbar() {
             type="button"
             onClick={openCart}
             className="relative h-10 w-10 rounded inline-flex items-center justify-center text-ink hover:bg-paper-warm transition"
-            aria-label="Keranjang"
+            aria-label="Cart"
           >
             <ShoppingBag size={20} strokeWidth={1.6} />
             {cartCount > 0 && (
@@ -87,7 +86,7 @@ export default function Navbar() {
               className="h-10 px-3 rounded inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-paper-warm transition"
             >
               <LayoutDashboard size={15} strokeWidth={1.6} />
-              <span className="hidden xl:inline">Panel Vendor</span>
+              <span className="hidden xl:inline">Vendor Panel</span>
             </Link>
           )}
           {user ? (
@@ -104,7 +103,7 @@ export default function Navbar() {
               className="h-10 px-4 rounded inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink hover:bg-paper-warm transition"
             >
               <User size={16} strokeWidth={1.6} />
-              Masuk
+              Sign in
             </Link>
           )}
         </nav>
@@ -114,7 +113,7 @@ export default function Navbar() {
             type="button"
             onClick={openCart}
             className="relative h-10 w-10 rounded inline-flex items-center justify-center text-ink"
-            aria-label="Keranjang"
+            aria-label="Cart"
           >
             <ShoppingBag size={20} strokeWidth={1.6} />
             {cartCount > 0 && (
@@ -163,7 +162,7 @@ function AnnounceBar({ settings }) {
         type="button"
         onClick={handleDismiss}
         className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center text-white/60 hover:text-white"
-        aria-label="Tutup pengumuman"
+        aria-label="Dismiss announcement"
       >
         <X size={14} />
       </button>
@@ -223,33 +222,31 @@ export function MobileMenuDrawer() {
     <div className="fixed inset-0 z-50 bg-paper lg:hidden flex flex-col">
       <div className="flex items-center justify-between px-5 h-16 border-b border-line">
         <span className="text-xl font-bold tracking-[0.2em] text-ink">SDP</span>
-        <button onClick={close} className="text-ink p-2" aria-label="Tutup">
+        <button onClick={close} className="text-ink p-2" aria-label="Close">
           <X size={22} />
         </button>
       </div>
       <div className="px-5 py-4 border-b border-line">
         <form onSubmit={submitSearch}>
-          <div className="relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-faint" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari produk..."
-              autoFocus
-              className="w-full h-11 pl-11 pr-4 text-sm bg-paper-soft border border-line rounded focus:outline-none focus:border-ink"
-            />
-          </div>
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search products..."
+            leadingIcon={<Search size={16} />}
+            autoFocus
+            className="h-11 bg-paper-soft"
+          />
         </form>
       </div>
       <nav className="flex-1 overflow-y-auto py-2">
         <Link to="/" onClick={close} className="block px-5 py-3 text-sm font-medium text-ink border-b border-line">
-          Beranda
+          Home
         </Link>
         <Link to="/products" onClick={close} className="block px-5 py-3 text-sm font-medium text-ink border-b border-line">
-          Semua Produk
+          All Products
         </Link>
-        <p className="px-5 pt-5 pb-2 text-2xs font-bold uppercase tracking-widest text-ink-faint">Kategori</p>
+        <p className="px-5 pt-5 pb-2 text-2xs font-bold uppercase tracking-widest text-ink-faint">Categories</p>
         {categories.map((cat) => (
           <Link
             key={cat.id}
@@ -264,25 +261,25 @@ export function MobileMenuDrawer() {
       <div className="border-t border-line px-5 py-4 space-y-2">
         {user?.role === 'admin' && (
           <Link to="/admin" onClick={close} className="block w-full text-center border border-ink py-3 rounded text-sm font-medium text-ink">
-            Panel Admin
+            Admin Panel
           </Link>
         )}
         {user?.role === 'vendor_admin' && (
           <Link to="/vendor" onClick={close} className="block w-full text-center border border-ink py-3 rounded text-sm font-medium text-ink">
-            Panel Vendor
+            Vendor Panel
           </Link>
         )}
         {user ? (
           <Link to="/akun" onClick={close} className="block w-full text-center bg-ink text-white py-3 rounded text-sm font-medium">
-            Akun Saya — {user.name}
+            My Account — {user.name}
           </Link>
         ) : (
           <div className="flex gap-2">
             <Link to="/login" onClick={close} className="flex-1 text-center bg-ink text-white py-3 rounded text-sm font-medium">
-              Masuk
+              Sign in
             </Link>
             <Link to="/register" onClick={close} className="flex-1 text-center border border-line py-3 rounded text-sm font-medium text-ink">
-              Daftar
+              Sign up
             </Link>
           </div>
         )}

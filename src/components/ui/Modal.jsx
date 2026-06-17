@@ -47,7 +47,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md', clo
                         type="button"
                         onClick={onClose}
                         className="text-ink-faint hover:text-ink transition"
-                        aria-label="Tutup"
+                        aria-label="Close"
                       >
                         <X size={18} />
                       </button>

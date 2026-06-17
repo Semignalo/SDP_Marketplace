@@ -40,14 +40,14 @@ export default function CitySearchInput({ value, cityId, onChange, error }) {
   return (
     <div ref={wrapRef} className="relative">
       <label className="block text-xs font-semibold text-ink-muted mb-1.5">
-        Alamat <span className="text-state-danger">*</span>
+        City <span className="text-state-danger">*</span>
       </label>
       <input
         type="text"
         value={search}
         onChange={handleInput}
         onFocus={() => setOpen(true)}
-        placeholder="Cari kecamatan, kelurahan, atau kota..."
+        placeholder="Search district, sub-district, or city..."
         className={[
           'w-full h-11 px-3 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink',
           error ? 'border-state-danger' : 'border-line',
@@ -56,14 +56,14 @@ export default function CitySearchInput({ value, cityId, onChange, error }) {
       />
       {error && <p className="text-xs text-state-danger mt-1">{error}</p>}
       {open && (
-        <ul className="absolute z-50 w-full mt-1 bg-white border border-line rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-1 bg-paper rounded-lg shadow-hover max-h-48 overflow-y-auto">
           {isFetching && (
             <li className="px-3 py-2 text-sm text-ink-muted flex items-center gap-2">
-              <Spinner size={16} /> Mencari...
+              <Spinner size={16} /> Searching...
             </li>
           )}
           {!isFetching && cities.length === 0 && debouncedSearch.trim().length >= 2 && (
-            <li className="px-3 py-2 text-sm text-ink-muted">Lokasi tidak ditemukan</li>
+            <li className="px-3 py-2 text-sm text-ink-muted">No locations found</li>
           )}
           {!isFetching && cities.map((city) => (
             <li

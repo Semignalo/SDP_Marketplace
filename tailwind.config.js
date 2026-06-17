@@ -8,19 +8,19 @@ export default {
       },
       colors: {
         ink: {
-          DEFAULT: '#0a0a0a',
-          soft: '#262626',
-          muted: '#525252',
-          faint: '#a3a3a3',
+          DEFAULT: '#2a2520',
+          soft: '#4a4038',
+          muted: '#6b6058',
+          faint: '#a39a8e',
         },
         paper: {
-          DEFAULT: '#ffffff',
-          soft: '#fafafa',
-          warm: '#f5f5f5',
+          DEFAULT: '#faf7f2',
+          soft: '#f3eee6',
+          warm: '#ece4d6',
         },
         line: {
-          DEFAULT: '#e5e5e5',
-          strong: '#d4d4d4',
+          DEFAULT: '#e5ddd0',
+          strong: '#d6cbb8',
         },
         state: {
           success: '#15803d',
@@ -29,9 +29,13 @@ export default {
           info: '#1d4ed8',
         },
         accent: {
-          DEFAULT: '#ea580c',
-          hover: '#c2410c',
-          soft: '#fff7ed',
+          DEFAULT: '#c1623d',
+          hover: '#a14e30',
+          soft: '#f5e8e0',
+        },
+        rating: {
+          DEFAULT: '#f5b400',
+          soft: '#fdf0d5',
         },
       },
       borderRadius: {

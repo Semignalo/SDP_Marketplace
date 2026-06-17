@@ -13,7 +13,7 @@ export function Pagination({ currentPage, lastPage, onChange, className = '' }) 
         onClick={() => onChange(currentPage - 1)}
         disabled={currentPage <= 1}
         className="h-9 w-9 inline-flex items-center justify-center rounded border border-line text-ink-soft hover:bg-paper-warm disabled:opacity-40 disabled:cursor-not-allowed transition"
-        aria-label="Halaman sebelumnya"
+        aria-label="Previous page"
       >
         <ChevronLeft size={16} />
       </button>
@@ -46,7 +46,7 @@ export function Pagination({ currentPage, lastPage, onChange, className = '' }) 
         onClick={() => onChange(currentPage + 1)}
         disabled={currentPage >= lastPage}
         className="h-9 w-9 inline-flex items-center justify-center rounded border border-line text-ink-soft hover:bg-paper-warm disabled:opacity-40 disabled:cursor-not-allowed transition"
-        aria-label="Halaman berikutnya"
+        aria-label="Next page"
       >
         <ChevronRight size={16} />
       </button>

@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { useAuthStore } from '../../stores/useAuthStore'
 import { useUpdateProfile, useChangePassword } from '../../hooks/useAccount'
 import { extractErrorMessage } from '../../lib/api'
-import { Input, Button, Textarea } from '../../components/ui'
+import { Card, Input, Button, Textarea } from '../../components/ui'
 import TierBadge from '../../components/TierBadge'
 import { formatRupiah, cn } from '../../lib/utils'
 
@@ -30,7 +30,7 @@ export default function ProfilePage() {
     try {
       await updateProfile.mutateAsync(form)
       await fetchMe()
-      toast.success('Profil diperbarui')
+      toast.success('Profile updated')
     } catch (err) {
       const apiErrors = err.response?.data?.errors
       if (apiErrors) {
@@ -47,32 +47,32 @@ export default function ProfilePage() {
     <div className="space-y-12">
       <TierCard user={user} />
 
-      <Section title="Informasi Pribadi" description="Perbarui detail kontak kamu.">
+      <Section title="Personal Information" description="Keep your contact details up to date.">
         <form onSubmit={handleProfile} className="space-y-5 max-w-md">
           <Input
-            label="Nama Lengkap"
+            label="Full Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             error={errors.name}
           />
-          <Input label="Email" value={user?.email || ''} disabled hint="Email tidak bisa diubah" />
+          <Input label="Email" value={user?.email || ''} disabled hint="Email can't be changed" />
           <Input
-            label="Nomor HP"
+            label="Phone Number"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             placeholder="+62..."
             error={errors.phone}
           />
           <Textarea
-            label="Alamat Singkat"
+            label="Short Address"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             rows={2}
             error={errors.address}
-            hint="Untuk alamat pengiriman lengkap, gunakan tab Alamat."
+            hint="For full shipping addresses, use the Addresses tab."
           />
           <Button type="submit" loading={updateProfile.isPending}>
-            Simpan Perubahan
+            Save changes
           </Button>
         </form>
       </Section>
@@ -91,13 +91,13 @@ function PasswordCard({ changePassword }) {
     setErrors({})
 
     if (pwd.password !== pwd.password_confirmation) {
-      setErrors({ password_confirmation: 'Konfirmasi tidak cocok' })
+      setErrors({ password_confirmation: "Passwords don't match" })
       return
     }
 
     try {
       await changePassword.mutateAsync(pwd)
-      toast.success('Password berhasil diubah')
+      toast.success('Password changed')
       setPwd({ current_password: '', password: '', password_confirmation: '' })
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -112,31 +112,31 @@ function PasswordCard({ changePassword }) {
   }
 
   return (
-    <Section title="Ubah Password" description="Pastikan menggunakan password yang kuat (minimal 8 karakter).">
+    <Section title="Change Password" description="Use a strong password — at least 8 characters.">
       <form onSubmit={handlePassword} className="space-y-5 max-w-md">
         <Input
-          label="Password Saat Ini"
+          label="Current Password"
           type="password"
           value={pwd.current_password}
           onChange={(e) => setPwd({ ...pwd, current_password: e.target.value })}
           error={errors.current_password}
         />
         <Input
-          label="Password Baru"
+          label="New Password"
           type="password"
           value={pwd.password}
           onChange={(e) => setPwd({ ...pwd, password: e.target.value })}
           error={errors.password}
         />
         <Input
-          label="Konfirmasi Password Baru"
+          label="Confirm New Password"
           type="password"
           value={pwd.password_confirmation}
           onChange={(e) => setPwd({ ...pwd, password_confirmation: e.target.value })}
           error={errors.password_confirmation}
         />
         <Button type="submit" variant="outline" loading={changePassword.isPending}>
-          Ubah Password
+          Change password
         </Button>
       </form>
     </Section>
@@ -155,13 +155,13 @@ function Section({ title, description, children }) {
   )
 }
 
-// Gradient per tier level: from-ink (hitam) ke aksen warna tier
+// Gradient per tier level: neutral ink ramping up to accent/gold for top tiers
 const TIER_GRADIENT = {
-  1: 'bg-gradient-to-r from-ink to-orange-950',
-  2: 'bg-gradient-to-r from-ink to-slate-700',
-  3: 'bg-gradient-to-r from-ink to-amber-900',
-  4: 'bg-gradient-to-r from-ink to-blue-950',
-  5: 'bg-gradient-to-r from-ink to-purple-950',
+  1: 'bg-gradient-to-r from-ink to-ink-soft',
+  2: 'bg-gradient-to-r from-ink to-ink-muted',
+  3: 'bg-gradient-to-r from-ink to-accent',
+  4: 'bg-gradient-to-r from-ink to-accent-hover',
+  5: 'bg-gradient-to-r from-ink to-rating',
 }
 
 function TierCard({ user }) {
@@ -177,7 +177,7 @@ function TierCard({ user }) {
   const headerBg = tier ? (TIER_GRADIENT[tier.level] || TIER_GRADIENT[1]) : 'bg-paper-soft'
 
   return (
-    <section className="border border-line rounded-lg overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <div className={cn(
         'px-6 py-5 flex items-center justify-between gap-4 flex-wrap',
         headerBg,
@@ -185,19 +185,19 @@ function TierCard({ user }) {
       )}>
         <div>
           <p className={cn('text-2xs uppercase tracking-[0.25em] mb-2', tier ? 'text-white/60' : 'text-ink-muted')}>
-            Tier Loyalty Kamu
+            Your Loyalty Tier
           </p>
           <div className="flex items-center gap-3">
             <TierBadge tier={tier} size="lg" onDark={!!tier} />
             {tier && (
-              <span className="text-sm font-medium text-white/90">Diskon {tier.discount}% di setiap order</span>
+              <span className="text-sm font-medium text-white/90">{tier.discount}% off every order</span>
             )}
           </div>
         </div>
         <div className={cn('text-right', tier ? 'text-white' : 'text-ink')}>
-          <p className={cn('text-2xs uppercase tracking-widest', tier ? 'text-white/60' : 'text-ink-muted')}>Total Belanja</p>
+          <p className={cn('text-2xs uppercase tracking-widest', tier ? 'text-white/60' : 'text-ink-muted')}>Total Spent</p>
           <p className="text-2xl font-bold tabular-nums">{formatRupiah(spending)}</p>
-          <p className={cn('text-2xs', tier ? 'text-white/50' : 'text-ink-faint')}>dari order completed</p>
+          <p className={cn('text-2xs', tier ? 'text-white/50' : 'text-ink-faint')}>from completed orders</p>
         </div>
       </div>
 
@@ -206,7 +206,7 @@ function TierCard({ user }) {
           <div>
             <div className="flex items-baseline justify-between mb-2">
               <p className="text-xs text-ink-muted">
-                Belanja <strong className="text-ink tabular-nums">{formatRupiah(next.remaining)}</strong> lagi untuk naik ke
+                Spend <strong className="text-ink tabular-nums">{formatRupiah(next.remaining)}</strong> more to reach
               </p>
               <TierBadge tier={next} size="sm" />
             </div>
@@ -222,14 +222,14 @@ function TierCard({ user }) {
           </div>
         ) : (
           <p className="text-xs text-state-success font-semibold">
-            Selamat! Kamu sudah di tier tertinggi. 🎉
+            You've hit the top tier. Nicely done.
           </p>
         )}
 
         <details className="group">
           <summary className="cursor-pointer text-xs text-ink-muted hover:text-ink list-none flex items-center gap-1.5">
             <span className="inline-block transition group-open:rotate-90">▸</span>
-            Lihat semua tier & benefit
+            See all tiers & benefits
           </summary>
           <ul className="mt-3 space-y-1.5">
             {(user?.all_tiers || []).map((t) => (
@@ -237,11 +237,11 @@ function TierCard({ user }) {
             ))}
           </ul>
           <p className="text-2xs text-ink-faint mt-3">
-            Nama & nilai tier bisa diubah admin. Yang ditampilkan di atas adalah default.
+            Tier names and thresholds can be customized by admins. Shown above are the defaults.
           </p>
         </details>
       </div>
-    </section>
+    </Card>
   )
 }
 
@@ -254,7 +254,7 @@ function TierTableRow({ level, name, minSpend, discount, active }) {
       <div className="flex items-center gap-2">
         <span className="w-5 text-center text-ink-faint tabular-nums">{level}</span>
         <span>{name}</span>
-        {active && <span className="text-2xs text-state-success">• Aktif</span>}
+        {active && <span className="text-2xs text-state-success">• Current</span>}
       </div>
       <div className="flex items-center gap-4 tabular-nums text-ink-muted">
         <span>min {formatRupiah(minSpend)}</span>

@@ -3,11 +3,11 @@ import { Plus, MapPin, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAddresses, useSaveAddress, useDeleteAddress } from '../../hooks/useAccount'
 import { extractErrorMessage } from '../../lib/api'
-import { Button, Input, Modal, Badge, EmptyState } from '../../components/ui'
+import { Button, Card, Input, Modal, Badge, EmptyState, Spinner } from '../../components/ui'
 import CitySearchInput from '../../components/CitySearchInput'
 
 const EMPTY_FORM = {
-  label: 'Rumah',
+  label: 'Home',
   recipient_name: '',
   phone: '',
   address: '',
@@ -56,7 +56,7 @@ export default function AddressPage() {
     setErrors({})
     try {
       await saveAddress.mutateAsync({ id: editing, ...form })
-      toast.success(editing ? 'Alamat diperbarui' : 'Alamat ditambahkan')
+      toast.success(editing ? 'Address updated' : 'Address added')
       setModalOpen(false)
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -71,10 +71,10 @@ export default function AddressPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Hapus alamat ini?')) return
+    if (!confirm('Delete this address?')) return
     try {
       await deleteAddress.mutateAsync(id)
-      toast.success('Alamat dihapus')
+      toast.success('Address deleted')
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
@@ -84,10 +84,10 @@ export default function AddressPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-base font-semibold text-ink">Daftar Alamat</h2>
-          <p className="text-sm text-ink-muted mt-1">Kelola alamat pengiriman kamu.</p>
+          <h2 className="text-base font-semibold text-ink">Your Addresses</h2>
+          <p className="text-sm text-ink-muted mt-1">Manage your shipping addresses.</p>
         </div>
-        <Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Tambah</Button>
+        <Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Add</Button>
       </div>
 
       {isLoading ? (
@@ -95,18 +95,18 @@ export default function AddressPage() {
       ) : addresses.length === 0 ? (
         <EmptyState
           icon={<MapPin size={40} strokeWidth={1.2} />}
-          title="Belum ada alamat"
-          description="Tambahkan alamat untuk mempercepat proses checkout."
-          action={<Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Tambah Alamat</Button>}
+          title="No addresses yet."
+          description="Add one now — checkout's faster when it's ready to go."
+          action={<Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Add address</Button>}
         />
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
           {addresses.map((addr) => (
-            <li key={addr.id} className="border border-line rounded-lg p-5">
+            <Card as="li" key={addr.id} padding="md">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="neutral">{addr.label}</Badge>
-                  {addr.is_default && <Badge variant="ink">Utama</Badge>}
+                  {addr.is_default && <Badge variant="ink">Default</Badge>}
                 </div>
                 <div className="flex items-center gap-1">
                   <button onClick={() => openEdit(addr)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
@@ -122,7 +122,7 @@ export default function AddressPage() {
               <p className="text-sm text-ink-soft mt-2 leading-relaxed">
                 {addr.address}, {addr.city} {addr.postal_code}
               </p>
-            </li>
+            </Card>
           ))}
         </ul>
       )}
@@ -130,19 +130,19 @@ export default function AddressPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Edit Alamat' : 'Tambah Alamat'}
+        title={editing ? 'Edit Address' : 'Add Address'}
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} loading={saveAddress.isPending}>Simpan</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} loading={saveAddress.isPending}>Save</Button>
           </div>
         }
       >
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-4">
-          <Input label="Label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Rumah/Kantor" error={errors.label} />
-          <Input label="Nama Penerima" value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} error={errors.recipient_name} />
-          <Input label="Nomor HP" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
+          <Input label="Label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Home/Office" error={errors.label} />
+          <Input label="Recipient Name" value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} error={errors.recipient_name} />
+          <Input label="Phone Number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
           <CitySearchInput
             value={form.city}
             cityId={form.city_id}
@@ -150,9 +150,9 @@ export default function AddressPage() {
             error={errors.city}
           />
           <div className="sm:col-span-2">
-            <Input label="Detail Alamat" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Nama jalan, nomor rumah, RT/RW" error={errors.address} />
+            <Input label="Address Details" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street name, house number, RT/RW" error={errors.address} />
           </div>
-          <Input label="Kode Pos" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} error={errors.postal_code} />
+          <Input label="Postal Code" value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} error={errors.postal_code} />
           <div className="flex items-end">
             <label className="inline-flex items-center gap-2 cursor-pointer h-11">
               <input
@@ -161,7 +161,7 @@ export default function AddressPage() {
                 onChange={(e) => setForm({ ...form, is_default: e.target.checked })}
                 className="h-4 w-4 accent-ink"
               />
-              <span className="text-sm text-ink-soft">Jadikan alamat utama</span>
+              <span className="text-sm text-ink-soft">Set as default address</span>
             </label>
           </div>
         </form>

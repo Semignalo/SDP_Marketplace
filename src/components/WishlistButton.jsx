@@ -16,15 +16,15 @@ export default function WishlistButton({ productId, className = '', size = 14, v
     e.preventDefault()
     e.stopPropagation()
     if (!user) {
-      toast.message('Masuk untuk menyimpan wishlist')
+      toast.message('Sign in to save to your wishlist')
       navigate('/login')
       return
     }
     toggle.mutate(productId, {
       onSuccess: (inWishlist) => {
-        toast.success(inWishlist ? 'Disimpan ke wishlist' : 'Dihapus dari wishlist')
+        toast.success(inWishlist ? 'Saved to wishlist' : 'Removed from wishlist')
       },
-      onError: () => toast.error('Gagal mengubah wishlist'),
+      onError: () => toast.error('Could not update wishlist'),
     })
   }
 
@@ -41,7 +41,7 @@ export default function WishlistButton({ productId, className = '', size = 14, v
         )}
       >
         <Heart size={size} className={isActive ? 'fill-current' : ''} />
-        {isActive ? 'Tersimpan' : 'Wishlist'}
+        {isActive ? 'Saved' : 'Wishlist'}
       </button>
     )
   }
@@ -51,9 +51,9 @@ export default function WishlistButton({ productId, className = '', size = 14, v
       type="button"
       onClick={handleClick}
       disabled={toggle.isPending}
-      aria-label={isActive ? 'Hapus dari wishlist' : 'Tambah ke wishlist'}
+      aria-label={isActive ? 'Remove from wishlist' : 'Add to wishlist'}
       className={cn(
-        'h-8 w-8 rounded-pill bg-white shadow-card flex items-center justify-center transition',
+        'h-8 w-8 rounded-pill bg-paper shadow-card flex items-center justify-center transition',
         isActive ? 'text-state-danger' : 'text-ink-muted hover:text-ink',
         className,
       )}

@@ -7,11 +7,11 @@ import { Select, SkeletonProductCard, EmptyState, Pagination, Drawer, Button } f
 import { cn } from '../lib/utils'
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Terbaru' },
-  { value: 'oldest', label: 'Terlama' },
-  { value: 'price_asc', label: 'Harga Terendah' },
-  { value: 'price_desc', label: 'Harga Tertinggi' },
-  { value: 'name_asc', label: 'Nama A→Z' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
+  { value: 'price_asc', label: 'Lowest price' },
+  { value: 'price_desc', label: 'Highest price' },
+  { value: 'name_asc', label: 'Name A→Z' },
 ]
 
 export default function ProductsPage() {
@@ -47,18 +47,18 @@ export default function ProductsPage() {
   const activeCategory = findCategory(categories, category)
 
   const pageTitle = search
-    ? `Hasil "${search}"`
+    ? `Results for "${search}"`
     : activeCategory
       ? activeCategory.name
-      : 'Semua Produk'
+      : 'All Products'
 
   return (
     <div className="container-page py-8 lg:py-12">
       <header className="mb-8">
-        <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">Katalog</p>
+        <p className="eyebrow mb-2">Catalog</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-ink">{pageTitle}</h1>
         <p className="text-sm text-ink-muted mt-2">
-          {isFetching ? 'Memuat…' : `${meta.total} produk ditemukan`}
+          {isFetching ? 'Loading…' : `${meta.total} products found`}
         </p>
       </header>
 
@@ -103,11 +103,11 @@ export default function ProductsPage() {
           ) : products.length === 0 ? (
             <EmptyState
               icon={<Search size={48} strokeWidth={1.2} />}
-              title="Produk tidak ditemukan"
-              description="Coba ubah filter atau kata kunci pencarian."
+              title="Nothing here yet."
+              description="Try a different filter or search term."
               action={
                 <Button variant="outline" onClick={() => setSearchParams({})}>
-                  Reset Filter
+                  Reset filters
                 </Button>
               }
             />
@@ -130,7 +130,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <Drawer open={filterOpen} onClose={() => setFilterOpen(false)} title="Filter" side="left">
+      <Drawer open={filterOpen} onClose={() => setFilterOpen(false)} title="Filters" side="left">
         <div className="p-5">
           <FilterPanel
             categories={categories}
@@ -152,15 +152,15 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
   return (
     <div className="space-y-8">
       {search && (
-        <div className="bg-paper-soft border border-line rounded p-3 flex items-start justify-between gap-2">
+        <div className="bg-paper-soft rounded-lg shadow-card p-3 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-2xs uppercase tracking-widest text-ink-muted">Pencarian</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-muted">Search</p>
             <p className="text-sm text-ink mt-0.5 truncate">{search}</p>
           </div>
           <button
             onClick={() => onSearchChange('')}
             className="text-ink-muted hover:text-ink"
-            aria-label="Hapus pencarian"
+            aria-label="Clear search"
           >
             <X size={16} />
           </button>
@@ -169,7 +169,7 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
 
       <div>
         <h3 className="text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
-          Kategori
+          Category
         </h3>
         <ul className="space-y-0.5">
           <li>
@@ -181,7 +181,7 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
                 !activeCategory ? 'text-ink font-semibold' : 'text-ink-muted hover:text-ink',
               )}
             >
-              Semua Kategori
+              All Categories
             </button>
           </li>
           {categories.map((parent) => (

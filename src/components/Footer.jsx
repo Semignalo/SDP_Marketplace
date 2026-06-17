@@ -19,7 +19,7 @@ export default function Footer() {
               {settings?.site_name || 'SDP'}
             </span>
             <p className="mt-4 text-sm text-white/60 max-w-xs leading-relaxed">
-              {settings?.site_tagline || 'Marketplace multi-brand pilihan kamu.'}
+              {settings?.site_tagline || 'Brands you trust. All in one place.'}
             </p>
             <div className="mt-6 flex items-center gap-3">
               {instagram && (
@@ -40,31 +40,31 @@ export default function Footer() {
             </div>
           </div>
 
-          <FooterCol title="Belanja">
-            <FooterLink to="/products">Semua Produk</FooterLink>
-            <FooterLink to="/products?sort=newest">Baru Datang</FooterLink>
-            <FooterLink to="/products?sort=price_asc">Harga Terendah</FooterLink>
-            <FooterLink to="/vendors">Semua Brand</FooterLink>
+          <FooterCol title="Shop">
+            <FooterLink to="/products">All Products</FooterLink>
+            <FooterLink to="/products?sort=newest">New In</FooterLink>
+            <FooterLink to="/products?sort=price_asc">Lowest Price</FooterLink>
+            <FooterLink to="/vendors">All Brands</FooterLink>
           </FooterCol>
 
-          <FooterCol title="Akun">
-            <FooterLink to="/login">Masuk</FooterLink>
-            <FooterLink to="/register">Daftar</FooterLink>
-            <FooterLink to="/akun/pesanan">Pesanan Saya</FooterLink>
+          <FooterCol title="Account">
+            <FooterLink to="/login">Sign in</FooterLink>
+            <FooterLink to="/register">Sign up</FooterLink>
+            <FooterLink to="/akun/pesanan">My Orders</FooterLink>
             <FooterLink to="/akun/wishlist">Wishlist</FooterLink>
           </FooterCol>
 
-          <FooterCol title="Bantuan">
-            <FooterLink to="/bantuan">Pusat Bantuan</FooterLink>
-            <FooterLink to="/kebijakan">Kebijakan Privasi</FooterLink>
-            <FooterLink to="/syarat">Syarat &amp; Ketentuan</FooterLink>
-            <FooterLink to="/kontak">Kontak Kami</FooterLink>
+          <FooterCol title="Help">
+            <FooterLink to="/bantuan">Help Center</FooterLink>
+            <FooterLink to="/kebijakan">Privacy Policy</FooterLink>
+            <FooterLink to="/syarat">Terms of Service</FooterLink>
+            <FooterLink to="/kontak">Talk to Us</FooterLink>
           </FooterCol>
         </div>
 
         <div className="mt-14 pt-6 border-t border-white/10 flex flex-col md:flex-row gap-4 items-center justify-between text-2xs uppercase tracking-widest text-white/40">
           <p>© {year} {settings?.site_name || 'SDP Marketplace'}. All rights reserved.</p>
-          <p>Made with care in Indonesia</p>
+          <p>Built with care, in Indonesia.</p>
         </div>
       </div>
     </footer>

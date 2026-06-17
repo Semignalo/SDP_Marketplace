@@ -10,25 +10,25 @@ export default function AccountLayout() {
   const navigate = useNavigate()
 
   const items = [
-    { to: '/akun/profil', icon: <User size={16} />, label: 'Profil' },
-    { to: '/akun/alamat', icon: <MapPin size={16} />, label: 'Alamat' },
-    { to: '/akun/pesanan', icon: <Package size={16} />, label: 'Pesanan' },
+    { to: '/akun/profil', icon: <User size={16} />, label: 'Profile' },
+    { to: '/akun/alamat', icon: <MapPin size={16} />, label: 'Addresses' },
+    { to: '/akun/pesanan', icon: <Package size={16} />, label: 'Orders' },
     { to: '/akun/wishlist', icon: <Heart size={16} />, label: 'Wishlist' },
-    // Menu Komisi tampil untuk semua user authenticated (tier loyalty refactor)
-    ...(user ? [{ to: '/akun/komisi', icon: <Wallet size={16} />, label: 'Komisi' }] : []),
+    // Komisi tab shows for every authenticated user (tier loyalty refactor)
+    ...(user ? [{ to: '/akun/komisi', icon: <Wallet size={16} />, label: 'Commissions' }] : []),
   ]
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Berhasil keluar')
+    toast.success('Signed out')
     navigate('/')
   }
 
   return (
     <div className="container-page py-8 lg:py-12">
       <header className="mb-8 pb-6 border-b border-line">
-        <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">Akun</p>
-        <h1 className="text-3xl font-bold tracking-tight">Halo, {user?.name?.split(' ')[0]}</h1>
+        <p className="eyebrow mb-2">Account</p>
+        <h1 className="text-3xl font-bold tracking-tight">Hi, {user?.name?.split(' ')[0]}</h1>
         <p className="text-sm text-ink-muted mt-1">{user?.email}</p>
       </header>
 
@@ -59,7 +59,7 @@ export default function AccountLayout() {
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm text-ink-soft hover:bg-paper-warm transition mt-4 pt-4 border-t border-line"
             >
               <LogOut size={16} className="shrink-0" />
-              <span>Keluar</span>
+              <span>Sign out</span>
             </button>
           </nav>
         </aside>

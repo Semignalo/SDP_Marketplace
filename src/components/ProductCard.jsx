@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Star } from 'lucide-react'
-import { Badge } from './ui'
-import { PriceLabel } from './ui'
+import { Badge, PriceLabel, StarRating } from './ui'
 import WishlistButton from './WishlistButton'
 
 const LOW_STOCK_THRESHOLD = 5
@@ -13,7 +11,7 @@ export default function ProductCard({ product }) {
 
   return (
     <Link to={`/products/${product.slug}`} className="group block">
-      <div className="relative aspect-square bg-paper-warm overflow-hidden rounded mb-3">
+      <div className="relative aspect-square bg-paper-warm overflow-hidden rounded-lg shadow-card group-hover:shadow-hover transition-shadow mb-3">
         {image ? (
           <img
             src={image}
@@ -29,13 +27,13 @@ export default function ProductCard({ product }) {
 
         {!product.in_stock && (
           <div className="absolute inset-0 bg-paper/70 backdrop-blur-[1px] flex items-center justify-center">
-            <Badge variant="ink">Stok Habis</Badge>
+            <Badge variant="ink">Sold out</Badge>
           </div>
         )}
 
         {isLowStock && (
           <div className="absolute top-2.5 left-2.5">
-            <Badge variant="danger">Sisa {product.stock}</Badge>
+            <Badge variant="danger">{product.stock} left</Badge>
           </div>
         )}
 
@@ -52,11 +50,7 @@ export default function ProductCard({ product }) {
         {product.name}
       </h3>
       {product.rating_avg && (
-        <div className="flex items-center gap-1 mb-1 text-2xs text-ink-muted">
-          <Star size={11} className="fill-amber-400 text-amber-400" />
-          <span className="font-semibold text-ink-soft">{product.rating_avg}</span>
-          <span>({product.reviews_count})</span>
-        </div>
+        <StarRating value={product.rating_avg} count={product.reviews_count} className="mb-1" />
       )}
       <PriceLabel price={price} oldPrice={product.compare_at_price} size="sm" />
     </Link>

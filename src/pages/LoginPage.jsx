@@ -4,7 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
 import { extractErrorMessage, api } from '../lib/api'
-import { Button, Input } from '../components/ui'
+import { Button, Card, Input } from '../components/ui'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -30,8 +30,8 @@ export default function LoginPage() {
     setGeneralError('')
 
     const localErrors = {}
-    if (!form.email) localErrors.email = 'Email wajib diisi'
-    if (!form.password) localErrors.password = 'Password wajib diisi'
+    if (!form.email) localErrors.email = 'Email is required'
+    if (!form.password) localErrors.password = 'Password is required'
     if (Object.keys(localErrors).length) {
       setErrors(localErrors)
       return
@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     try {
       const user = await login(form.email, form.password)
-      toast.success('Berhasil masuk')
+      toast.success('Signed in')
       const fallback = user?.role === 'vendor_admin' ? '/vendor'
         : user?.role === 'admin' ? '/admin'
         : '/'
@@ -50,7 +50,7 @@ export default function LoginPage() {
         setUnverifiedEmail(data.email || form.email)
         setGeneralError(data.message)
       } else {
-        setGeneralError(extractErrorMessage(err, 'Gagal masuk. Coba lagi.'))
+        setGeneralError(extractErrorMessage(err, "Couldn't sign in. Try again."))
       }
     }
   }
@@ -60,23 +60,23 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <Link to="/" className="inline-block text-2xl font-bold tracking-[0.2em] text-ink">SDP</Link>
-          <h1 className="mt-8 text-2xl font-bold tracking-tight text-ink">Masuk ke akun</h1>
+          <h1 className="mt-8 text-2xl font-bold tracking-tight text-ink">Welcome back.</h1>
           <p className="text-sm text-ink-muted mt-2">
-            Belum punya akun?{' '}
+            New here?{' '}
             <Link to="/register" className="text-ink font-semibold underline underline-offset-4">
-              Daftar gratis
+              Create a free account
             </Link>
           </p>
         </div>
 
-        <div className="bg-paper border border-line rounded-lg p-6 lg:p-8">
+        <Card padding="lg">
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email"
               type="email"
               value={form.email}
               onChange={update('email')}
-              placeholder="email@contoh.com"
+              placeholder="email@example.com"
               error={errors.email}
               autoComplete="email"
             />
@@ -105,24 +105,24 @@ export default function LoginPage() {
                     onClick={async () => {
                       try {
                         await api.post('/auth/email/resend', { email: unverifiedEmail })
-                        toast.success('Email verifikasi dikirim ulang!')
+                        toast.success('Verification email resent!')
                       } catch {
-                        toast.error('Gagal mengirim ulang. Coba lagi.')
+                        toast.error("Couldn't resend it. Try again.")
                       }
                     }}
                   >
-                    Kirim ulang verifikasi →
+                    Resend verification →
                   </button>
                 )}
               </div>
             )}
 
             <Button type="submit" fullWidth loading={isLoading} size="lg">
-              Masuk
+              Sign in
             </Button>
           </form>
 
-        </div>
+        </Card>
       </div>
     </div>
   )

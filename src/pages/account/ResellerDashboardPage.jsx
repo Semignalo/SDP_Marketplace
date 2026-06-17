@@ -3,34 +3,34 @@ import { Link } from 'react-router-dom'
 import { Copy, Check, Wallet, Users, Package, TrendingUp, ArrowDownToLine, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useResellerSummary, useResellerCommissions, useResellerNetwork, useResellerWithdrawals, useSubmitWithdrawal } from '../../hooks/useReseller'
-import { Badge, Skeleton, EmptyState, Pagination, Button, Input, Modal } from '../../components/ui'
+import { Badge, Card, Skeleton, EmptyState, Pagination, Button, Input, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
 const STATUS_LABELS = {
-  pending: { label: 'Menunggu', variant: 'warning' },
-  earned:  { label: 'Dikonfirmasi', variant: 'neutral' },
-  paid:    { label: 'Dibayar', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  pending: { label: 'Pending', variant: 'warning' },
+  earned:  { label: 'Confirmed', variant: 'neutral' },
+  paid:    { label: 'Paid', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
 const WITHDRAWAL_STATUS = {
-  pending:  { label: 'Diproses', variant: 'warning' },
-  approved: { label: 'Disetujui', variant: 'success' },
-  rejected: { label: 'Ditolak', variant: 'danger' },
+  pending:  { label: 'Processing', variant: 'warning' },
+  approved: { label: 'Approved', variant: 'success' },
+  rejected: { label: 'Rejected', variant: 'danger' },
 }
 
 const FILTERS = [
-  { value: '', label: 'Semua' },
-  { value: 'pending', label: 'Menunggu' },
-  { value: 'earned', label: 'Dikonfirmasi' },
-  { value: 'paid', label: 'Dibayar' },
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'earned', label: 'Confirmed' },
+  { value: 'paid', label: 'Paid' },
 ]
 
 const TABS = [
-  { value: 'komisi', label: 'Komisi' },
-  { value: 'penarikan', label: 'Penarikan' },
-  { value: 'jaringan', label: 'Jaringan' },
+  { value: 'komisi', label: 'Commissions' },
+  { value: 'penarikan', label: 'Withdrawals' },
+  { value: 'jaringan', label: 'Network' },
 ]
 
 const EMPTY_FORM = { amount: '', bank_name: '', bank_account_number: '', bank_account_name: '', notes: '' }
@@ -63,10 +63,10 @@ export default function ResellerDashboardPage() {
     try {
       await navigator.clipboard.writeText(referralUrl)
       setCopied(true)
-      toast.success('Link referral disalin')
+      toast.success('Referral link copied')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Gagal menyalin')
+      toast.error('Could not copy')
     }
   }
 
@@ -83,7 +83,7 @@ export default function ResellerDashboardPage() {
         ...form,
         amount: Number(form.amount),
       })
-      toast.success('Permintaan penarikan berhasil dikirim!')
+      toast.success('Withdrawal request submitted!')
       setModalOpen(false)
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -101,8 +101,8 @@ export default function ResellerDashboardPage() {
     <div className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-ink">Dashboard Komisi</h2>
-          <p className="text-sm text-ink-muted mt-1">Pantau komisi & link referral kamu.</p>
+          <h2 className="text-base font-semibold text-ink">Commission Dashboard</h2>
+          <p className="text-sm text-ink-muted mt-1">Track your commissions and referral link.</p>
         </div>
         <Button
           leadingIcon={<ArrowDownToLine size={15} />}
@@ -110,19 +110,18 @@ export default function ResellerDashboardPage() {
           disabled={availableBalance <= 0 || hasPendingWithdrawal}
           size="sm"
         >
-          Tarik Komisi
+          Withdraw
         </Button>
       </div>
 
       {hasPendingWithdrawal && (
-        <div className="px-4 py-3 bg-state-warning/10 border border-state-warning/30 rounded text-xs text-ink-soft">
-          Ada permintaan penarikan yang sedang diproses. Tunggu hingga selesai sebelum mengajukan yang baru.
+        <div className="px-4 py-3 bg-state-warning/10 rounded text-xs text-ink-soft">
+          You have a withdrawal in progress. Wait for it to finish before requesting another.
         </div>
       )}
 
-      {/* Referral link card */}
-      <div className="border border-line rounded-lg p-5 bg-paper-soft">
-        <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Link Referral Kamu</p>
+      <Card padding="md" className="bg-paper-soft">
+        <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Your Referral Link</p>
         <div className="flex items-center gap-2">
           <code className="flex-1 px-3 py-2.5 bg-paper border border-line rounded text-sm text-ink tabular-nums truncate">
             {referralUrl || '—'}
@@ -137,21 +136,20 @@ export default function ResellerDashboardPage() {
             )}
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? 'Tersalin' : 'Salin'}
+            {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
         <p className="mt-3 text-xs text-ink-muted">
-          Bagikan link ini. Setiap pembelian customer via link kamu otomatis dapat komisi
-          {summary?.rate && <strong className="text-ink"> {summary.rate}%</strong>}.
+          Share this link. Every purchase made through it automatically earns you
+          {summary?.rate && <strong className="text-ink"> {summary.rate}%</strong>} commission.
         </p>
-      </div>
+      </Card>
 
-      {/* Summary cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Wallet size={18} />} label="Total Komisi" value={sumLoading ? null : formatRupiah(summary?.total_earned || 0)} accent />
-        <StatCard icon={<TrendingUp size={18} />} label="Siap Ditarik" value={sumLoading ? null : formatRupiah(summary?.earned || 0)} />
-        <StatCard icon={<Package size={18} />} label="Total Order" value={sumLoading ? null : (summary?.orders_count || 0).toString()} />
-        <StatCard icon={<Users size={18} />} label="Pelanggan Unik" value={sumLoading ? null : (summary?.customers_count || 0).toString()} />
+        <StatCard icon={<Wallet size={18} />} label="Total Earned" value={sumLoading ? null : formatRupiah(summary?.total_earned || 0)} accent />
+        <StatCard icon={<TrendingUp size={18} />} label="Available" value={sumLoading ? null : formatRupiah(summary?.earned || 0)} />
+        <StatCard icon={<Package size={18} />} label="Total Orders" value={sumLoading ? null : (summary?.orders_count || 0).toString()} />
+        <StatCard icon={<Users size={18} />} label="Unique Customers" value={sumLoading ? null : (summary?.customers_count || 0).toString()} />
       </div>
 
       {/* Tabs */}
@@ -197,15 +195,15 @@ export default function ResellerDashboardPage() {
           ))}
         </div>
 
-        <section className="border border-line rounded-lg overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
-            <span>Pesanan</span><span>Customer</span><span>Tanggal</span>
-            <span className="text-right">Komisi</span><span className="text-right">Status</span>
+            <span>Order</span><span>Customer</span><span>Date</span>
+            <span className="text-right">Commission</span><span className="text-right">Status</span>
           </div>
           {comLoading ? (
             <div className="p-6 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : commissionData?.data?.length === 0 ? (
-            <div className="p-10"><EmptyState icon={<Wallet size={40} strokeWidth={1.2} />} title="Belum ada komisi" description="Bagikan link referral kamu untuk mulai dapat komisi." /></div>
+            <div className="p-10"><EmptyState icon={<Wallet size={40} strokeWidth={1.2} />} title="No commissions yet." description="Share your referral link to start earning." /></div>
           ) : (
             <ul className="divide-y divide-line">
               {commissionData?.data?.map((c) => {
@@ -221,7 +219,7 @@ export default function ResellerDashboardPage() {
                     <p className="text-sm text-ink-soft mt-2 md:mt-0">
                       {c.customer?.name || c.guest_name || '—'}
                       {!c.customer && c.guest_name && (
-                        <span className="ml-1.5 text-2xs px-1.5 py-0.5 bg-paper-warm text-ink-muted rounded">Tamu</span>
+                        <span className="ml-1.5 text-2xs px-1.5 py-0.5 bg-paper-warm text-ink-muted rounded">Guest</span>
                       )}
                     </p>
                     <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(c.created_at)}</p>
@@ -235,23 +233,23 @@ export default function ResellerDashboardPage() {
               })}
             </ul>
           )}
-        </section>
+        </Card>
         {commissionData?.meta?.last_page > 1 && (
-          <Pagination currentPage={commissionData.meta.current_page} totalPages={commissionData.meta.last_page} onPageChange={setPage} />
+          <Pagination currentPage={commissionData.meta.current_page} lastPage={commissionData.meta.last_page} onChange={setPage} />
         )}
       </>}
 
-      {/* Tab: Penarikan */}
+      {/* Tab: Withdrawals */}
       {tab === 'penarikan' && (
-        <section className="border border-line rounded-lg overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <div className="hidden md:grid grid-cols-[1fr_1.2fr_120px_140px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
-            <span>Tanggal</span><span>Rekening</span><span className="text-right">Jumlah</span><span>Status</span>
+            <span>Date</span><span>Account</span><span className="text-right">Amount</span><span>Status</span>
           </div>
           {wdLoading ? (
             <div className="p-6 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !withdrawalData?.data?.length ? (
             <div className="p-10">
-              <EmptyState icon={<ArrowDownToLine size={40} strokeWidth={1.2} />} title="Belum ada penarikan" description="Klik 'Tarik Komisi' untuk mengajukan penarikan saldo." />
+              <EmptyState icon={<ArrowDownToLine size={40} strokeWidth={1.2} />} title="No withdrawals yet." description="Click 'Withdraw' to request a payout." />
             </div>
           ) : (
             <ul className="divide-y divide-line">
@@ -262,7 +260,7 @@ export default function ResellerDashboardPage() {
                     <p className="text-xs text-ink-muted tabular-nums">{formatDate(w.created_at)}</p>
                     <div className="mt-1 md:mt-0">
                       <p className="text-sm text-ink">{w.bank_name} — {w.bank_account_number}</p>
-                      <p className="text-xs text-ink-muted">a.n. {w.bank_account_name}</p>
+                      <p className="text-xs text-ink-muted">a/n {w.bank_account_name}</p>
                     </div>
                     <p className="text-sm font-bold tabular-nums md:text-right mt-2 md:mt-0">{formatRupiah(w.amount)}</p>
                     <div className="mt-2 md:mt-0">
@@ -274,19 +272,19 @@ export default function ResellerDashboardPage() {
               })}
             </ul>
           )}
-        </section>
+        </Card>
       )}
 
-      {/* Tab: Jaringan */}
+      {/* Tab: Network */}
       {tab === 'jaringan' && (
-        <section className="border border-line rounded-lg overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <div className="hidden md:grid grid-cols-[2fr_1fr_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
-            <span>Member</span><span>Bergabung</span><span className="text-right">Order</span>
+            <span>Member</span><span>Joined</span><span className="text-right">Orders</span>
           </div>
           {netLoading ? (
             <div className="p-6 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
           ) : !network?.length ? (
-            <div className="p-10"><EmptyState icon={<Users size={40} strokeWidth={1.2} />} title="Belum ada jaringan" description="Bagikan link referral kamu agar orang lain bergabung." /></div>
+            <div className="p-10"><EmptyState icon={<Users size={40} strokeWidth={1.2} />} title="No network yet." description="Share your referral link to get people to join." /></div>
           ) : (
             <ul className="divide-y divide-line">
               {network.map((u) => (
@@ -296,70 +294,69 @@ export default function ResellerDashboardPage() {
                     <p className="text-xs text-ink-muted">{u.email}</p>
                   </div>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(u.joined_at)}</p>
-                  <p className="text-sm font-semibold text-ink md:text-right mt-1 md:mt-0 tabular-nums">{u.orders_count} order</p>
+                  <p className="text-sm font-semibold text-ink md:text-right mt-1 md:mt-0 tabular-nums">{u.orders_count} orders</p>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
       )}
 
-      {/* Modal Tarik Komisi */}
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title="Tarik Komisi"
+        title="Withdraw Commission"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button onClick={handleSubmitWithdrawal} loading={submitWithdrawal.isPending} leadingIcon={<ArrowDownToLine size={15} />}>
-              Ajukan Penarikan
+              Submit request
             </Button>
           </div>
         }
       >
         <div className="space-y-4">
           <div className="px-4 py-3 bg-paper-soft rounded text-sm">
-            Saldo tersedia (Dikonfirmasi):{' '}
+            Available balance (Confirmed):{' '}
             <span className="font-bold text-ink">{formatRupiah(availableBalance)}</span>
           </div>
 
           <Input
-            label="Jumlah Penarikan (Rp)"
+            label="Withdrawal Amount (Rp)"
             type="number"
             value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            placeholder={`Maks. ${formatRupiah(availableBalance)}`}
+            placeholder={`Max. ${formatRupiah(availableBalance)}`}
             error={formErrors.amount}
           />
           <Input
-            label="Nama Bank"
+            label="Bank Name"
             value={form.bank_name}
             onChange={(e) => setForm({ ...form, bank_name: e.target.value })}
-            placeholder="BCA, BNI, Mandiri, dll"
+            placeholder="BCA, BNI, Mandiri, etc."
             error={formErrors.bank_name}
           />
           <Input
-            label="Nomor Rekening"
+            label="Account Number"
             value={form.bank_account_number}
             onChange={(e) => setForm({ ...form, bank_account_number: e.target.value })}
             placeholder="1234567890"
             error={formErrors.bank_account_number}
           />
           <Input
-            label="Nama Pemilik Rekening"
+            label="Account Holder Name"
             value={form.bank_account_name}
             onChange={(e) => setForm({ ...form, bank_account_name: e.target.value })}
-            placeholder="Sesuai buku tabungan"
+            placeholder="As shown on your bank account"
             error={formErrors.bank_account_name}
           />
           <div>
-            <label className="text-xs font-medium text-ink-soft block mb-1.5">Catatan (opsional)</label>
+            <label className="text-xs font-medium text-ink-soft block mb-1.5">Notes (optional)</label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              placeholder="Catatan tambahan untuk admin"
+              placeholder="Any extra notes for the admin"
               className="w-full px-3 py-2.5 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink resize-none"
             />
           </div>
@@ -371,7 +368,7 @@ export default function ResellerDashboardPage() {
 
 function StatCard({ icon, label, value, accent = false }) {
   return (
-    <div className={cn('border rounded-lg p-5', accent ? 'bg-ink text-white border-ink' : 'bg-paper border-line')}>
+    <Card padding="md" className={cn(accent && 'bg-ink text-white')}>
       <div className={cn('flex items-center gap-2 text-2xs uppercase tracking-widest', accent ? 'text-white/60' : 'text-ink-muted')}>
         {icon}<span>{label}</span>
       </div>
@@ -380,6 +377,6 @@ function StatCard({ icon, label, value, accent = false }) {
           ? <Skeleton className={cn('h-6 w-24', accent && 'bg-white/20')} />
           : <p className="text-xl md:text-2xl font-bold tabular-nums">{value}</p>}
       </div>
-    </div>
+    </Card>
   )
 }

@@ -38,4 +38,20 @@
     @apply bg-ink text-white rounded shadow-hover -translate-y-16 focus:translate-y-0;
     @apply transition-transform duration-200;
   }
+
+  .eyebrow {
+    @apply text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted;
+  }
+
+  .section-sm {
+    @apply py-10 lg:py-14;
+  }
+
+  .section-md {
+    @apply py-14 lg:py-20;
+  }
+
+  .section-lg {
+    @apply py-20 lg:py-28;
+  }
 }

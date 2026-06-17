@@ -4,17 +4,17 @@ import { ArrowLeft, MapPin, Truck, RefreshCw, FileText, CreditCard, XCircle } fr
 import { toast } from 'sonner'
 import { useOrder } from '../../hooks/useAccount'
 import { useSnapToken, useCancelOrder } from '../../hooks/useCheckout'
-import { Badge, Skeleton, EmptyState, Button, Modal } from '../../components/ui'
+import { Badge, Card, Skeleton, EmptyState, Button, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 import { loadSnap } from '../../lib/snap'
 
 const STATUS = {
-  pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning' },
-  processing:      { label: 'Diproses',            variant: 'neutral' },
-  shipped:         { label: 'Dikirim',             variant: 'neutral' },
-  completed:       { label: 'Selesai',             variant: 'success' },
-  cancelled:       { label: 'Dibatalkan',          variant: 'danger'  },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
+  processing:      { label: 'Processing',       variant: 'neutral' },
+  shipped:         { label: 'Shipped',          variant: 'neutral' },
+  completed:       { label: 'Completed',        variant: 'success' },
+  cancelled:       { label: 'Cancelled',        variant: 'danger'  },
 }
 
 export default function OrderDetailPage() {
@@ -29,9 +29,9 @@ export default function OrderDetailPage() {
       const { data } = await import('../../lib/api').then(m => m.api.get(`/orders/${orderNumber}/check-status`))
       await refetch()
       if (data.data.status === 'pending_payment') {
-        toast.message('Belum ada pembayaran yang terdeteksi')
+        toast.message('No payment detected yet')
       } else {
-        toast.success('Status diperbarui!')
+        toast.success('Status updated!')
       }
     } catch {
       await refetch()
@@ -44,8 +44,8 @@ export default function OrderDetailPage() {
       const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
       snap.pay(token, {
         onSuccess: () => handleCheckStatus(),
-        onPending: () => { toast.info('Pembayaran pending.'); refetch() },
-        onError: () => toast.error('Pembayaran gagal. Silakan coba lagi.'),
+        onPending: () => { toast.info('Payment pending.'); refetch() },
+        onError: () => toast.error('Payment failed. Please try again.'),
         onClose: () => refetch(),
       })
     } catch (err) {
@@ -56,7 +56,7 @@ export default function OrderDetailPage() {
   const handleCancel = async () => {
     try {
       await cancelMut.mutateAsync(orderNumber)
-      toast.success('Pesanan berhasil dibatalkan.')
+      toast.success('Order cancelled.')
       setCancelModalOpen(false)
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -77,8 +77,8 @@ export default function OrderDetailPage() {
   if (error || !order) {
     return (
       <EmptyState
-        title="Pesanan tidak ditemukan"
-        action={<Link to="/akun/pesanan"><Button variant="outline">Kembali ke Pesanan</Button></Link>}
+        title="We couldn't find this order."
+        action={<Link to="/akun/pesanan"><Button variant="outline">Back to Orders</Button></Link>}
       />
     )
   }
@@ -89,14 +89,13 @@ export default function OrderDetailPage() {
   return (
     <div className="space-y-6">
       <Link to="/akun/pesanan" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
-        <ArrowLeft size={14} /> Kembali
+        <ArrowLeft size={14} /> Back
       </Link>
 
-      {/* Header pesanan */}
-      <div className="border border-line rounded-lg p-5">
+      <Card padding="md">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-faint">Nomor Pesanan</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-faint">Order Number</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -111,14 +110,13 @@ export default function OrderDetailPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* ── Panel Pembayaran (hanya saat pending) ── */}
       {isPending && (
-        <div className="border border-line rounded-lg overflow-hidden">
+        <Card padding="none" className="overflow-hidden">
           <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
             <div>
-              <p className="text-2xs uppercase tracking-widest text-ink-faint">Total Tagihan</p>
+              <p className="text-2xs uppercase tracking-widest text-ink-faint">Amount Due</p>
               <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatRupiah(order.total)}</p>
             </div>
             <button
@@ -127,7 +125,7 @@ export default function OrderDetailPage() {
               className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink border border-line rounded px-3 py-1.5 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={12} className={isRefetching ? 'animate-spin' : ''} />
-              Cek Status
+              Check status
             </button>
           </div>
 
@@ -139,40 +137,40 @@ export default function OrderDetailPage() {
               loading={snapMut.isPending}
               leadingIcon={<CreditCard size={16} />}
             >
-              Bayar Sekarang
+              Pay now
             </Button>
             <p className="text-2xs text-ink-faint text-center">
-              Aman via Midtrans — VA, QRIS, GoPay, kartu kredit, dan lainnya.
+              Secured via Midtrans — VA, QRIS, GoPay, credit card, and more.
             </p>
             <div className="pt-1 border-t border-line">
               <button
                 onClick={() => setCancelModalOpen(true)}
                 className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-state-danger hover:underline py-2"
               >
-                <XCircle size={13} /> Batalkan Pesanan
+                <XCircle size={13} /> Cancel order
               </button>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <InfoCard icon={<MapPin size={16} />} title="Alamat Pengiriman">
+        <InfoCard icon={<MapPin size={16} />} title="Shipping Address">
           <p className="text-sm font-semibold">{order.shipping_name}</p>
           <p className="text-xs text-ink-muted mt-0.5">{order.shipping_phone}</p>
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">{order.shipping_address}</p>
         </InfoCard>
-        <InfoCard icon={<Truck size={16} />} title="Pengiriman">
-          <p className="text-sm">{order.shipping_courier || 'Kurir belum dipilih'}</p>
+        <InfoCard icon={<Truck size={16} />} title="Shipping">
+          <p className="text-sm">{order.shipping_courier || 'Courier not picked yet'}</p>
           {order.tracking_number && (
-            <p className="text-xs text-ink-muted mt-1">No. Resi: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>
+            <p className="text-xs text-ink-muted mt-1">Tracking number: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>
           )}
         </InfoCard>
       </div>
 
-      <section className="border border-line rounded-lg overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted px-5 py-3 border-b border-line bg-paper-soft">
-          Item Pesanan
+          Order Items
         </h3>
         <ul className="divide-y divide-line">
           {(order.items || []).map((item) => (
@@ -197,35 +195,35 @@ export default function OrderDetailPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </Card>
 
-      <section className="border border-line rounded-lg p-5">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Ringkasan</h3>
+      <Card padding="md">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h3>
         <dl className="space-y-2 text-sm">
           <Row label="Subtotal" value={formatRupiah(Number(order.subtotal) + Number(order.tier_discount || 0))} />
           {order.tier_discount > 0 && (
-            <Row label={`Diskon Tier ${order.tier_name || ''}`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
+            <Row label={`${order.tier_name || ''} tier discount`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
           )}
-          <Row label="Ongkir" value={formatRupiah(order.shipping_cost)} />
+          <Row label="Shipping" value={formatRupiah(order.shipping_cost)} />
           <div className="pt-2 mt-2 border-t border-line">
             <Row label="Total" value={formatRupiah(order.total)} bold />
           </div>
         </dl>
-      </section>
+      </Card>
 
       <Modal
         open={cancelModalOpen}
         onClose={() => setCancelModalOpen(false)}
-        title="Batalkan Pesanan?"
+        title="Cancel this order?"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setCancelModalOpen(false)}>Tidak</Button>
-            <Button variant="danger" onClick={handleCancel} loading={cancelMut.isPending}>Ya, Batalkan</Button>
+            <Button variant="outline" onClick={() => setCancelModalOpen(false)}>No</Button>
+            <Button variant="danger" onClick={handleCancel} loading={cancelMut.isPending}>Yes, cancel</Button>
           </div>
         }
       >
         <p className="text-sm text-ink-soft">
-          Pesanan <span className="font-semibold text-ink">{orderNumber}</span> akan dibatalkan dan stok produk dikembalikan. Tindakan ini tidak dapat diurungkan.
+          Order <span className="font-semibold text-ink">{orderNumber}</span> will be cancelled and stock will be returned. This can't be undone.
         </p>
       </Modal>
     </div>
@@ -234,12 +232,12 @@ export default function OrderDetailPage() {
 
 function InfoCard({ icon, title, children }) {
   return (
-    <div className="border border-line rounded-lg p-5">
+    <Card padding="md">
       <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
         <span className="text-ink">{icon}</span> {title}
       </div>
       {children}
-    </div>
+    </Card>
   )
 }
 

@@ -20,24 +20,24 @@ export default function MobileBottomNav() {
   return (
     <nav
       className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-paper border-t border-line"
-      aria-label="Navigasi utama mobile"
+      aria-label="Main mobile navigation"
     >
       <div className="grid grid-cols-4 h-14">
-        <Item to="/" icon={<Home size={18} />} label="Beranda" exact />
+        <Item to="/" icon={<Home size={18} />} label="Home" exact />
         <button
           type="button"
           onClick={openMenu}
           className="inline-flex flex-col items-center justify-center gap-0.5 text-ink-muted hover:text-ink active:bg-paper-warm"
-          aria-label="Buka kategori"
+          aria-label="Open categories"
         >
           <Grid3x3 size={18} />
-          <span className="text-2xs">Kategori</span>
+          <span className="text-2xs">Categories</span>
         </button>
         <button
           type="button"
           onClick={openCart}
           className="relative inline-flex flex-col items-center justify-center gap-0.5 text-ink-muted hover:text-ink active:bg-paper-warm"
-          aria-label="Keranjang"
+          aria-label="Cart"
         >
           <div className="relative">
             <ShoppingBag size={18} />
@@ -47,12 +47,12 @@ export default function MobileBottomNav() {
               </span>
             )}
           </div>
-          <span className="text-2xs">Keranjang</span>
+          <span className="text-2xs">Cart</span>
         </button>
         <Item
           to={user ? '/akun/profil' : '/login'}
           icon={<User size={18} />}
-          label="Akun"
+          label="Account"
         />
       </div>
       <div className="h-[env(safe-area-inset-bottom)]" />

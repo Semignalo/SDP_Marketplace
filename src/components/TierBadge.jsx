@@ -9,13 +9,13 @@ const LEVEL_STYLE = {
   5: 'bg-gradient-to-r from-ink to-ink-soft text-white border-ink',
 }
 
-// Variant untuk background gelap (TierCard header)
+// Variant for dark backgrounds (TierCard header) — neutral-to-gold ladder using design tokens only
 const LEVEL_STYLE_DARK = {
-  1: 'bg-orange-950/70 text-orange-200 border-orange-700',
-  2: 'bg-slate-600/70 text-slate-100 border-slate-400',
-  3: 'bg-amber-800/70 text-amber-200 border-amber-600',
-  4: 'bg-blue-900/70 text-blue-200 border-blue-600',
-  5: 'bg-purple-900/70 text-purple-200 border-purple-600',
+  1: 'bg-white/10 text-white/80 border-white/20',
+  2: 'bg-white/15 text-white/90 border-white/25',
+  3: 'bg-accent/70 text-white border-accent',
+  4: 'bg-accent-hover/80 text-white border-accent-hover',
+  5: 'bg-rating/80 text-ink border-rating',
 }
 
 const SIZE = {
@@ -33,7 +33,7 @@ export default function TierBadge({ tier, size = 'md', showIcon = true, onDark =
         SIZE[size],
         className,
       )}>
-        Belum bertier
+        No tier yet
       </span>
     )
   }

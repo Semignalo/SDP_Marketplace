@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Trash2, Minus, Plus } from 'lucide-react'
+import { ShoppingBag, Trash2 } from 'lucide-react'
 import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
-import { Drawer, Button, EmptyState, PriceLabel } from './ui'
+import { Drawer, Button, EmptyState, PriceLabel, QuantityStepper } from './ui'
 import { formatRupiah } from '../lib/utils'
 
 export default function CartDrawer() {
@@ -17,14 +17,14 @@ export default function CartDrawer() {
     <Drawer
       open={open}
       onClose={close}
-      title={items.length > 0 ? `Keranjang (${items.length})` : 'Keranjang'}
+      title={items.length > 0 ? `Cart (${items.length})` : 'Cart'}
       footer={items.length > 0 && (
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
             <span className="text-xs uppercase tracking-widest text-ink-muted">Subtotal</span>
             <span className="text-lg font-bold tabular-nums">{formatRupiah(subtotal)}</span>
           </div>
-          <p className="text-2xs text-ink-muted">Ongkir & pajak dihitung di checkout</p>
+          <p className="text-2xs text-ink-muted">Shipping and tax — sorted at checkout.</p>
           <Link to="/checkout" onClick={close}>
             <Button variant="accent" fullWidth size="lg">Checkout</Button>
           </Link>
@@ -32,7 +32,7 @@ export default function CartDrawer() {
             onClick={close}
             className="block w-full text-center text-xs text-ink-muted hover:text-ink py-1"
           >
-            Lanjutkan Belanja
+            Keep browsing
           </button>
         </div>
       )}
@@ -40,11 +40,11 @@ export default function CartDrawer() {
       {items.length === 0 ? (
         <EmptyState
           icon={<ShoppingBag size={40} strokeWidth={1.2} />}
-          title="Keranjang kosong"
-          description="Mulai jelajahi koleksi dan tambahkan ke keranjang."
+          title="Your cart's empty."
+          description="Let's find something you'll love."
           action={
             <Link to="/products" onClick={close}>
-              <Button variant="outline">Mulai Belanja</Button>
+              <Button variant="outline">Start shopping</Button>
             </Link>
           }
         />
@@ -66,39 +66,16 @@ export default function CartDrawer() {
                   <PriceLabel price={item.price} size="sm" />
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <div className="inline-flex items-center border border-line rounded">
-                    <button
-                      onClick={() => setQuantity(item.product_id, item.quantity - 1)}
-                      disabled={item.quantity <= 1}
-                      className="h-8 w-8 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                      aria-label="Kurangi"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={item.stock}
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value)
-                        if (!isNaN(val)) setQuantity(item.product_id, Math.min(Math.max(1, val), item.stock))
-                      }}
-                      className="w-10 text-center text-xs font-semibold tabular-nums bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <button
-                      onClick={() => setQuantity(item.product_id, item.quantity + 1)}
-                      disabled={item.quantity >= item.stock}
-                      className="h-8 w-8 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                      aria-label="Tambah"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
+                  <QuantityStepper
+                    size="sm"
+                    value={item.quantity}
+                    max={item.stock}
+                    onChange={(n) => setQuantity(item.product_id, Math.min(Math.max(1, n), item.stock))}
+                  />
                   <button
                     onClick={() => removeItem(item.product_id)}
                     className="text-ink-muted hover:text-state-danger transition"
-                    aria-label="Hapus"
+                    aria-label="Remove"
                   >
                     <Trash2 size={14} />
                   </button>

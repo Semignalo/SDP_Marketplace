@@ -4,7 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
 import { extractErrorMessage } from '../lib/api'
-import { Button, Input } from '../components/ui'
+import { Button, Card, Input } from '../components/ui'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -36,12 +36,12 @@ export default function RegisterPage() {
     setGeneralError('')
 
     const localErrors = {}
-    if (!form.name) localErrors.name = 'Nama wajib diisi'
-    if (!form.email) localErrors.email = 'Email wajib diisi'
-    if (!form.password) localErrors.password = 'Password wajib diisi'
-    else if (form.password.length < 8) localErrors.password = 'Minimal 8 karakter'
+    if (!form.name) localErrors.name = 'Name is required'
+    if (!form.email) localErrors.email = 'Email is required'
+    if (!form.password) localErrors.password = 'Password is required'
+    else if (form.password.length < 8) localErrors.password = 'At least 8 characters'
     if (form.password !== form.password_confirmation) {
-      localErrors.password_confirmation = 'Konfirmasi password tidak cocok'
+      localErrors.password_confirmation = "Passwords don't match"
     }
     if (Object.keys(localErrors).length) {
       setErrors(localErrors)
@@ -63,7 +63,7 @@ export default function RegisterPage() {
         })
         setErrors(apiErrors)
       } else {
-        setGeneralError(extractErrorMessage(err, 'Gagal mendaftar.'))
+        setGeneralError(extractErrorMessage(err, "Couldn't sign up."))
       }
     }
   }
@@ -73,26 +73,26 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <Link to="/" className="inline-block text-2xl font-bold tracking-[0.2em] text-ink">SDP</Link>
-          <h1 className="mt-8 text-2xl font-bold tracking-tight text-ink">Buat akun baru</h1>
+          <h1 className="mt-8 text-2xl font-bold tracking-tight text-ink">Let's get you set up.</h1>
           <p className="text-sm text-ink-muted mt-2">
-            Sudah punya akun?{' '}
+            Already have an account?{' '}
             <Link to="/login" className="text-ink font-semibold underline underline-offset-4">
-              Masuk
+              Sign in
             </Link>
           </p>
         </div>
 
-        <div className="bg-paper border border-line rounded-lg p-6 lg:p-8">
+        <Card padding="lg">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Nama Lengkap" value={form.name} onChange={update('name')} placeholder="Nama kamu" error={errors.name} />
-            <Input label="Email" type="email" value={form.email} onChange={update('email')} placeholder="email@contoh.com" error={errors.email} />
-            <Input label="Nomor HP (opsional)" value={form.phone} onChange={update('phone')} placeholder="+62..." error={errors.phone} />
+            <Input label="Full Name" value={form.name} onChange={update('name')} placeholder="Your name" error={errors.name} />
+            <Input label="Email" type="email" value={form.email} onChange={update('email')} placeholder="email@example.com" error={errors.email} />
+            <Input label="Phone Number (optional)" value={form.phone} onChange={update('phone')} placeholder="+62..." error={errors.phone} />
             <Input
               label="Password"
               type={showPass ? 'text' : 'password'}
               value={form.password}
               onChange={update('password')}
-              placeholder="Min. 8 karakter"
+              placeholder="At least 8 characters"
               error={errors.password}
               trailingIcon={
                 <button type="button" onClick={() => setShowPass(!showPass)} className="hover:text-ink">
@@ -101,24 +101,24 @@ export default function RegisterPage() {
               }
             />
             <Input
-              label="Konfirmasi Password"
+              label="Confirm Password"
               type={showPass ? 'text' : 'password'}
               value={form.password_confirmation}
               onChange={update('password_confirmation')}
-              placeholder="Ulangi password"
+              placeholder="Type it again"
               error={errors.password_confirmation}
             />
 
             <div>
               <Input
-                label="Kode Referral (opsional)"
+                label="Referral Code (optional)"
                 value={form.ref_code}
                 onChange={update('ref_code')}
-                placeholder="Masukkan kode referral"
+                placeholder="Enter a referral code"
                 error={errors.ref_code}
               />
               {form.ref_code && !errors.ref_code && (
-                <p className="text-2xs text-state-success mt-1">✓ Kode referral akan diterapkan</p>
+                <p className="text-2xs text-state-success mt-1">✓ Referral code will be applied</p>
               )}
             </div>
 
@@ -129,14 +129,14 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" fullWidth loading={isLoading} size="lg">
-              Daftar Sekarang
+              Create account
             </Button>
 
             <p className="text-2xs text-ink-muted text-center leading-relaxed">
-              Dengan mendaftar, kamu menyetujui Syarat & Kebijakan Privasi kami.
+              By signing up, you agree to our Terms and Privacy Policy.
             </p>
           </form>
-        </div>
+        </Card>
       </div>
     </div>
   )

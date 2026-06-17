@@ -10,9 +10,9 @@ export default function WishlistPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-base font-semibold text-ink">Wishlist Saya</h2>
+        <h2 className="text-base font-semibold text-ink">Your Wishlist</h2>
         <p className="text-sm text-ink-muted mt-1">
-          {isLoading ? 'Memuat…' : `${products.length} produk tersimpan`}
+          {isLoading ? 'Loading…' : `${products.length} saved products`}
         </p>
       </div>
 
@@ -23,9 +23,9 @@ export default function WishlistPage() {
       ) : products.length === 0 ? (
         <EmptyState
           icon={<Heart size={40} strokeWidth={1.2} />}
-          title="Wishlist masih kosong"
-          description="Simpan produk favoritmu dengan klik ikon hati di halaman produk."
-          action={<Link to="/products"><Button variant="outline">Jelajahi Produk</Button></Link>}
+          title="Your wishlist is empty."
+          description="Tap the heart icon on any product to save it here."
+          action={<Link to="/products"><Button variant="outline">Browse products</Button></Link>}
         />
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, Minus, Plus, ShieldCheck, Truck, Share2, Star } from 'lucide-react'
+import { ChevronRight, ShieldCheck, Truck, Share2, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import ProductCard from '../components/ProductCard'
 import WishlistButton from '../components/WishlistButton'
@@ -9,7 +9,7 @@ import { useProductReviews, useReviewEligibility, useSubmitReview } from '../hoo
 import { useCartStore } from '../stores/useCartStore'
 import { useUIStore } from '../stores/useUIStore'
 import { useAuthStore } from '../stores/useAuthStore'
-import { Button, PriceLabel, Skeleton, EmptyState, Spinner, Textarea } from '../components/ui'
+import { Button, Card, PriceLabel, Skeleton, EmptyState, QuantityStepper, Spinner, StarRating, Textarea } from '../components/ui'
 import { extractErrorMessage } from '../lib/api'
 import { formatRupiah, cn } from '../lib/utils'
 
@@ -27,9 +27,9 @@ export default function ProductDetailPage() {
     return (
       <div className="container-page py-20">
         <EmptyState
-          title="Produk tidak ditemukan"
-          description="Produk yang kamu cari tidak tersedia atau sudah dihapus."
-          action={<Link to="/products"><Button variant="outline">Lihat Semua Produk</Button></Link>}
+          title="We couldn't find this product."
+          description="It may have sold out or been removed."
+          action={<Link to="/products"><Button variant="outline">Browse all products</Button></Link>}
         />
       </div>
     )
@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     addToCart(product, qty)
-    toast.success(`${product.name} ditambahkan ke keranjang`)
+    toast.success(`Added ${product.name} to cart`)
   }
 
   const handleBuyNow = () => {
@@ -53,9 +53,9 @@ export default function ProductDetailPage() {
   return (
     <div className="container-page py-6 lg:py-10">
       <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
-        <Link to="/" className="hover:text-ink">Beranda</Link>
+        <Link to="/" className="hover:text-ink">Home</Link>
         <ChevronRight size={12} />
-        <Link to="/products" className="hover:text-ink">Produk</Link>
+        <Link to="/products" className="hover:text-ink">Products</Link>
         {product.category && (
           <>
             <ChevronRight size={12} />
@@ -66,7 +66,7 @@ export default function ProductDetailPage() {
 
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 mb-20">
         <div>
-          <div className="aspect-square bg-paper-warm overflow-hidden rounded">
+          <div className="aspect-square bg-paper-warm overflow-hidden rounded-lg shadow-card">
             {images[activeImg]?.url && (
               <img src={images[activeImg].url} alt={product.name} className="h-full w-full object-cover" />
             )}
@@ -103,11 +103,7 @@ export default function ProductDetailPage() {
           </h1>
 
           {product.rating_avg && (
-            <div className="mt-2 flex items-center gap-1.5 text-sm">
-              <Star size={14} className="fill-amber-400 text-amber-400" />
-              <span className="font-semibold text-ink">{product.rating_avg}</span>
-              <span className="text-ink-muted">({product.reviews_count} ulasan)</span>
-            </div>
+            <StarRating value={product.rating_avg} count={product.reviews_count} label="reviews" size="md" className="mt-2" />
           )}
 
           <div className="mt-4">
@@ -117,45 +113,31 @@ export default function ProductDetailPage() {
           <div className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
             {product.stock > 0 ? (
               product.stock <= 5 ? (
-                <span className="font-semibold text-state-danger">Stok terbatas — tersisa {product.stock}</span>
+                <span className="font-semibold text-state-danger">Almost gone — {product.stock} left</span>
               ) : (
-                <span>Stok: {product.stock} tersedia</span>
+                <span>{product.stock} in stock</span>
               )
             ) : (
-              <span className="text-state-danger">Stok habis</span>
+              <span className="text-state-danger">Sold out</span>
             )}
             {product.sku && <span className="ml-1">SKU: {product.sku}</span>}
           </div>
 
           {product.description && (
             <div className="mt-6 pt-6 border-t border-line">
-              <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Deskripsi</p>
+              <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Description</p>
               <p className="text-sm text-ink-soft leading-relaxed whitespace-pre-line">{product.description}</p>
             </div>
           )}
 
           <div className="mt-8 pt-6 border-t border-line">
-            <p className="text-2xs uppercase tracking-widest text-ink-muted mb-3">Jumlah</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-muted mb-3">Quantity</p>
             <div className="flex items-center justify-between gap-4">
-              <div className="inline-flex items-center border border-line rounded">
-                <button
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  disabled={qty <= 1}
-                  className="h-11 w-11 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                  aria-label="Kurangi"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="w-12 text-center text-sm font-semibold tabular-nums">{qty}</span>
-                <button
-                  onClick={() => setQty(Math.min(product.stock, qty + 1))}
-                  disabled={qty >= product.stock}
-                  className="h-11 w-11 inline-flex items-center justify-center text-ink-soft hover:bg-paper-warm disabled:opacity-40"
-                  aria-label="Tambah"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
+              <QuantityStepper
+                value={qty}
+                max={product.stock}
+                onChange={(n) => setQty(Math.min(Math.max(1, n), product.stock))}
+              />
               <p className="text-sm text-ink-muted">
                 Subtotal: <strong className="text-ink tabular-nums">{formatRupiah(price * qty)}</strong>
               </p>
@@ -164,10 +146,10 @@ export default function ProductDetailPage() {
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!product.in_stock}>
-              + Keranjang
+              Add to cart
             </Button>
             <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!product.in_stock}>
-              Beli Sekarang
+              Buy now
             </Button>
           </div>
 
@@ -182,17 +164,17 @@ export default function ProductDetailPage() {
                   await navigator.share({ title: product.name, url })
                 } else {
                   await navigator.clipboard.writeText(url)
-                  toast.success('Link produk disalin!')
+                  toast.success('Link copied!')
                 }
               }}
             >
-              <Share2 size={14} /> Bagikan
+              <Share2 size={14} /> Share
             </button>
           </div>
 
           <div className="mt-8 pt-6 border-t border-line space-y-3">
-            <Perk icon={<Truck size={16} />} text="Gratis ongkir min. Rp 150.000" />
-            <Perk icon={<ShieldCheck size={16} />} text="Produk original, retur mudah dalam 7 hari" />
+            <Perk icon={<Truck size={16} />} text="Free shipping over Rp 150,000" />
+            <Perk icon={<ShieldCheck size={16} />} text="Genuine products. Easy 7-day returns." />
           </div>
         </div>
       </div>
@@ -202,7 +184,7 @@ export default function ProductDetailPage() {
       {related.length > 0 && (
         <section className="border-t border-line pt-12 mt-12">
           <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-6">
-            Mungkin Kamu Suka
+            You might also like
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
             {related.slice(0, 4).map((p) => <ProductCard key={p.id} product={p} />)}
@@ -235,15 +217,9 @@ function ReviewsSection({ slug, productId }) {
     <section className="border-t border-line pt-12 mt-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted">
-          Ulasan Pembeli
+          Customer Reviews
         </h2>
-        {ratingAvg && (
-          <div className="flex items-center gap-1.5 text-sm">
-            <Star size={14} className="fill-amber-400 text-amber-400" />
-            <span className="font-semibold text-ink">{ratingAvg}</span>
-            <span className="text-ink-muted">({reviewsCount})</span>
-          </div>
-        )}
+        {ratingAvg && <StarRating value={ratingAvg} count={reviewsCount} size="md" />}
       </div>
 
       {user && eligibility?.eligible && (
@@ -253,7 +229,7 @@ function ReviewsSection({ slug, productId }) {
       {isLoading ? (
         <div className="py-8 flex justify-center"><Spinner /></div>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-ink-muted py-4">Belum ada ulasan untuk produk ini.</p>
+        <p className="text-sm text-ink-muted py-4">No reviews yet — be the first.</p>
       ) : (
         <ul className="divide-y divide-line">
           {reviews.map((r) => <ReviewItem key={r.id} review={r} />)}
@@ -272,7 +248,7 @@ function ReviewItem({ review }) {
             <Star
               key={i}
               size={13}
-              className={i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-line-strong'}
+              className={i < review.rating ? 'fill-rating text-rating' : 'text-line-strong'}
             />
           ))}
         </div>
@@ -293,42 +269,44 @@ function ReviewForm({ slug, productId, orderId }) {
     try {
       await submitReview.mutateAsync({ product_id: productId, order_id: orderId, rating, comment: comment || undefined })
       setComment('')
-      toast.success('Ulasan berhasil dikirim, terima kasih!')
+      toast.success('Thanks — review submitted!')
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mb-8 p-5 border border-line rounded-lg space-y-3">
-      <p className="text-xs font-bold uppercase tracking-widest text-ink-muted">Beri Ulasan</p>
-      <div className="flex items-center gap-1">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setRating(i + 1)}
-            className="p-0.5"
-            aria-label={`${i + 1} bintang`}
-          >
-            <Star
-              size={22}
-              className={i < rating ? 'fill-amber-400 text-amber-400' : 'text-line-strong hover:text-amber-300'}
-            />
-          </button>
-        ))}
-      </div>
-      <Textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        rows={3}
-        maxLength={1000}
-        placeholder="Bagaimana pengalamanmu dengan produk ini? (opsional)"
-      />
-      <Button type="submit" size="sm" loading={submitReview.isPending}>
-        Kirim Ulasan
-      </Button>
-    </form>
+    <Card padding="md" className="mb-8 space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-ink-muted">Write a review</p>
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setRating(i + 1)}
+              className="p-0.5"
+              aria-label={`${i + 1} star${i === 0 ? '' : 's'}`}
+            >
+              <Star
+                size={22}
+                className={i < rating ? 'fill-rating text-rating' : 'text-line-strong hover:text-rating/60'}
+              />
+            </button>
+          ))}
+        </div>
+        <Textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={3}
+          maxLength={1000}
+          placeholder="Tell us what you thought (optional)"
+        />
+        <Button type="submit" size="sm" loading={submitReview.isPending}>
+          Submit review
+        </Button>
+      </form>
+    </Card>
   )
 }
 
