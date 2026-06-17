@@ -12,6 +12,7 @@ import TierBadge from '../components/TierBadge'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
 import { formatRupiah, cn } from '../lib/utils'
+import { calcTierDiscount, calcShippingCost } from '../lib/pricing'
 
 const STEPS = [
   { id: 1, title: 'Alamat', icon: MapPin },
@@ -70,14 +71,14 @@ export default function CheckoutPage() {
 
   // Apply tier discount preview (sync with backend logic)
   const tier = user?.tier || null
-  const tierDiscountPct = Number(tier?.discount || 0)
-  const tierDiscount = Math.round(subtotal * tierDiscountPct / 100)
+  const tierMaxDiscount = Number(options?.tier_max_discount_rupiah || 0)
+  const tierDiscount = calcTierDiscount(subtotal, tier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
 
   const isFreeShipping = subtotalAfterTier >= freeShippingMin
   const courierCost = Number(selectedCourier?.cost || 0)
   // Jika free shipping aktif, subsidi max freeShippingMax — sisa ditanggung customer
-  const shippingCost = isFreeShipping ? Math.max(0, courierCost - freeShippingMax) : courierCost
+  const shippingCost = calcShippingCost(courierCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
 
@@ -332,7 +333,7 @@ export default function CheckoutPage() {
             {step < 3 ? (
               <Button onClick={handleNext} disabled={!canNext(step)}>Lanjutkan →</Button>
             ) : (
-              <Button onClick={handleSubmit} loading={createOrder.isPending || snapMut.isPending} leadingIcon={<ShieldCheck size={16} />}>
+              <Button variant="accent" onClick={handleSubmit} loading={createOrder.isPending || snapMut.isPending} leadingIcon={<ShieldCheck size={16} />}>
                 Bayar Sekarang
               </Button>
             )}
@@ -368,6 +369,12 @@ export default function CheckoutPage() {
                 <Row label="Total" value={formatRupiah(total)} bold />
               </div>
             </dl>
+
+            {step === 3 && (
+              <p className="mt-4 pt-4 border-t border-line text-2xs text-ink-muted flex items-center gap-1.5">
+                <ShieldCheck size={13} className="shrink-0" /> Pembayaran aman terenkripsi via Midtrans
+              </p>
+            )}
           </div>
         </aside>
       </div>
@@ -386,11 +393,11 @@ export default function CheckoutPage() {
       >
         <form onSubmit={handleSaveAddress} className="grid sm:grid-cols-2 gap-4">
           <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Rumah/Kantor" error={addrErrors.label} />
-          <Input label="Nama Penerima" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
-          <Input label="Nomor HP" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
+          <Input label="Nama Penerima *" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
+          <Input label="Nomor HP *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
           <CitySearchInput value={addrForm.city} cityId={addrForm.city_id} onChange={({ name, id }) => setAddrForm({ ...addrForm, city: name, city_id: id })} error={addrErrors.city} />
           <div className="sm:col-span-2">
-            <Input label="Detail Alamat" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={addrErrors.address} />
+            <Input label="Detail Alamat *" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Jalan, RT/RW, kelurahan, kecamatan" error={addrErrors.address} />
           </div>
           <Input label="Kode Pos" value={addrForm.postal_code} onChange={(e) => setAddrForm({ ...addrForm, postal_code: e.target.value })} error={addrErrors.postal_code} />
         </form>
@@ -412,21 +419,21 @@ function Stepper({ current, onJump }) {
               type="button"
               onClick={() => onJump?.(s.id)}
               className={cn(
-                'flex items-center gap-2 flex-1 px-3 py-2 rounded transition',
+                'flex flex-col sm:flex-row items-center gap-1 sm:gap-2 flex-1 px-1 sm:px-3 py-2 rounded transition',
                 done && 'text-ink hover:bg-paper-warm cursor-pointer',
                 active && 'bg-ink text-white',
                 !done && !active && 'text-ink-faint cursor-default',
               )}
             >
               <span className={cn(
-                'h-7 w-7 inline-flex items-center justify-center rounded-pill text-xs font-bold border',
+                'h-7 w-7 inline-flex items-center justify-center rounded-pill text-xs font-bold border shrink-0',
                 done && 'bg-ink text-white border-ink',
                 active && 'bg-white text-ink border-white',
                 !done && !active && 'border-line text-ink-faint',
               )}>
                 {done ? <Check size={14} /> : s.id}
               </span>
-              <span className="text-sm font-semibold hidden sm:inline">{s.title}</span>
+              <span className="text-2xs sm:text-sm font-semibold text-center">{s.title}</span>
             </button>
             {idx < STEPS.length - 1 && <span className="h-px w-4 bg-line hidden md:block" />}
           </div>

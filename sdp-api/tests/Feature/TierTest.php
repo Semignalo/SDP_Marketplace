@@ -155,6 +155,42 @@ class TierTest extends TestCase
             ->assertJsonPath('data.subtotal', 85000);
     }
 
+    public function test_tier_discount_is_capped_by_max_rupiah_setting(): void
+    {
+        Setting::set('tier_max_discount_rupiah', '50000');
+
+        // VIP 30% × 1jt = 300k, harus dipotong jadi cap 50k
+        $user = User::factory()->create();
+        $this->makeCompletedOrder($user, 30_000_000);
+
+        $product = Product::factory()->create(['price' => 1_000_000, 'stock' => 10]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/orders', [
+            'shipping_name' => 'X',
+            'shipping_phone' => '08',
+            'shipping_address' => 'X',
+            'courier_name' => 'JNT EZ',
+            'shipping_cost' => 16000,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.tier_name', 'VIP')
+            ->assertJsonPath('data.tier_discount', 50000)
+            ->assertJsonPath('data.subtotal', 950000);
+    }
+
+    public function test_tier_discount_uncapped_when_max_setting_is_zero(): void
+    {
+        Setting::set('tier_max_discount_rupiah', '0');
+
+        $user = User::factory()->create();
+        $this->makeCompletedOrder($user, 30_000_000);
+
+        $discount = app(TierService::class)->applyDiscount(1_000_000, $user);
+        $this->assertEquals(300000, $discount['discount']);
+    }
+
     public function test_admin_can_modify_tier_thresholds(): void
     {
         $admin = User::factory()->admin()->create();

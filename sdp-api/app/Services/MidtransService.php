@@ -70,7 +70,7 @@ class MidtransService
             'customer_details' => [
                 'first_name' => $order->shipping_name,
                 'phone' => $order->shipping_phone,
-                'email' => $order->customer?->email,
+                'email' => $order->customer?->email ?? $order->guest_email,
                 'shipping_address' => [
                     'first_name' => $order->shipping_name,
                     'phone' => $order->shipping_phone,

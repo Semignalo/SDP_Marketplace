@@ -99,11 +99,24 @@ class TierService
     }
 
     /**
-     * Apply tier discount ke subtotal.
+     * Tier tetap untuk guest (tanpa akun) — disamakan dengan tier minimum user terdaftar (Silver).
      */
-    public function applyDiscount(float $subtotal, User $user): array
+    public function tierByLevel(int $level): ?array
     {
-        $tier = $this->userTier($user);
+        foreach ($this->tiers() as $tier) {
+            if ($tier['level'] === $level) {
+                return $tier;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Apply tier discount ke subtotal. $user null = guest, pakai tier Silver (level 2).
+     */
+    public function applyDiscount(float $subtotal, ?User $user): array
+    {
+        $tier = $user ? $this->userTier($user) : $this->tierByLevel(2);
         if (! $tier || $tier['discount'] <= 0) {
             return [
                 'subtotal_after' => $subtotal,
@@ -113,6 +126,12 @@ class TierService
         }
 
         $discount = round($subtotal * $tier['discount'] / 100, 2);
+
+        $maxDiscount = (float) Setting::get('tier_max_discount_rupiah', 0);
+        if ($maxDiscount > 0 && $discount > $maxDiscount) {
+            $discount = $maxDiscount;
+        }
+
         return [
             'subtotal_after' => $subtotal - $discount,
             'discount'       => $discount,

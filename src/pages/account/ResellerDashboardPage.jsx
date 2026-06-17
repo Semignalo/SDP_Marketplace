@@ -218,7 +218,12 @@ export default function ResellerDashboardPage() {
                       </Link>
                       <p className="text-xs text-ink-muted mt-0.5 tabular-nums">Total: {formatRupiah(c.order_total)}</p>
                     </div>
-                    <p className="text-sm text-ink-soft mt-2 md:mt-0">{c.customer?.name || '—'}</p>
+                    <p className="text-sm text-ink-soft mt-2 md:mt-0">
+                      {c.customer?.name || c.guest_name || '—'}
+                      {!c.customer && c.guest_name && (
+                        <span className="ml-1.5 text-2xs px-1.5 py-0.5 bg-paper-warm text-ink-muted rounded">Tamu</span>
+                      )}
+                    </p>
                     <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(c.created_at)}</p>
                     <div className="md:text-right mt-2 md:mt-0">
                       <p className="text-sm font-bold text-ink tabular-nums">{formatRupiah(c.amount)}</p>

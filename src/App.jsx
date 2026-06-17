@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import Navbar, { MobileMenuDrawer } from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
+import ReferralCapture from './components/ReferralCapture'
 import ProtectedRoute from './components/ProtectedRoute'
 import MobileBottomNav from './components/MobileBottomNav'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -18,6 +19,8 @@ import ProductsPage from './pages/ProductsPage'
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'))
 const CartPage = lazy(() => import('./pages/CartPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
+const GuestCheckoutPage = lazy(() => import('./pages/GuestCheckoutPage'))
+const GuestTrackPage = lazy(() => import('./pages/GuestTrackPage'))
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
@@ -100,6 +103,7 @@ function AppShell() {
     <div className="min-h-screen bg-paper flex flex-col">
       <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
       <ScrollToTop />
+      <ReferralCapture />
       <Navbar />
       <main id="main-content" className="flex-1 pb-14 lg:pb-0">
         <ErrorBoundary>
@@ -110,10 +114,8 @@ function AppShell() {
               <Route path="/products/:slug" element={<ProductDetailPage />} />
               <Route path="/vendor/:slug" element={<VendorPage />} />
               <Route path="/keranjang" element={<CartPage />} />
-              <Route
-                path="/checkout"
-                element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>}
-              />
+              <Route path="/checkout" element={<CheckoutGate />} />
+              <Route path="/lacak/:orderNumber" element={<GuestTrackPage />} />
               <Route
                 path="/order/sukses/:orderNumber"
                 element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>}
@@ -194,6 +196,14 @@ function AppShell() {
       <MobileBottomNav />
     </div>
   )
+}
+
+function CheckoutGate() {
+  const user = useAuthStore((s) => s.user)
+  const isReady = useAuthStore((s) => s.isReady)
+
+  if (!isReady) return <RouteFallback />
+  return user ? <CheckoutPage /> : <GuestCheckoutPage />
 }
 
 function ScrollToTop() {

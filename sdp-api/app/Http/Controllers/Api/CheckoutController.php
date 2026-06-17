@@ -24,12 +24,16 @@ class CheckoutController extends Controller
     /**
      * GET /api/checkout/options — free shipping threshold.
      */
-    public function options(): JsonResponse
+    public function options(TierService $tierService): JsonResponse
     {
+        $guestTier = $tierService->tierByLevel(2);
+
         return response()->json([
             'data' => [
                 'shipping_min_free' => (float) Setting::get('shipping_min_free', 150000),
                 'shipping_max_free' => (float) Setting::get('shipping_max_free', 20000),
+                'tier_max_discount_rupiah' => (float) Setting::get('tier_max_discount_rupiah', 0),
+                'guest_tier' => $guestTier,
             ],
         ]);
     }

@@ -15,6 +15,8 @@ class ResellerCommission extends Model
         'reseller_id',
         'order_id',
         'customer_id',
+        'guest_name',
+        'guest_email',
         'order_total',
         'rate',
         'amount',

@@ -15,7 +15,10 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'guest_email',
+        'guest_token',
         'reseller_id',
+        'referral_code',
         'order_number',
         'status',
         'subtotal',
@@ -64,5 +67,10 @@ class Order extends Model
     public function commission(): HasOne
     {
         return $this->hasOne(ResellerCommission::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
     }
 }

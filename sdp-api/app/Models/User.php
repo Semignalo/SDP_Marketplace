@@ -60,11 +60,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Order::class, 'user_id');
     }
 
-    public function resellerOrders(): HasMany
-    {
-        return $this->hasMany(Order::class, 'reseller_id');
-    }
-
     public function commissions(): HasMany
     {
         return $this->hasMany(ResellerCommission::class, 'reseller_id');
@@ -75,11 +70,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Address::class);
     }
 
-    public function defaultAddress()
-    {
-        return $this->hasOne(Address::class)->where('is_default', true);
-    }
-
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
@@ -88,20 +78,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new \App\Notifications\VerifyEmail());
-    }
-
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
-    public function isVendorAdmin(): bool
-    {
-        return $this->role === 'vendor_admin';
-    }
-
-    public function isCustomer(): bool
-    {
-        return $this->role === 'customer';
     }
 }

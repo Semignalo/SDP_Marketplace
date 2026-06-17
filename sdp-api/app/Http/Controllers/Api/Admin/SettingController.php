@@ -47,6 +47,7 @@ class SettingController extends Controller
         'tier_5_name' => ['Tier 5 — Nama', 'text', 'Tier Loyalty'],
         'tier_5_min_spend' => ['Tier 5 — Min Spend (Rp)', 'number', 'Tier Loyalty'],
         'tier_5_discount' => ['Tier 5 — Diskon (%)', 'number', 'Tier Loyalty'],
+        'tier_max_discount_rupiah' => ['Maksimal Diskon Tier per Order (Rp, 0 = tanpa batas)', 'number', 'Tier Loyalty'],
     ];
 
     public function index(): JsonResponse

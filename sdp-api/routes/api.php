@@ -7,9 +7,12 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\GuestCheckoutController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\RajaOngkirController;
+use App\Http\Controllers\Api\ReferralController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ResellerController;
 use App\Http\Controllers\Api\ResellerWithdrawalController;
 use App\Http\Controllers\Api\SettingController;
@@ -34,6 +37,7 @@ Route::prefix('auth')->group(function () {
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
+Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
 
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{slug}', [CategoryController::class, 'show'])->name('categories.show');
@@ -44,6 +48,18 @@ Route::get('/vendors/{slug}', [VendorController::class, 'show'])->name('vendors.
 Route::get('/settings/public', [SettingController::class, 'publicIndex'])->name('settings.public');
 Route::get('/checkout/options', [CheckoutController::class, 'options']);
 Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'cities'])->middleware('throttle:60,1');
+
+// Referral — validasi kode publik (untuk checkout guest/manual)
+Route::get('/referral/validate', [ReferralController::class, 'validateCode'])->middleware('throttle:60,1');
+
+// Guest checkout — tanpa auth. Akses order diamankan via guest_token.
+Route::prefix('guest')->group(function () {
+    Route::post('/shipping-rates', [GuestCheckoutController::class, 'shippingRates'])->middleware('throttle:60,1');
+    Route::post('/orders', [GuestCheckoutController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/orders/{orderNumber}', [GuestCheckoutController::class, 'track'])->middleware('throttle:120,1');
+    Route::get('/orders/{orderNumber}/check-status', [GuestCheckoutController::class, 'checkStatus'])->middleware('throttle:120,1');
+    Route::post('/orders/{orderNumber}/snap-token', [GuestCheckoutController::class, 'snapToken'])->middleware('throttle:snap-token');
+});
 
 // Midtrans webhook — public (no auth, signature verified inside controller)
 Route::post('/payments/notification', [PaymentController::class, 'notification']);
@@ -60,6 +76,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::get('/wishlist/ids', [WishlistController::class, 'ids']);
     Route::post('/wishlist/toggle', [WishlistController::class, 'toggle']);
+
+    Route::get('/products/{slug}/review-eligibility', [ReviewController::class, 'eligibility']);
+    Route::post('/reviews', [ReviewController::class, 'store']);
 
     Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates']);
 

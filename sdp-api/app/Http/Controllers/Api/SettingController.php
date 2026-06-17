@@ -12,6 +12,7 @@ class SettingController extends Controller
         'site_tagline',
         'shipping_min_free',
         'shipping_flat_default',
+        'tier_max_discount_rupiah',
         'announce_bar_1',
         'announce_bar_2',
         'whatsapp_cs',

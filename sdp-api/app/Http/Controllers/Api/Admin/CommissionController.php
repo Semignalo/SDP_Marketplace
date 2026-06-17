@@ -38,11 +38,19 @@ class CommissionController extends Controller
 
         $items = $query->paginate($request->input('per_page', 20))->withQueryString();
 
+        $sums = ResellerCommission::selectRaw('
+                SUM(amount) as total,
+                SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END) as pending,
+                SUM(CASE WHEN status = "earned" THEN amount ELSE 0 END) as earned,
+                SUM(CASE WHEN status = "paid" THEN amount ELSE 0 END) as paid
+            ')
+            ->first();
+
         $summary = [
-            'total' => (float) ResellerCommission::sum('amount'),
-            'pending' => (float) ResellerCommission::where('status', 'pending')->sum('amount'),
-            'earned' => (float) ResellerCommission::where('status', 'earned')->sum('amount'),
-            'paid' => (float) ResellerCommission::where('status', 'paid')->sum('amount'),
+            'total' => (float) ($sums->total ?? 0),
+            'pending' => (float) ($sums->pending ?? 0),
+            'earned' => (float) ($sums->earned ?? 0),
+            'paid' => (float) ($sums->paid ?? 0),
         ];
 
         return response()->json([

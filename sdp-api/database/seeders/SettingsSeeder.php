@@ -35,6 +35,9 @@ class SettingsSeeder extends Seeder
             'tier_3_name' => 'Gold',     'tier_3_min_spend' => '10000000', 'tier_3_discount' => '20',
             'tier_4_name' => 'Platinum', 'tier_4_min_spend' => '20000000', 'tier_4_discount' => '25',
             'tier_5_name' => 'VIP',      'tier_5_min_spend' => '50000000', 'tier_5_discount' => '30',
+
+            // Cap maksimum diskon tier per order (Rp). 0 = tanpa batas.
+            'tier_max_discount_rupiah' => '500000',
         ];
 
         foreach ($defaults as $key => $value) {

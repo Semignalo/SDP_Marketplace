@@ -6,6 +6,7 @@ import { usePublicSettings } from '../hooks/useProducts'
 import { Button, EmptyState, PriceLabel } from '../components/ui'
 import TierBadge from '../components/TierBadge'
 import { formatRupiah } from '../lib/utils'
+import { calcTierDiscount } from '../lib/pricing'
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items)
@@ -16,7 +17,8 @@ export default function CartPage() {
   const user = useAuthStore((s) => s.user)
 
   const tier = user?.tier
-  const tierDiscount = tier ? Math.round(subtotal * tier.discount / 100) : 0
+  const tierMaxDiscount = Number(settings?.tier_max_discount_rupiah || 0)
+  const tierDiscount = calcTierDiscount(subtotal, tier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
 
   const freeShippingMin = Number(settings?.shipping_min_free || 150000)
@@ -163,7 +165,7 @@ export default function CartPage() {
             </dl>
 
             <Link to="/checkout" className="block mt-5">
-              <Button fullWidth size="lg" className="group">
+              <Button variant="accent" fullWidth size="lg" className="group">
                 Lanjut ke Checkout
                 <ArrowRight size={16} className="ml-1.5 transition group-hover:translate-x-0.5" />
               </Button>

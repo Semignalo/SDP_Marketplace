@@ -743,11 +743,12 @@ Frontend:
 
 - Ditambahkan `ALLOWED_TRANSITIONS` constant di `Admin/OrderController`. Status terminal (`completed`, `cancelled`) tidak bisa diubah lagi. Transisi ilegal → 422.
 
-**🔲 4. Tier discount tanpa cap maksimum Rupiah**
+**✅ 4. Tier discount tanpa cap maksimum Rupiah**
 
-- **File:** `sdp-api/app/Services/TierService.php` (applyDiscount)
-- Diskon 30% × order Rp 100jt = potong Rp 30jt. Tidak ada batas atas.
-- **Fix:** Tambahkan setting `tier_max_discount_rupiah` per tier atau global cap.
+- Setting global baru `tier_max_discount_rupiah` (default Rp 500.000, admin-editable di `/admin/settings` grup "Tier Loyalty"; isi `0` = tanpa batas).
+- `TierService::applyDiscount()` clamp diskon ke nilai cap setelah hitung persentase.
+- Diexpose ke `/api/settings/public` & `/api/checkout/options` agar preview di `CartPage`/`CheckoutPage` konsisten dengan backend.
+- Tests: `test_tier_discount_is_capped_by_max_rupiah_setting`, `test_tier_discount_uncapped_when_max_setting_is_zero` di `TierTest.php` — 51/51 pass.
 
 **🔲 5. Data Midtrans tidak disimpan untuk rekonsiliasi**
 
@@ -835,8 +836,8 @@ Footer di `src/components/Footer.jsx` link ke route yang belum ada → 404:
 - [ ] Set Midtrans notification URL production — saat deploy
 - [ ] `php artisan migrate` (SoftDeletes migration) — saat Laragon aktif / deploy
 - [ ] Test golden path end-to-end di production
-- [ ] 🔲 Tier discount max cap (point 4) — opsional
-- [ ] 🔲 Simpan data Midtrans untuk rekonsiliasi (point 5) — opsional
+- [x] Tier discount max cap (point 4)
+- [x] Simpan data Midtrans untuk rekonsiliasi (point 5) — `payment_transaction_id`/`payment_type`/`payment_channel`/`payment_gross_amount` di `orders` (migration `2026_05_21_032628_add_payment_fields_to_orders_table`)
 - [ ] 🔲 Audit trail keuangan / activity log (point 6) — opsional
 
 ---
