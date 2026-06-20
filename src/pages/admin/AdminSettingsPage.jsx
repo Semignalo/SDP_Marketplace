@@ -75,7 +75,7 @@ export default function AdminSettingsPage() {
                     onChange={(e) => handleChange(s.key, e.target.value)}
                     rows={3}
                   />
-                  <p className="text-2xs text-ink-faint mt-1 tabular-nums">key: {s.key}</p>
+                  <p className="text-2xs text-ink-muted mt-1 tabular-nums">key: {s.key}</p>
                 </div>
               ) : (
                 <div key={s.key}>
@@ -85,7 +85,7 @@ export default function AdminSettingsPage() {
                     value={values[s.key] ?? ''}
                     onChange={(e) => handleChange(s.key, e.target.value)}
                   />
-                  <p className="text-2xs text-ink-faint mt-1 tabular-nums">key: {s.key}</p>
+                  <p className="text-2xs text-ink-muted mt-1 tabular-nums">key: {s.key}</p>
                 </div>
               )
             ))}

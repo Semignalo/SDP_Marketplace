@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Api\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderShipped;
 use App\Models\Order;
+use App\Support\CourierTracking;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -78,10 +83,15 @@ class OrderController extends Controller
             ->firstOrFail();
 
         $payload = ['tracking_number' => $data['tracking_number']];
-        if (! empty($data['mark_shipped']) && $order->status === 'processing') {
+        $marksShipped = ! empty($data['mark_shipped']) && $order->status === 'processing';
+        if ($marksShipped) {
             $payload['status'] = 'shipped';
         }
         $order->update($payload);
+
+        if ($marksShipped) {
+            $this->sendOrderShippedEmail($order->fresh());
+        }
 
         return response()->json(['message' => 'Tracking diperbarui', 'data' => ['status' => $order->status, 'tracking_number' => $order->tracking_number]]);
     }
@@ -103,6 +113,7 @@ class OrderController extends Controller
             'vendor_subtotal' => (float) $vendorSubtotal,
             'items_count' => $vendorItems->count(),
             'tracking_number' => $order->tracking_number,
+            'tracking_url' => CourierTracking::url($order->shipping_courier),
             'shipping_courier' => $order->shipping_courier,
         ];
 
@@ -121,5 +132,30 @@ class OrderController extends Controller
         }
 
         return $base;
+    }
+
+    /**
+     * Best-effort: kirim email pemberitahuan pesanan dikirim ke customer atau guest.
+     */
+    private function sendOrderShippedEmail(Order $order): void
+    {
+        try {
+            if (! $order->user_id && $order->guest_email) {
+                Mail::to($order->guest_email)->send(new OrderShipped($order));
+                return;
+            }
+
+            if ($order->user_id) {
+                $order->loadMissing('customer');
+                if ($order->customer?->email) {
+                    Mail::to($order->customer->email)->send(new OrderShipped($order));
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning('Order shipped email failed', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

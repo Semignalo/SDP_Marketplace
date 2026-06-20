@@ -2,7 +2,7 @@ export default function SyaratPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight text-ink">Syarat &amp; Ketentuan</h1>
-      <p className="mt-1 text-xs text-ink-faint uppercase tracking-widest">Terakhir diperbarui: Mei 2026</p>
+      <p className="mt-1 text-xs text-ink-muted uppercase tracking-widest">Terakhir diperbarui: Mei 2026</p>
 
       <div className="mt-8 space-y-8 text-sm text-ink-muted leading-relaxed">
         <Section title="1. Penerimaan Syarat">

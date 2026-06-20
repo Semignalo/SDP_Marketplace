@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, NavLink } from 'react-router-dom'
 import { Search, Menu, X, User, ShoppingBag, Heart, LayoutDashboard } from 'lucide-react'
 import { useUIStore } from '../stores/useUIStore'
@@ -6,7 +6,25 @@ import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useCategories, usePublicSettings } from '../hooks/useProducts'
 import { cn } from '../lib/utils'
-import { Input } from './ui'
+import { Input, CartBadge } from './ui'
+
+function useHideOnScroll() {
+  const [hidden, setHidden] = useState(false)
+  const lastY = useRef(0)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const y = window.scrollY
+      const goingDown = y > lastY.current
+      setHidden(goingDown && y > 96)
+      lastY.current = y
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  return hidden
+}
 
 export default function Navbar() {
   const [search, setSearch] = useState('')
@@ -17,6 +35,7 @@ export default function Navbar() {
   const user = useAuthStore((s) => s.user)
   const { data: settings } = usePublicSettings()
   const { data: categories = [] } = useCategories()
+  const hidden = useHideOnScroll()
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -26,7 +45,12 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-paper border-b border-line">
+    <header
+      className={cn(
+        'sticky top-0 z-40 bg-paper border-b border-line transition-transform duration-300',
+        hidden ? '-translate-y-full' : 'translate-y-0',
+      )}
+    >
       <AnnounceBar settings={settings} />
 
       <div className="container-page flex items-center gap-6 h-16">
@@ -39,7 +63,7 @@ export default function Navbar() {
           <Menu size={22} />
         </button>
 
-        <Link to="/" className="text-xl font-bold tracking-[0.2em] text-ink shrink-0">
+        <Link to="/" className="text-xl font-bold tracking-logo text-ink shrink-0">
           SDP
         </Link>
 
@@ -65,11 +89,7 @@ export default function Navbar() {
             aria-label="Cart"
           >
             <ShoppingBag size={20} strokeWidth={1.6} />
-            {cartCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-4 h-4 px-1 text-3xs font-bold rounded-pill bg-ink text-white flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
+            <CartBadge count={cartCount} className="absolute top-1 right-1" />
           </button>
           {user?.role === 'admin' && (
             <Link
@@ -116,11 +136,7 @@ export default function Navbar() {
             aria-label="Cart"
           >
             <ShoppingBag size={20} strokeWidth={1.6} />
-            {cartCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-4 h-4 px-1 text-3xs font-bold rounded-pill bg-ink text-white flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
+            <CartBadge count={cartCount} className="absolute top-1 right-1" />
           </button>
         </div>
       </div>
@@ -221,7 +237,7 @@ export function MobileMenuDrawer() {
   return (
     <div className="fixed inset-0 z-50 bg-paper lg:hidden flex flex-col">
       <div className="flex items-center justify-between px-5 h-16 border-b border-line">
-        <span className="text-xl font-bold tracking-[0.2em] text-ink">SDP</span>
+        <span className="text-xl font-bold tracking-logo text-ink">SDP</span>
         <button onClick={close} className="text-ink p-2" aria-label="Close">
           <X size={22} />
         </button>
@@ -246,7 +262,7 @@ export function MobileMenuDrawer() {
         <Link to="/products" onClick={close} className="block px-5 py-3 text-sm font-medium text-ink border-b border-line">
           All Products
         </Link>
-        <p className="px-5 pt-5 pb-2 text-2xs font-bold uppercase tracking-widest text-ink-faint">Categories</p>
+        <p className="px-5 pt-5 pb-2 text-2xs font-bold uppercase tracking-widest text-ink-muted">Categories</p>
         {categories.map((cat) => (
           <Link
             key={cat.id}

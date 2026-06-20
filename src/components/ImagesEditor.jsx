@@ -97,7 +97,7 @@ export default function ImagesEditor({ images, onChange, error }) {
             className="w-full border-2 border-dashed border-line rounded-lg p-5 text-center hover:border-ink-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             {uploading
               ? <><Loader2 size={22} className="mx-auto text-ink-muted mb-1.5 animate-spin" /><p className="text-xs text-ink-muted">Mengupload...</p></>
-              : <><Upload size={22} className="mx-auto text-ink-faint mb-1.5" strokeWidth={1.2} /><p className="text-xs text-ink-muted">Klik untuk pilih gambar<br /><span className="text-ink-faint">JPG, PNG, WebP · Maks 5 MB · {8 - images.length} slot tersisa</span></p></>
+              : <><Upload size={22} className="mx-auto text-ink-faint mb-1.5" strokeWidth={1.2} /><p className="text-xs text-ink-muted">Klik untuk pilih gambar<br /><span className="text-ink-muted">JPG, PNG, WebP · Maks 5 MB · {8 - images.length} slot tersisa</span></p></>
             }
           </button>
         </>
@@ -113,7 +113,7 @@ export default function ImagesEditor({ images, onChange, error }) {
 
       {images.length > 0 ? (
         <>
-          <p className="text-2xs text-ink-faint mt-3 mb-2">Drag untuk urutkan · Klik ★ untuk jadikan gambar utama</p>
+          <p className="text-2xs text-ink-muted mt-3 mb-2">Drag untuk urutkan · Klik ★ untuk jadikan gambar utama</p>
           <ul className="grid grid-cols-4 gap-2">
             {images.map((url, i) => (
               <li

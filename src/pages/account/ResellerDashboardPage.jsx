@@ -225,7 +225,7 @@ export default function ResellerDashboardPage() {
                     <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(c.created_at)}</p>
                     <div className="md:text-right mt-2 md:mt-0">
                       <p className="text-sm font-bold text-ink tabular-nums">{formatRupiah(c.amount)}</p>
-                      <p className="text-2xs text-ink-faint tabular-nums">rate {c.rate}%</p>
+                      <p className="text-2xs text-ink-muted tabular-nums">rate {c.rate}%</p>
                     </div>
                     <div className="md:text-right mt-2 md:mt-0"><Badge variant={s.variant}>{s.label}</Badge></div>
                   </li>

@@ -48,6 +48,7 @@ Route::get('/vendors/{slug}', [VendorController::class, 'show'])->name('vendors.
 Route::get('/settings/public', [SettingController::class, 'publicIndex'])->name('settings.public');
 Route::get('/checkout/options', [CheckoutController::class, 'options']);
 Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'cities'])->middleware('throttle:60,1');
+Route::get('/rajaongkir/districts', [RajaOngkirController::class, 'districts'])->middleware('throttle:60,1');
 
 // Referral — validasi kode publik (untuk checkout guest/manual)
 Route::get('/referral/validate', [ReferralController::class, 'validateCode'])->middleware('throttle:60,1');
@@ -56,6 +57,7 @@ Route::get('/referral/validate', [ReferralController::class, 'validateCode'])->m
 Route::prefix('guest')->group(function () {
     Route::post('/shipping-rates', [GuestCheckoutController::class, 'shippingRates'])->middleware('throttle:60,1');
     Route::post('/orders', [GuestCheckoutController::class, 'store'])->middleware('throttle:20,1');
+    Route::post('/orders/resend-link', [GuestCheckoutController::class, 'resendLink'])->middleware('throttle:email-resend');
     Route::get('/orders/{orderNumber}', [GuestCheckoutController::class, 'track'])->middleware('throttle:120,1');
     Route::get('/orders/{orderNumber}/check-status', [GuestCheckoutController::class, 'checkStatus'])->middleware('throttle:120,1');
     Route::post('/orders/{orderNumber}/snap-token', [GuestCheckoutController::class, 'snapToken'])->middleware('throttle:snap-token');

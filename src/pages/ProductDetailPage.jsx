@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, ShieldCheck, Truck, Share2, Star } from 'lucide-react'
+import { ChevronRight, ShieldCheck, Truck, Share2, Star, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
 import ProductCard from '../components/ProductCard'
 import WishlistButton from '../components/WishlistButton'
@@ -51,7 +51,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="container-page py-6 lg:py-10">
+    <div className="container-page pt-6 lg:pt-10 pb-24 lg:pb-10">
       <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
         <Link to="/" className="hover:text-ink">Home</Link>
         <ChevronRight size={12} />
@@ -93,7 +93,7 @@ export default function ProductDetailPage() {
           {product.vendor && (
             <Link
               to={`/vendor/${product.vendor.slug}`}
-              className="inline-block text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted hover:text-ink mb-3"
+              className="inline-block text-2xs font-bold uppercase tracking-eyebrow text-ink-muted hover:text-ink mb-3"
             >
               {product.vendor.name}
             </Link>
@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="mt-6 hidden lg:grid grid-cols-2 gap-3">
             <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!product.in_stock}>
               Add to cart
             </Button>
@@ -183,7 +183,7 @@ export default function ProductDetailPage() {
 
       {related.length > 0 && (
         <section className="border-t border-line pt-12 mt-12">
-          <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-6">
+          <h2 className="text-xs font-bold uppercase tracking-eyebrow text-ink-muted mb-6">
             You might also like
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
@@ -191,6 +191,31 @@ export default function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Sticky buy bar — mobile only; menggantikan tombol inline yang di-hidden di <lg */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-paper border-t border-line shadow-hover">
+        <div className="container-page py-3 flex items-center gap-3">
+          <div className="min-w-0">
+            <PriceLabel price={price} oldPrice={product.compare_at_price} size="md" />
+          </div>
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleAddToCart}
+              disabled={!product.in_stock}
+              aria-label="Add to cart"
+              className="px-4"
+            >
+              <ShoppingBag size={18} />
+            </Button>
+            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!product.in_stock} className="px-6">
+              {product.in_stock ? 'Buy now' : 'Sold out'}
+            </Button>
+          </div>
+        </div>
+        <div className="h-[env(safe-area-inset-bottom)]" />
+      </div>
     </div>
   )
 }
@@ -216,7 +241,7 @@ function ReviewsSection({ slug, productId }) {
   return (
     <section className="border-t border-line pt-12 mt-12">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted">
+        <h2 className="text-xs font-bold uppercase tracking-eyebrow text-ink-muted">
           Customer Reviews
         </h2>
         {ratingAvg && <StarRating value={ratingAvg} count={reviewsCount} size="md" />}

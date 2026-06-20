@@ -58,7 +58,7 @@ export default function CartDrawer() {
                 </div>
               </Link>
               <div className="flex-1 min-w-0">
-                <p className="text-2xs uppercase tracking-widest text-ink-faint">{item.vendor_name}</p>
+                <p className="text-2xs uppercase tracking-widest text-ink-muted">{item.vendor_name}</p>
                 <Link to={`/products/${item.slug}`} onClick={close}>
                   <h3 className="text-sm text-ink line-clamp-2 hover:text-ink-soft">{item.name}</h3>
                 </Link>

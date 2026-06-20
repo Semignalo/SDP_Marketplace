@@ -4,6 +4,7 @@ import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { cn } from '../lib/utils'
+import { CartBadge } from './ui'
 
 // Hide pada path yang punya layout sidebar/full-screen sendiri
 const HIDDEN_PREFIXES = ['/admin', '/vendor', '/akun', '/checkout', '/login', '/register']
@@ -15,7 +16,9 @@ export default function MobileBottomNav() {
   const openMenu = useUIStore((s) => s.openMobileMenu)
   const user = useAuthStore((s) => s.user)
 
-  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null
+  // Halaman detail produk punya sticky buy bar sendiri — hindari dua bar bertumpuk
+  const isProductDetail = pathname.startsWith('/products/')
+  if (isProductDetail || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null
 
   return (
     <nav
@@ -41,11 +44,7 @@ export default function MobileBottomNav() {
         >
           <div className="relative">
             <ShoppingBag size={18} />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-2 h-4 min-w-[16px] px-1 rounded-pill bg-ink text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
-                {cartCount > 9 ? '9+' : cartCount}
-              </span>
-            )}
+            <CartBadge count={cartCount} className="absolute -top-1 -right-2" />
           </div>
           <span className="text-2xs">Cart</span>
         </button>

@@ -65,8 +65,8 @@ export function CourierOption({ courier, selected, freeShipping, freeMax, onSele
   return (
     <label
       className={cn(
-        'flex items-center gap-3 p-4 rounded-lg cursor-pointer transition',
-        selected ? 'bg-paper-soft shadow-card' : 'shadow-card hover:shadow-hover',
+        'flex items-center gap-3 p-4 rounded-lg cursor-pointer border transition',
+        selected ? 'border-ink bg-paper-soft shadow-card' : 'border-transparent shadow-card hover:shadow-hover',
       )}
     >
       <input type="radio" name="courier" checked={selected} onChange={onSelect} className="h-4 w-4 accent-ink" />

@@ -75,7 +75,7 @@ export default function OrdersPage() {
                     <Card padding="md" interactive>
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div className="min-w-0">
-                          <p className="text-2xs uppercase tracking-widest text-ink-faint">
+                          <p className="text-2xs uppercase tracking-widest text-ink-muted">
                             {formatDate(order.created_at)}
                           </p>
                           <p className="text-sm font-semibold text-ink mt-0.5 tabular-nums">

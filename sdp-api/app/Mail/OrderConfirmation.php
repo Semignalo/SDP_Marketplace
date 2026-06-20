@@ -20,9 +20,14 @@ class OrderConfirmation extends Mailable
         $this->order->loadMissing('items');
 
         $base = rtrim(config('app.frontend_url'), '/');
-        $this->trackingUrl = $base
-            . '/lacak/' . $order->order_number
-            . '?token=' . $order->guest_token;
+
+        if (! $order->user_id && $order->guest_token) {
+            $this->trackingUrl = $base
+                . '/lacak/' . $order->order_number
+                . '?token=' . $order->guest_token;
+        } else {
+            $this->trackingUrl = $base . '/akun/pesanan/' . $order->order_number;
+        }
     }
 
     public function envelope(): Envelope

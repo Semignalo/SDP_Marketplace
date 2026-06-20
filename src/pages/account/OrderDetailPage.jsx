@@ -95,7 +95,7 @@ export default function OrderDetailPage() {
       <Card padding="md">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-faint">Order Number</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-muted">Order Number</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -116,7 +116,7 @@ export default function OrderDetailPage() {
         <Card padding="none" className="overflow-hidden">
           <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
             <div>
-              <p className="text-2xs uppercase tracking-widest text-ink-faint">Amount Due</p>
+              <p className="text-2xs uppercase tracking-widest text-ink-muted">Amount Due</p>
               <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatRupiah(order.total)}</p>
             </div>
             <button
@@ -139,7 +139,7 @@ export default function OrderDetailPage() {
             >
               Pay now
             </Button>
-            <p className="text-2xs text-ink-faint text-center">
+            <p className="text-2xs text-ink-muted text-center">
               Secured via Midtrans — VA, QRIS, GoPay, credit card, and more.
             </p>
             <div className="pt-1 border-t border-line">
@@ -165,6 +165,16 @@ export default function OrderDetailPage() {
           {order.tracking_number && (
             <p className="text-xs text-ink-muted mt-1">Tracking number: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>
           )}
+          {order.tracking_number && order.tracking_url && (
+            <a
+              href={order.tracking_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-ink underline mt-2"
+            >
+              Track on {order.shipping_courier} site →
+            </a>
+          )}
         </InfoCard>
       </div>
 
@@ -181,7 +191,7 @@ export default function OrderDetailPage() {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-2xs uppercase tracking-widest text-ink-faint">{item.vendor?.name}</p>
+                <p className="text-2xs uppercase tracking-widest text-ink-muted">{item.vendor?.name}</p>
                 <p className="text-sm text-ink line-clamp-2 mt-0.5">{item.product_name}</p>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-ink-muted tabular-nums">

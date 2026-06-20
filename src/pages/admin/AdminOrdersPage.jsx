@@ -77,16 +77,16 @@ export default function AdminOrdersPage() {
                   </div>
                   <div className="mt-2 md:mt-0">
                     <p className="text-sm text-ink-soft">{o.customer?.name || '—'}</p>
-                    <p className="text-xs text-ink-faint">{o.customer?.email}</p>
+                    <p className="text-xs text-ink-muted">{o.customer?.email}</p>
                   </div>
                   <div className="mt-1 md:mt-0">
                     {o.reseller ? (
                       <>
                         <p className="text-sm text-ink-soft">{o.reseller.name}</p>
-                        <p className="text-2xs text-ink-faint tabular-nums">{o.reseller.reseller_code}</p>
+                        <p className="text-2xs text-ink-muted tabular-nums">{o.reseller.reseller_code}</p>
                       </>
                     ) : (
-                      <span className="text-xs text-ink-faint">—</span>
+                      <span className="text-xs text-ink-muted">—</span>
                     )}
                   </div>
                   <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatRupiah(o.total)}</p>

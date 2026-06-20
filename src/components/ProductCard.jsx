@@ -11,7 +11,7 @@ export default function ProductCard({ product }) {
 
   return (
     <Link to={`/products/${product.slug}`} className="group block">
-      <div className="relative aspect-square bg-paper-warm overflow-hidden rounded-lg shadow-card group-hover:shadow-hover transition-shadow mb-3">
+      <div className="relative aspect-square bg-paper-warm overflow-hidden rounded-lg mb-3">
         {image ? (
           <img
             src={image}
@@ -20,7 +20,7 @@ export default function ProductCard({ product }) {
             className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
           />
         ) : (
-          <div className="h-full w-full flex items-center justify-center text-ink-faint text-xs">
+          <div className="h-full w-full flex items-center justify-center text-ink-muted text-xs">
             No image
           </div>
         )}
@@ -43,7 +43,7 @@ export default function ProductCard({ product }) {
         />
       </div>
 
-      <p className="text-2xs uppercase tracking-widest text-ink-faint mb-1">
+      <p className="text-2xs uppercase tracking-widest text-ink-muted mb-1">
         {product.vendor?.name || ''}
       </p>
       <h3 className="text-sm text-ink line-clamp-2 leading-snug mb-1.5 group-hover:text-ink-soft transition">

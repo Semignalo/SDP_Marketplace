@@ -29,7 +29,7 @@ export default function VendorLayout() {
       <div className="container-page py-8 lg:py-10">
         <header className="mb-8 pb-6 border-b border-line flex items-start justify-between flex-wrap gap-4">
           <div>
-            <p className="text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">Vendor Panel</p>
+            <p className="text-2xs font-bold uppercase tracking-eyebrow text-ink-muted mb-2">Vendor Panel</p>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{vendor?.name || user?.name}</h1>
             <p className="text-sm text-ink-muted mt-1">{user?.email}</p>
           </div>

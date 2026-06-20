@@ -8,19 +8,19 @@ export default {
       },
       colors: {
         ink: {
-          DEFAULT: '#2a2520',
-          soft: '#4a4038',
-          muted: '#6b6058',
-          faint: '#a39a8e',
+          DEFAULT: '#1a1a1a',
+          soft: '#333333',
+          muted: '#6b6b6b',
+          faint: '#a3a3a3',
         },
         paper: {
-          DEFAULT: '#faf7f2',
-          soft: '#f3eee6',
-          warm: '#ece4d6',
+          DEFAULT: '#ffffff',
+          soft: '#fafafa',
+          warm: '#f5f5f5',
         },
         line: {
-          DEFAULT: '#e5ddd0',
-          strong: '#d6cbb8',
+          DEFAULT: '#e5e5e5',
+          strong: '#d4d4d4',
         },
         state: {
           success: '#15803d',
@@ -29,9 +29,9 @@ export default {
           info: '#1d4ed8',
         },
         accent: {
-          DEFAULT: '#c1623d',
-          hover: '#a14e30',
-          soft: '#f5e8e0',
+          DEFAULT: '#b5562f',
+          hover: '#96431f',
+          soft: '#f5e6df',
         },
         rating: {
           DEFAULT: '#f5b400',
@@ -58,6 +58,10 @@ export default {
       fontSize: {
         '2xs': '10px',
         '3xs': '9px',
+      },
+      letterSpacing: {
+        eyebrow: '0.25em',
+        logo: '0.2em',
       },
     },
   },

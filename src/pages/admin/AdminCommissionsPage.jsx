@@ -178,12 +178,12 @@ export default function AdminCommissionsPage() {
                   </div>
                   <div className="mt-1 md:mt-0">
                     <p className="text-sm text-ink-soft">{c.reseller?.name}</p>
-                    <p className="text-2xs text-ink-faint tabular-nums">{c.reseller?.reseller_code}</p>
+                    <p className="text-2xs text-ink-muted tabular-nums">{c.reseller?.reseller_code}</p>
                   </div>
                   <p className="text-sm text-ink-soft mt-1 md:mt-0">{c.customer?.name || '—'}</p>
                   <div className="mt-2 md:mt-0 md:text-right">
                     <p className="text-sm font-bold tabular-nums">{formatRupiah(c.amount)}</p>
-                    <p className="text-2xs text-ink-faint tabular-nums">rate {c.rate}%</p>
+                    <p className="text-2xs text-ink-muted tabular-nums">rate {c.rate}%</p>
                   </div>
                   <div className="mt-2 md:mt-0">
                     <Select value={c.status} onChange={(e) => handleStatusChange(c, e.target.value)} className="h-8 text-xs">

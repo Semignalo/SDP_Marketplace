@@ -115,6 +115,7 @@ function AppShell() {
               <Route path="/vendor/:slug" element={<VendorPage />} />
               <Route path="/keranjang" element={<CartPage />} />
               <Route path="/checkout" element={<CheckoutGate />} />
+              <Route path="/lacak" element={<GuestTrackPage />} />
               <Route path="/lacak/:orderNumber" element={<GuestTrackPage />} />
               <Route
                 path="/order/sukses/:orderNumber"

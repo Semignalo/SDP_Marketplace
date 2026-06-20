@@ -59,7 +59,7 @@ export default function LoginPage() {
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-paper-soft px-5 py-16">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <Link to="/" className="inline-block text-2xl font-bold tracking-[0.2em] text-ink">SDP</Link>
+          <Link to="/" className="inline-block text-2xl font-bold tracking-logo text-ink">SDP</Link>
           <h1 className="mt-8 text-2xl font-bold tracking-tight text-ink">Welcome back.</h1>
           <p className="text-sm text-ink-muted mt-2">
             New here?{' '}

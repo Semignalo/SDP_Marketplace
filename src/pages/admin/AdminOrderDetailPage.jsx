@@ -58,7 +58,7 @@ export default function AdminOrderDetailPage() {
       <div className="bg-paper border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-faint">Nomor Pesanan</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -99,6 +99,16 @@ export default function AdminOrderDetailPage() {
         <InfoCard icon={<Truck size={16} />} title="Pengiriman">
           <p className="text-sm">{order.shipping_courier || 'Belum dipilih'}</p>
           {order.tracking_number && <p className="text-xs text-ink-muted mt-1">Resi: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>}
+          {order.tracking_number && order.tracking_url && (
+            <a
+              href={order.tracking_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-ink underline mt-2"
+            >
+              Lacak di situs {order.shipping_courier} →
+            </a>
+          )}
         </InfoCard>
       </div>
 
@@ -107,17 +117,17 @@ export default function AdminOrderDetailPage() {
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <p className="text-sm font-semibold">{order.reseller.name}</p>
-              <p className="text-2xs text-ink-faint tabular-nums">Code: {order.reseller.reseller_code}</p>
+              <p className="text-2xs text-ink-muted tabular-nums">Code: {order.reseller.reseller_code}</p>
             </div>
             {order.commission && (
               <>
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-faint">Komisi</p>
+                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Komisi</p>
                   <p className="text-sm font-semibold tabular-nums">{formatRupiah(order.commission.amount)}</p>
-                  <p className="text-2xs text-ink-faint tabular-nums">rate {order.commission.rate}%</p>
+                  <p className="text-2xs text-ink-muted tabular-nums">rate {order.commission.rate}%</p>
                 </div>
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-faint">Status Komisi</p>
+                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Status Komisi</p>
                   <Badge variant={order.commission.status === 'paid' ? 'success' : order.commission.status === 'cancelled' ? 'danger' : 'neutral'}>
                     {order.commission.status}
                   </Badge>
@@ -137,7 +147,7 @@ export default function AdminOrderDetailPage() {
                 <Link to={`/products/${item.product_slug}`} target="_blank" className="text-sm text-ink hover:underline">
                   {item.product_name}
                 </Link>
-                <p className="text-2xs text-ink-faint mt-0.5">{item.vendor?.name}</p>
+                <p className="text-2xs text-ink-muted mt-0.5">{item.vendor?.name}</p>
                 <p className="text-xs text-ink-muted mt-1 tabular-nums">{formatRupiah(item.price)} × {item.quantity}</p>
               </div>
               <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.subtotal)}</p>

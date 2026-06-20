@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Mail\OrderConfirmation;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -16,8 +17,11 @@ use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CheckoutController extends Controller
 {
@@ -251,6 +255,15 @@ class CheckoutController extends Controller
 
             return $order->load(['items.product.images', 'items.vendor']);
         });
+
+        try {
+            Mail::to($user->email)->send(new OrderConfirmation($order));
+        } catch (Throwable $e) {
+            Log::warning('Order confirmation email failed', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'data' => new OrderResource($order),

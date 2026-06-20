@@ -15,7 +15,7 @@ export default function Footer() {
       <div className="container-page py-16">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4">
-            <span className="text-2xl font-bold tracking-[0.2em]">
+            <span className="text-2xl font-bold tracking-logo">
               {settings?.site_name || 'SDP'}
             </span>
             <p className="mt-4 text-sm text-white/60 max-w-xs leading-relaxed">
@@ -56,6 +56,7 @@ export default function Footer() {
 
           <FooterCol title="Help">
             <FooterLink to="/bantuan">Help Center</FooterLink>
+            <FooterLink to="/lacak">Track Order</FooterLink>
             <FooterLink to="/kebijakan">Privacy Policy</FooterLink>
             <FooterLink to="/syarat">Terms of Service</FooterLink>
             <FooterLink to="/kontak">Talk to Us</FooterLink>

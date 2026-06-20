@@ -69,7 +69,7 @@ export default function VendorOrderDetailPage() {
       <div className="bg-paper border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-faint">Nomor Pesanan</p>
+            <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -102,6 +102,16 @@ export default function VendorOrderDetailPage() {
                 </Button>
               )}
             </div>
+            {order.tracking_number && order.tracking_url && (
+              <a
+                href={order.tracking_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-ink underline"
+              >
+                Lacak di situs {order.shipping_courier} →
+              </a>
+            )}
           </div>
         </InfoCard>
       </div>

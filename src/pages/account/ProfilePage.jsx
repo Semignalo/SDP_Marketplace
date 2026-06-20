@@ -184,7 +184,7 @@ function TierCard({ user }) {
         tier && 'text-white',
       )}>
         <div>
-          <p className={cn('text-2xs uppercase tracking-[0.25em] mb-2', tier ? 'text-white/60' : 'text-ink-muted')}>
+          <p className={cn('text-2xs uppercase tracking-eyebrow mb-2', tier ? 'text-white/60' : 'text-ink-muted')}>
             Your Loyalty Tier
           </p>
           <div className="flex items-center gap-3">
@@ -197,7 +197,7 @@ function TierCard({ user }) {
         <div className={cn('text-right', tier ? 'text-white' : 'text-ink')}>
           <p className={cn('text-2xs uppercase tracking-widest', tier ? 'text-white/60' : 'text-ink-muted')}>Total Spent</p>
           <p className="text-2xl font-bold tabular-nums">{formatRupiah(spending)}</p>
-          <p className={cn('text-2xs', tier ? 'text-white/50' : 'text-ink-faint')}>from completed orders</p>
+          <p className={cn('text-2xs', tier ? 'text-white/50' : 'text-ink-muted')}>from completed orders</p>
         </div>
       </div>
 
@@ -216,7 +216,7 @@ function TierCard({ user }) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-2xs text-ink-faint mt-1 tabular-nums text-right">
+            <p className="text-2xs text-ink-muted mt-1 tabular-nums text-right">
               {formatRupiah(spending)} / {formatRupiah(next.min_spend)}
             </p>
           </div>
@@ -236,7 +236,7 @@ function TierCard({ user }) {
               <TierTableRow key={t.level} level={t.level} name={t.name} minSpend={t.min_spend} discount={t.discount} active={tier?.level === t.level} />
             ))}
           </ul>
-          <p className="text-2xs text-ink-faint mt-3">
+          <p className="text-2xs text-ink-muted mt-3">
             Tier names and thresholds can be customized by admins. Shown above are the defaults.
           </p>
         </details>
@@ -252,7 +252,7 @@ function TierTableRow({ level, name, minSpend, discount, active }) {
       active ? 'bg-paper-warm font-semibold text-ink' : 'text-ink-soft',
     )}>
       <div className="flex items-center gap-2">
-        <span className="w-5 text-center text-ink-faint tabular-nums">{level}</span>
+        <span className="w-5 text-center text-ink-muted tabular-nums">{level}</span>
         <span>{name}</span>
         {active && <span className="text-2xs text-state-success">• Current</span>}
       </div>

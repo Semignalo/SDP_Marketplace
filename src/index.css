@@ -40,7 +40,7 @@
   }
 
   .eyebrow {
-    @apply text-2xs font-bold uppercase tracking-[0.25em] text-ink-muted;
+    @apply text-2xs font-bold uppercase tracking-eyebrow text-ink-muted;
   }
 
   .section-sm {

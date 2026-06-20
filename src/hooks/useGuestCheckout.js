@@ -43,6 +43,18 @@ export function useGuestSnapToken() {
   })
 }
 
+export function useResendGuestTrackingLink() {
+  return useMutation({
+    mutationFn: async ({ orderNumber, guestEmail }) => {
+      const { data } = await api.post('/guest/orders/resend-link', {
+        order_number: orderNumber,
+        guest_email: guestEmail,
+      })
+      return data
+    },
+  })
+}
+
 export function useGuestOrder(orderNumber, token) {
   return useQuery({
     queryKey: ['guest-order', orderNumber, token],

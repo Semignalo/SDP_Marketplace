@@ -92,7 +92,7 @@ export default function OrderSuccessPage() {
             <>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-faint">Nomor Pesanan</p>
+                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
                   <p className="text-lg font-bold text-ink tabular-nums">{order.order_number}</p>
                 </div>
                 {(() => {
@@ -119,7 +119,7 @@ export default function OrderSuccessPage() {
                   >
                     Bayar Sekarang
                   </Button>
-                  <p className="text-2xs text-ink-faint text-center">
+                  <p className="text-2xs text-ink-muted text-center">
                     Aman via Midtrans — VA, QRIS, GoPay, kartu kredit, dan lainnya.
                   </p>
                 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\CourierTracking;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,6 +26,7 @@ class OrderResource extends JsonResource
             'shipping_phone' => $this->shipping_phone,
             'shipping_courier' => $this->shipping_courier,
             'tracking_number' => $this->tracking_number,
+            'tracking_url' => CourierTracking::url($this->shipping_courier),
             'payment_proof' => $this->payment_proof,
             'payment_verified_at' => $this->payment_verified_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),

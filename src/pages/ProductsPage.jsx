@@ -70,7 +70,7 @@ export default function ProductsPage() {
         >
           <SlidersHorizontal size={16} /> Filter
         </button>
-        <div className="hidden lg:block text-2xs uppercase tracking-[0.25em] text-ink-muted">
+        <div className="hidden lg:block text-2xs uppercase tracking-eyebrow text-ink-muted">
           Filter
         </div>
         <div className="flex-1 lg:flex-none">
@@ -205,7 +205,7 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
                         onClick={() => onCategoryChange(child.slug)}
                         className={cn(
                           'w-full text-left text-xs py-1',
-                          activeCategory === child.slug ? 'text-ink font-semibold' : 'text-ink-faint hover:text-ink',
+                          activeCategory === child.slug ? 'text-ink font-semibold' : 'text-ink-muted hover:text-ink',
                         )}
                       >
                         {child.name}

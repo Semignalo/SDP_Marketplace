@@ -304,6 +304,38 @@ class GuestCheckoutController extends Controller
     }
 
     /**
+     * POST /api/guest/orders/resend-link — kirim ulang link lacak ke email guest.
+     * Selalu balas pesan generik agar tidak bisa dipakai enumerasi order/email.
+     */
+    public function resendLink(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'order_number' => 'required|string|max:40',
+            'guest_email'  => 'required|email|max:160',
+        ]);
+
+        $order = Order::where('order_number', strtoupper(trim($data['order_number'])))
+            ->whereNull('user_id')
+            ->where('guest_email', $data['guest_email'])
+            ->first();
+
+        if ($order) {
+            try {
+                Mail::to($order->guest_email)->send(new OrderConfirmation($order));
+            } catch (Throwable $e) {
+                Log::warning('Resend guest tracking link failed', [
+                    'order' => $order->order_number,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Jika nomor pesanan dan email cocok, link lacak sudah dikirim ulang ke emailmu.',
+        ]);
+    }
+
+    /**
      * GET /api/guest/orders/{orderNumber}?token=XXX — tracking detail order guest.
      */
     public function track(Request $request, string $orderNumber): JsonResponse

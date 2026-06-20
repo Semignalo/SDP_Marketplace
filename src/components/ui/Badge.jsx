@@ -12,7 +12,7 @@ const VARIANTS = {
 }
 
 const SIZES = {
-  sm: 'text-3xs px-1.5 py-0.5',
+  sm: 'text-2xs px-1.5 py-0.5',
   md: 'text-2xs px-2 py-0.5',
   lg: 'text-xs px-2.5 py-1',
 }

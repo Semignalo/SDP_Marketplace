@@ -7,7 +7,7 @@ import { useAuthStore } from '../stores/useAuthStore'
 import { useAddresses, useSaveAddress } from '../hooks/useAccount'
 import { useCheckoutOptions, useCreateOrder, useSnapToken, useShippingRates } from '../hooks/useCheckout'
 import { loadSnap } from '../lib/snap'
-import { Button, Card, Input, Spinner, Modal } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner, Modal } from '../components/ui'
 import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '../components/checkout/shared'
 import TierBadge from '../components/TierBadge'
 import CitySearchInput from '../components/CitySearchInput'
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm line-clamp-1">{item.name}</p>
-                        <p className="text-2xs uppercase tracking-widest text-ink-faint mt-0.5">{item.vendor_name}</p>
+                        <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
                         <p className="text-xs text-ink-muted mt-0.5 tabular-nums">
                           {formatRupiah(item.price)} × {item.quantity}
                         </p>
@@ -307,13 +307,12 @@ export default function CheckoutPage() {
               </StepCard>
 
               <StepCard title="Notes (optional)">
-                <textarea
+                <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   maxLength={500}
                   placeholder="A note for the seller or courier"
-                  className="w-full px-3 py-2.5 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink resize-none"
                 />
               </StepCard>
             </>
@@ -405,8 +404,8 @@ function AddressOption({ addr, selected, onSelect }) {
   return (
     <label
       className={cn(
-        'flex items-start gap-3 p-4 rounded-lg cursor-pointer transition',
-        selected ? 'bg-paper-soft shadow-card' : 'shadow-card hover:shadow-hover',
+        'flex items-start gap-3 p-4 rounded-lg cursor-pointer border transition',
+        selected ? 'border-ink bg-paper-soft shadow-card' : 'border-transparent shadow-card hover:shadow-hover',
       )}
     >
       <input

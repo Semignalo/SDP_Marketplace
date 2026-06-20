@@ -52,7 +52,7 @@ export default function KontakPage() {
         />
       </div>
 
-      <p className="text-xs text-ink-faint border-t border-line pt-6">
+      <p className="text-xs text-ink-muted border-t border-line pt-6">
         Untuk pertanyaan umum tentang produk, pengiriman, atau pembayaran — silakan baca
         {' '}<a href="/bantuan" className="underline hover:text-ink">Pusat Bantuan</a> kami terlebih dahulu.
       </p>
@@ -67,7 +67,7 @@ function ContactCard({ icon, title, description, action }) {
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-widest text-ink-faint">{title}</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-ink-muted">{title}</p>
         <p className="text-sm text-ink mt-0.5">{description}</p>
       </div>
       {action && <div className="shrink-0">{action}</div>}

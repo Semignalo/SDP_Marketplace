@@ -10,7 +10,21 @@ export function useRajaOngkirCities(search = '') {
       return data.data || []
     },
     staleTime: 24 * 60 * 60_000,
-    enabled: search.length === 0 || search.length >= 2,
+    enabled: search.length >= 2,
+  })
+}
+
+export function useRajaOngkirDistricts(city, search = '') {
+  return useQuery({
+    queryKey: ['rajaongkir', 'districts', city, search],
+    queryFn: async () => {
+      const params = { city }
+      if (search) params.search = search
+      const { data } = await api.get('/rajaongkir/districts', { params })
+      return data.data || []
+    },
+    staleTime: 24 * 60 * 60_000,
+    enabled: !!city,
   })
 }
 

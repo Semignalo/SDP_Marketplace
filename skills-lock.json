@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "design-audit": {
+      "source": "bencium/bencium-claude-code-design-skill",
+      "sourceType": "github",
+      "skillPath": "design-audit/skills/design-audit/SKILL.md",
+      "computedHash": "be4427bc445752b11968a22ded63f16a756235e24cef2c06a5d723f8102287dd"
+    },
     "huashu-design": {
       "source": "alchaincyf/huashu-design",
       "sourceType": "github",

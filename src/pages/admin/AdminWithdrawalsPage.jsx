@@ -104,13 +104,13 @@ export default function AdminWithdrawalsPage() {
 
                   <div className="mt-1 md:mt-0">
                     <p className="text-sm font-medium text-ink">{w.user?.name}</p>
-                    <p className="text-2xs text-ink-faint">{w.user?.email}</p>
+                    <p className="text-2xs text-ink-muted">{w.user?.email}</p>
                   </div>
 
                   <div className="mt-1 md:mt-0">
                     <p className="text-sm text-ink">{w.bank_name} — {w.bank_account_number}</p>
                     <p className="text-xs text-ink-muted">a.n. {w.bank_account_name}</p>
-                    {w.notes && <p className="text-2xs text-ink-faint mt-0.5 italic">"{w.notes}"</p>}
+                    {w.notes && <p className="text-2xs text-ink-muted mt-0.5 italic">"{w.notes}"</p>}
                   </div>
 
                   <p className="text-sm font-bold tabular-nums md:text-right mt-2 md:mt-0">{formatRupiah(w.amount)}</p>
@@ -136,7 +136,7 @@ export default function AdminWithdrawalsPage() {
                       </button>
                     </div>
                   ) : (
-                    <p className="text-2xs text-ink-faint mt-2 md:mt-0">{w.processed_at ? formatDate(w.processed_at) : '—'}</p>
+                    <p className="text-2xs text-ink-muted mt-2 md:mt-0">{w.processed_at ? formatDate(w.processed_at) : '—'}</p>
                   )}
                 </li>
               )

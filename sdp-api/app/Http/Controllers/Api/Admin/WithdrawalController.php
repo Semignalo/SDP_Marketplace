@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WithdrawalStatusUpdated;
 use App\Models\CommissionWithdrawal;
 use App\Models\ResellerCommission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class WithdrawalController extends Controller
 {
@@ -83,7 +87,27 @@ class WithdrawalController extends Controller
             }
         });
 
-        return response()->json(['message' => 'Status penarikan diperbarui.', 'data' => $this->shape($withdrawal->fresh('user'))]);
+        $withdrawal = $withdrawal->fresh('user');
+        $this->sendWithdrawalStatusEmail($withdrawal);
+
+        return response()->json(['message' => 'Status penarikan diperbarui.', 'data' => $this->shape($withdrawal)]);
+    }
+
+    /**
+     * Best-effort: kirim email pemberitahuan status penarikan ke reseller.
+     */
+    private function sendWithdrawalStatusEmail(CommissionWithdrawal $withdrawal): void
+    {
+        try {
+            if ($withdrawal->user?->email) {
+                Mail::to($withdrawal->user->email)->send(new WithdrawalStatusUpdated($withdrawal));
+            }
+        } catch (Throwable $e) {
+            Log::warning('Withdrawal status email failed', [
+                'withdrawal' => $withdrawal->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     private function shape(CommissionWithdrawal $w): array

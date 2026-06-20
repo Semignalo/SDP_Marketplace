@@ -85,7 +85,7 @@ export default function VendorProfilePage() {
               {form.logo ? (
                 <img src={form.logo} alt="logo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.opacity = 0.2 }} />
               ) : (
-                <span className="text-2xs uppercase tracking-widest text-ink-faint">Logo</span>
+                <span className="text-2xs uppercase tracking-widest text-ink-muted">Logo</span>
               )}
               <div className="absolute inset-0 bg-ink/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {uploadingLogo
@@ -153,7 +153,7 @@ export default function VendorProfilePage() {
 function Row({ label, value }) {
   return (
     <div>
-      <dt className="text-2xs uppercase tracking-widest text-ink-faint">{label}</dt>
+      <dt className="text-2xs uppercase tracking-widest text-ink-muted">{label}</dt>
       <dd className="text-sm text-ink mt-1">{value}</dd>
     </div>
   )

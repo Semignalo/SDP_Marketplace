@@ -800,11 +800,13 @@ Footer di `src/components/Footer.jsx` link ke route yang belum ada → 404:
 
 #### ⚙️ Fitur yang Kurang (nice-to-have sebelum publish)
 
-- 🔲 **Auto-cancel order** `pending_payment` > 24 jam — stok kekunci terus tanpa cron job.
-- 🔲 **Auto-complete order** `shipped` > 7 hari — komisi tidak pernah jadi `earned` kalau admin lupa.
-- 🔲 **Email notifikasi** ke customer: order confirmed, shipped, withdrawal approved/rejected.
-- 🔲 **Link tracking kurir** — saat ini hanya tampil nomor resi, belum ada link ke site kurir.
+- ✅ **Auto-cancel order** `pending_payment` > 24 jam — command `orders:cancel-expired` (`app/Console/Commands/CancelExpiredOrders.php`), restore stok + cancel komisi, scheduled hourly.
+- ✅ **Auto-complete order** `shipped` > 7 hari — command `orders:complete-shipped` (`app/Console/Commands/CompleteShippedOrders.php`), commission `pending` → `earned`, scheduled daily.
+- ✅ **Email notifikasi**: order confirmed (`OrderConfirmation`, kini juga dikirim untuk checkout user login, tidak hanya guest), shipped (`OrderShipped`, dikirim saat vendor/admin tandai shipped), withdrawal approved/rejected (`WithdrawalStatusUpdated`).
+- ✅ **Link tracking kurir** — `App\Support\CourierTracking::url()` map nama kurir → halaman lacak resmi (JNE/J&T/SiCepat/AnterAja/POS/Tiki), diexpose sebagai `tracking_url` di `OrderResource` + admin/vendor order endpoint, tombol "Lacak di situs {kurir}" di semua halaman detail pesanan.
 - ✅ **Halaman `/vendors`** — `VendorsPage.jsx` grid semua brand sudah dibuat.
+
+> **Catatan deploy:** scheduler terdaftar via `withSchedule()` di `bootstrap/app.php` (`php artisan schedule:list` untuk verifikasi). Di VPS perlu cron `* * * * * php artisan schedule:run` (lihat Phase 13) supaya kedua command jalan otomatis.
 
 ---
 

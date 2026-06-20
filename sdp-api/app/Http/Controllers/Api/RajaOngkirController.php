@@ -13,8 +13,18 @@ class RajaOngkirController extends Controller
     {
         $search = trim($request->query('search', ''));
 
-        $cities = $rajaOngkir->searchDestinations($search);
+        $cities = $rajaOngkir->searchCities($search);
 
-        return response()->json(['data' => array_slice($cities, 0, 50)]);
+        return response()->json(['data' => array_slice($cities, 0, 15)]);
+    }
+
+    public function districts(Request $request, RajaOngkirService $rajaOngkir): JsonResponse
+    {
+        $city = trim($request->query('city', ''));
+        $search = trim($request->query('search', ''));
+
+        $districts = $rajaOngkir->searchDistricts($city, $search);
+
+        return response()->json(['data' => array_slice($districts, 0, 50)]);
     }
 }

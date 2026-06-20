@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { CheckCircle2, Package, ArrowRight, Clock, AlertTriangle, CreditCard, Truck } from 'lucide-react'
+import { CheckCircle2, Package, ArrowRight, Clock, AlertTriangle, CreditCard, Truck, Mail, Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { useGuestOrder, useGuestSnapToken } from '../hooks/useGuestCheckout'
+import { useGuestOrder, useGuestSnapToken, useResendGuestTrackingLink } from '../hooks/useGuestCheckout'
 import { getGuestToken } from '../lib/guestOrders'
 import { api, extractErrorMessage } from '../lib/api'
 import { Button, Skeleton, Badge } from '../components/ui'
@@ -62,20 +62,7 @@ export default function GuestTrackPage() {
   }
 
   if (!token) {
-    return (
-      <div className="container-page py-20">
-        <div className="max-w-md mx-auto text-center">
-          <AlertTriangle size={40} className="mx-auto text-ink-faint mb-4" />
-          <h1 className="text-xl font-bold text-ink">Token tidak ditemukan</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Gunakan link lacak pesanan dari email konfirmasi untuk mengakses halaman ini.
-          </p>
-          <Link to="/products" className="inline-block mt-6">
-            <Button variant="outline">Lanjut Belanja</Button>
-          </Link>
-        </div>
-      </div>
-    )
+    return <ResendLinkForm orderNumber={orderNumber} />
   }
 
   const showSuccess = paidFromCheckout || (order && order.status !== 'pending_payment' && order.status !== 'cancelled')
@@ -99,6 +86,8 @@ export default function GuestTrackPage() {
           </p>
         </div>
 
+        {order && <SaveTrackingBanner orderNumber={orderNumber} token={token} email={order.guest_email} />}
+
         <div className="mt-8 border border-line rounded-lg p-6 bg-paper">
           {isLoading ? (
             <div className="space-y-3">
@@ -114,7 +103,7 @@ export default function GuestTrackPage() {
             <>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-faint">Nomor Pesanan</p>
+                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
                   <p className="text-lg font-bold text-ink tabular-nums">{order.order_number}</p>
                 </div>
                 {(() => {
@@ -135,6 +124,16 @@ export default function GuestTrackPage() {
                 <Row label="Kurir" value={order.shipping_courier || '-'} />
                 <Row label="Penerima" value={order.shipping_name} />
                 {order.tracking_number && <Row label="No. Resi" value={order.tracking_number} />}
+                {order.tracking_number && order.tracking_url && (
+                  <Row
+                    label=" "
+                    value={
+                      <a href={order.tracking_url} target="_blank" rel="noopener noreferrer" className="text-ink underline">
+                        Lacak di situs {order.shipping_courier} →
+                      </a>
+                    }
+                  />
+                )}
               </dl>
 
               {Array.isArray(order.items) && order.items.length > 0 && (
@@ -158,7 +157,7 @@ export default function GuestTrackPage() {
                   <Button variant="accent" fullWidth size="lg" onClick={handlePay} loading={snapMut.isPending} leadingIcon={<CreditCard size={16} />}>
                     Bayar Sekarang
                   </Button>
-                  <p className="text-2xs text-ink-faint text-center">
+                  <p className="text-2xs text-ink-muted text-center">
                     Aman via Midtrans — VA, QRIS, GoPay, kartu kredit, dan lainnya.
                   </p>
                 </div>
@@ -198,6 +197,103 @@ function Row({ label, value, bold }) {
     <div className="flex justify-between items-baseline">
       <dt className={bold ? 'text-sm font-semibold' : 'text-sm text-ink-muted'}>{label}</dt>
       <dd className={`tabular-nums ${bold ? 'text-base font-bold' : 'text-sm text-ink'}`}>{value}</dd>
+    </div>
+  )
+}
+
+function SaveTrackingBanner({ orderNumber, token, email }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    const url = `${window.location.origin}/lacak/${orderNumber}?token=${token}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      toast.success('Link disalin')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('Gagal menyalin link')
+    }
+  }
+
+  return (
+    <div className="mt-6 px-4 py-3.5 bg-paper-soft border border-line rounded-lg flex items-start gap-3 flex-wrap">
+      <Mail size={16} className="text-ink-muted mt-0.5 shrink-0" />
+      <p className="text-xs text-ink-soft flex-1 min-w-[200px]">
+        Link lacak sudah dikirim ke{' '}
+        {email ? <span className="font-medium text-ink">{email}</span> : 'emailmu'}.
+        Simpan halaman ini untuk cek status pesananmu kapanpun.
+      </p>
+      <Button variant="outline" size="sm" onClick={handleCopy} leadingIcon={copied ? <Check size={14} /> : <Copy size={14} />}>
+        {copied ? 'Tersalin' : 'Salin Link'}
+      </Button>
+    </div>
+  )
+}
+
+function ResendLinkForm({ orderNumber }) {
+  const [orderInput, setOrderInput] = useState(orderNumber || '')
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+  const resendMut = useResendGuestTrackingLink()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await resendMut.mutateAsync({ orderNumber: orderInput.trim(), guestEmail: email.trim() })
+      setSent(true)
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
+
+  return (
+    <div className="container-page py-20">
+      <div className="max-w-md mx-auto text-center">
+        <AlertTriangle size={40} className="mx-auto text-ink-faint mb-4" />
+        <h1 className="text-xl font-bold text-ink">Token tidak ditemukan</h1>
+        <p className="mt-2 text-sm text-ink-muted">
+          Gunakan link lacak pesanan dari email konfirmasi, atau kirim ulang lewat form di bawah.
+        </p>
+
+        {sent ? (
+          <div className="mt-6 px-4 py-3.5 bg-paper-soft border border-line rounded-lg text-sm text-ink-soft text-left">
+            Jika nomor pesanan dan email cocok, link lacak sudah dikirim ulang ke emailmu. Cek inbox (atau folder spam) beberapa menit ke depan.
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="mt-6 space-y-3 text-left">
+            <div>
+              <label className="text-xs font-medium text-ink-muted">Nomor Pesanan</label>
+              <input
+                type="text"
+                required
+                value={orderInput}
+                onChange={(e) => setOrderInput(e.target.value)}
+                placeholder="SDP-20260619-XXXXX"
+                className="mt-1 w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-ink-muted">Email Checkout</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nama@email.com"
+                className="mt-1 w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
+              />
+            </div>
+            <Button type="submit" variant="accent" fullWidth loading={resendMut.isPending}>
+              Kirim Ulang Link Lacak
+            </Button>
+          </form>
+        )}
+
+        <Link to="/products" className="inline-block mt-6">
+          <Button variant="outline">Lanjut Belanja</Button>
+        </Link>
+      </div>
     </div>
   )
 }

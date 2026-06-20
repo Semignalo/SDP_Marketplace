@@ -18,22 +18,22 @@ import {
 } from '../components/ui'
 
 const SAMPLE_PHOTOS = [
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
-  'https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?w=600&q=80',
-  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80',
-  'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80',
-  'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&q=80',
-  'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80',
-  'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&q=80',
+  'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&q=80',
+  'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80',
+  'https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?w=600&q=80',
+  'https://images.unsplash.com/photo-1532413992378-f169ac26fff0?w=600&q=80',
+  'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80',
+  'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600&q=80',
+  'https://images.unsplash.com/photo-1567721913486-6585f069b332?w=600&q=80',
+  'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=600&q=80',
 ]
 
 const SAMPLE_PRODUCTS = [
-  { name: 'Linen Blouse Crinkle', vendor: 'Lumière Studio', price: 245000, oldPrice: 320000, photo: SAMPLE_PHOTOS[0], badge: 'Baru' },
-  { name: 'Vitamin C Brightening Serum 30ml', vendor: 'Kanaya Beauty', price: 189000, photo: SAMPLE_PHOTOS[4] },
-  { name: 'Oxford Slim Fit Shirt', vendor: 'Aksen Pria', price: 285000, oldPrice: 380000, photo: SAMPLE_PHOTOS[1], badge: 'Sale' },
-  { name: 'Canvas Tote Bag Premium', vendor: 'Atelier Goods', price: 175000, photo: SAMPLE_PHOTOS[3] },
-  { name: 'Daily Glow Moisturizer SPF 30', vendor: 'Kanaya Beauty', price: 312000, photo: SAMPLE_PHOTOS[5] },
+  { name: 'Vitamin C Brightening Serum 30ml', vendor: 'Kanaya Beauty', price: 189000, oldPrice: 245000, photo: SAMPLE_PHOTOS[0], badge: 'Baru' },
+  { name: 'Daily Glow Moisturizer SPF 30', vendor: 'Kanaya Beauty', price: 165000, photo: SAMPLE_PHOTOS[4] },
+  { name: 'Gentle Gel Cleanser Centella', vendor: 'Mochi Care', price: 85000, oldPrice: 110000, photo: SAMPLE_PHOTOS[1], badge: 'Sale' },
+  { name: 'Coffee Body Scrub Energizing', vendor: 'Pure Atelier', price: 98000, photo: SAMPLE_PHOTOS[6] },
+  { name: 'Botanical Face Oil Rosehip', vendor: 'Verda Botanica', price: 175000, photo: SAMPLE_PHOTOS[5] },
 ]
 
 export default function StyleGuidePage() {
@@ -44,7 +44,7 @@ export default function StyleGuidePage() {
   return (
     <div className="container-page py-10 space-y-16">
       <header>
-        <p className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-2">Design System</p>
+        <p className="text-xs font-bold uppercase tracking-eyebrow text-ink-muted mb-2">Design System</p>
         <h1 className="text-3xl font-bold text-ink">SDP Style Guide</h1>
         <p className="text-sm text-ink-muted mt-2 max-w-xl">
           Monochrome premium minimalis. Typography Inter, radius max 8px, neutral palette — warna datang dari foto produk & aset brand.
@@ -75,7 +75,7 @@ export default function StyleGuidePage() {
           <p className="text-xl font-semibold">Heading M — 20px</p>
           <p className="text-base">Body — 16px. Quick brown fox jumps over the lazy dog.</p>
           <p className="text-sm text-ink-soft">Body small — 14px soft.</p>
-          <p className="text-xs text-ink-muted uppercase tracking-[0.25em]">CAPTION — 12px wide tracking</p>
+          <p className="text-xs text-ink-muted uppercase tracking-eyebrow">CAPTION — 12px wide tracking</p>
         </div>
       </Section>
 
@@ -213,8 +213,8 @@ export default function StyleGuidePage() {
 
         <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Keranjang (2)">
           <div className="p-5 space-y-4">
-            <CartItemDemo name="Vitamin C Brightening Serum" vendor="Kanaya Beauty" price={189000} qty={1} photo={SAMPLE_PHOTOS[4]} />
-            <CartItemDemo name="Linen Blouse Crinkle" vendor="Lumière Studio" price={245000} oldPrice={320000} qty={2} photo={SAMPLE_PHOTOS[0]} />
+            <CartItemDemo name="Daily Glow Moisturizer SPF 30" vendor="Kanaya Beauty" price={165000} qty={1} photo={SAMPLE_PHOTOS[4]} />
+            <CartItemDemo name="Vitamin C Brightening Serum" vendor="Kanaya Beauty" price={189000} oldPrice={245000} qty={2} photo={SAMPLE_PHOTOS[0]} />
           </div>
         </Drawer>
       </Section>
@@ -225,7 +225,7 @@ export default function StyleGuidePage() {
 function Section({ title, children }) {
   return (
     <section>
-      <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-ink-muted mb-4 pb-2 border-b border-line">
+      <h2 className="text-xs font-bold uppercase tracking-eyebrow text-ink-muted mb-4 pb-2 border-b border-line">
         {title}
       </h2>
       {children}

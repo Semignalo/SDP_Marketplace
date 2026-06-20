@@ -25,29 +25,29 @@ class RajaOngkirService
     }
 
     /**
-     * Cari destinasi/kota dari Komerce API, di-cache 24 jam.
-     * Return: [{id, name, province, type}]
+     * Cari destinasi mentah dari Komerce API, di-cache 1 jam.
+     * Return: [{id, name (label lengkap), province, city}]
      */
-    public function searchDestinations(string $search = ''): array
+    private function rawSearch(string $search, int $limit = 20): array
     {
         if (empty($search)) {
             return [];
         }
 
-        $cacheKey = 'rajaongkir_dest_' . md5($search);
+        $cacheKey = 'rajaongkir_dest_' . md5($search . '|' . $limit);
 
-        return Cache::remember($cacheKey, 3600, function () use ($search) {
+        return Cache::remember($cacheKey, 3600, function () use ($search, $limit) {
             try {
                 $response = Http::timeout(10)
                     ->withHeaders(['key' => $this->apiKey])
                     ->get("{$this->baseUrl}/destination/domestic-destination", [
                         'search' => $search,
-                        'limit'  => 20,
+                        'limit'  => $limit,
                         'offset' => 0,
                     ]);
 
                 if (! $response->successful()) {
-                    Log::warning('RajaOngkir searchDestinations failed', ['status' => $response->status()]);
+                    Log::warning('RajaOngkir rawSearch failed', ['status' => $response->status()]);
                     return [];
                 }
 
@@ -57,17 +57,84 @@ class RajaOngkirService
                 }
 
                 return collect($results)->map(fn ($d) => [
-                    'id'       => (int) $d['id'],
+                    'id'       => (int) ($d['id'] ?? 0),
                     'name'     => $d['label'] ?? '',
                     'province' => $d['province_name'] ?? '',
                     'city'     => $d['city_name'] ?? '',
                 ])->filter(fn ($d) => $d['id'] > 0)->values()->all();
 
             } catch (\Throwable $e) {
-                Log::warning('RajaOngkir searchDestinations exception', ['error' => $e->getMessage()]);
+                Log::warning('RajaOngkir rawSearch exception', ['error' => $e->getMessage()]);
                 return [];
             }
         });
+    }
+
+    /**
+     * Langkah 1: cari kota/kabupaten saja (di-dedupe per nama kota), kota yang
+     * cocok dengan kata kunci naik ke atas. Tidak ada ID di sini — ID baru
+     * didapat di searchDistricts() setelah user pilih kota.
+     * Return: [{city, province}]
+     */
+    public function searchCities(string $search = ''): array
+    {
+        $needle = strtolower(trim($search));
+        $results = $this->rawSearch($search, 50);
+
+        return collect($results)
+            ->map(fn ($d) => [
+                'city'           => $d['city'],
+                'province'       => $d['province'],
+                'is_city'        => strtolower($d['city']) === $needle,
+                'city_starts_with' => str_starts_with(strtolower($d['city']), $needle),
+            ])
+            ->unique(fn ($d) => strtolower($d['city']))
+            ->sortByDesc(fn ($d) => ($d['is_city'] ? 2 : 0) + ($d['city_starts_with'] ? 1 : 0))
+            ->map(fn ($d) => ['city' => $d['city'], 'province' => $d['province']])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Langkah 2: cari kecamatan/kelurahan di dalam kota yang sudah dipilih.
+     * $search opsional untuk menyaring lebih lanjut (nama kecamatan).
+     * Return: [{id, name (kecamatan/kelurahan saja), province, city}]
+     */
+    public function searchDistricts(string $city, string $search = ''): array
+    {
+        $city = trim($city);
+        if ($city === '') {
+            return [];
+        }
+
+        $results = $this->rawSearch($search !== '' ? $search : $city, 100);
+
+        return collect($results)
+            ->filter(fn ($d) => strcasecmp($d['city'], $city) === 0)
+            ->map(function ($d) {
+                $parts = array_map('trim', explode(',', $d['name']));
+                $cityIdx = null;
+                foreach ($parts as $i => $part) {
+                    if (strcasecmp($part, $d['city']) === 0) {
+                        $cityIdx = $i;
+                        break;
+                    }
+                }
+
+                $district = $cityIdx !== null
+                    ? implode(', ', array_slice($parts, 0, $cityIdx))
+                    : $d['name'];
+
+                return [
+                    'id'       => $d['id'],
+                    'name'     => $district !== '' ? $district : $d['name'],
+                    'province' => $d['province'],
+                    'city'     => $d['city'],
+                ];
+            })
+            ->sortBy('name')
+            ->values()
+            ->all();
     }
 
     /**

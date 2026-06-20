@@ -106,7 +106,7 @@ function StatCard({ icon, label, value, hint, accent, danger }) {
           ? <Skeleton className={cn('h-7 w-24', accent && 'bg-white/20')} />
           : <p className="text-xl md:text-2xl font-bold tabular-nums">{value}</p>}
       </div>
-      {hint && <p className={cn('text-2xs mt-1', accent ? 'text-white/50' : 'text-ink-faint')}>{hint}</p>}
+      {hint && <p className={cn('text-2xs mt-1', accent ? 'text-white/50' : 'text-ink-muted')}>{hint}</p>}
     </div>
   )
 }
@@ -145,7 +145,7 @@ function RevenueChart({ data }) {
           )
         })}
       </div>
-      <div className="mt-2 flex justify-between text-2xs text-ink-faint">
+      <div className="mt-2 flex justify-between text-2xs text-ink-muted">
         <span>{data[0]?.date}</span>
         <span>{data[data.length - 1]?.date}</span>
       </div>

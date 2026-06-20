@@ -11,14 +11,11 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $tree = [
-            'Wanita' => ['Atasan', 'Bawahan', 'Dress', 'Outerwear'],
-            'Pria' => ['Kaos', 'Kemeja', 'Celana', 'Jaket'],
-            'Beauty' => ['Skincare', 'Makeup', 'Body Care', 'Fragrance'],
-            'Anak' => ['Baju Bayi', 'Mainan'],
-            'Aksesoris' => ['Tas', 'Sepatu', 'Topi', 'Jam Tangan'],
-            'Sport' => ['Pakaian Olahraga', 'Peralatan'],
-            'Rumah' => ['Dekorasi', 'Dapur'],
-            'Gadget' => ['Aksesoris HP', 'Audio'],
+            'Skincare' => ['Cleanser', 'Toner', 'Serum', 'Moisturizer', 'Sunscreen', 'Masker'],
+            'Body Care' => ['Body Wash', 'Body Lotion', 'Body Scrub', 'Hand Cream'],
+            'Hair Care' => ['Shampoo', 'Hair Oil'],
+            'Lip & Eye' => ['Lip Care', 'Eye Care'],
+            'Fragrance' => ['Parfum', 'Body Mist'],
         ];
 
         $order = 0;

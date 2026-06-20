@@ -53,7 +53,7 @@ export default function VendorPage() {
           {vendor.description && (
             <p className="text-sm text-ink-muted mt-1 max-w-xl">{vendor.description}</p>
           )}
-          <p className="text-2xs text-ink-faint mt-2 uppercase tracking-widest">
+          <p className="text-2xs text-ink-muted mt-2 uppercase tracking-widest">
             {vendor.products_count} produk aktif
           </p>
         </div>

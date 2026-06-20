@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PaymentConfirmation;
 use App\Models\Order;
 use App\Models\ResellerCommission;
 use App\Services\MidtransService;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Throwable;
 
@@ -102,6 +104,11 @@ class PaymentController extends Controller
                     $commission->update(['status' => 'cancelled']);
                 }
             });
+
+            // Kirim email konfirmasi pembayaran setelah status berubah ke processing
+            if ($next === 'processing') {
+                $this->sendPaymentConfirmationEmail($order->fresh());
+            }
         }
 
         return response()->json(['data' => ['status' => $order->fresh()->status]]);
@@ -128,6 +135,8 @@ class PaymentController extends Controller
             return response()->json(['message' => 'OK', 'order_status' => $order->status]);
         }
 
+        $wasAlreadyProcessing = $order->status !== 'pending_payment';
+
         DB::transaction(function () use ($order, $next, $result) {
             // Idempotent: skip kalau status sudah lebih maju dari pending_payment
             if ($next === 'processing' && $order->status !== 'pending_payment') {
@@ -153,12 +162,52 @@ class PaymentController extends Controller
                 if ($next === 'cancelled' && in_array($commission->status, ['pending', 'earned'])) {
                     $commission->update(['status' => 'cancelled']);
                 }
-                // Commission status stays "pending" until order is fully "completed"
             }
         });
+
+        // Kirim email konfirmasi pembayaran — hanya kalau status baru berubah ke processing
+        if ($next === 'processing' && ! $wasAlreadyProcessing) {
+            $this->sendPaymentConfirmationEmail($order->fresh());
+        }
 
         Log::info('Midtrans webhook processed', ['order' => $order->order_number, 'next' => $next]);
 
         return response()->json(['message' => 'OK', 'order_status' => $order->fresh()->status]);
+    }
+
+    /**
+     * Kirim email PaymentConfirmation ke guest atau user yang login.
+     * Best-effort: error di-log tapi tidak throw.
+     */
+    private function sendPaymentConfirmationEmail(Order $order): void
+    {
+        try {
+            // Guest order — kirim ke guest_email
+            if (! $order->user_id && $order->guest_email) {
+                Mail::to($order->guest_email)->send(new PaymentConfirmation($order));
+                Log::info('Payment confirmation email sent to guest', [
+                    'order' => $order->order_number,
+                    'email' => $order->guest_email,
+                ]);
+                return;
+            }
+
+            // Logged-in user — kirim ke email akun
+            if ($order->user_id) {
+                $order->loadMissing('user');
+                if ($order->user?->email) {
+                    Mail::to($order->user->email)->send(new PaymentConfirmation($order));
+                    Log::info('Payment confirmation email sent to user', [
+                        'order' => $order->order_number,
+                        'email' => $order->user->email,
+                    ]);
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning('Payment confirmation email failed', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -139,7 +139,7 @@ function CategoryNode({ node, onEdit, onDelete, onAddChild, depth = 0 }) {
         <div style={{ paddingLeft: `${depth * 24}px` }} className="flex items-center gap-2 flex-1 min-w-0">
           {depth > 0 && <ChevronRight size={14} className="text-ink-faint shrink-0" />}
           <p className="text-sm text-ink font-medium">{node.name}</p>
-          <span className="text-2xs text-ink-faint tabular-nums">/{node.slug}</span>
+          <span className="text-2xs text-ink-muted tabular-nums">/{node.slug}</span>
           <span className="text-2xs text-ink-muted">· {node.products_count} produk</span>
         </div>
         <div className="flex items-center gap-1">

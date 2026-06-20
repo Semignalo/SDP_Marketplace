@@ -126,7 +126,7 @@ export default function AdminUsersPage() {
                   <div>
                     <p className="text-sm text-ink font-medium">{u.name}</p>
                     <p className="text-xs text-ink-muted">{u.email}</p>
-                    {u.reseller_code && <p className="text-2xs text-ink-faint tabular-nums mt-0.5">Code: {u.reseller_code}</p>}
+                    {u.reseller_code && <p className="text-2xs text-ink-muted tabular-nums mt-0.5">Code: {u.reseller_code}</p>}
                   </div>
                   <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0">{u.vendor?.name || '—'}</p>

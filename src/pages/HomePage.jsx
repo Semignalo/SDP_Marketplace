@@ -1,18 +1,15 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Search, Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Star } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
-import { Badge, Input, SkeletonProductCard, StarRating } from '../components/ui'
-import { useProducts, useVendors, useCategories } from '../hooks/useProducts'
+import { Badge, SkeletonProductCard } from '../components/ui'
+import { useProducts, useVendors } from '../hooks/useProducts'
 import { formatRupiah, calcDiscount } from '../lib/utils'
-import { getCategoryImage } from '../lib/categoryImages'
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600&q=80'
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=1600&q=80'
 
 export default function HomePage() {
   const { data: featured, isLoading: loadingFeatured } = useProducts({ per_page: 60, sort: 'newest' })
   const { data: vendors = [], isLoading: loadingVendors } = useVendors()
-  const { data: categories = [] } = useCategories()
 
   const products = featured?.data || []
   const promoProducts = products.filter(
@@ -36,105 +33,82 @@ export default function HomePage() {
 
       <ValueStrip />
 
-      <BrandStrip vendors={vendors} isLoading={loadingVendors} />
+      <ThreeCardSection />
 
-      <CategoryGrid categories={categories} />
+      <EditorialBlock />
+
+      <BrandStrip vendors={vendors} isLoading={loadingVendors} />
 
       <PromoSection products={promoProducts} />
 
       <FeaturedSection products={products} isLoading={loadingFeatured} />
 
-      <TopRatedSection products={topRated} />
+      <StyleInTheWildSection />
 
-      <EditorialBlock />
+      <TopRatedSection products={topRated} />
     </div>
   )
 }
 
 function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    const q = query.trim()
-    navigate(q ? `/products?search=${encodeURIComponent(q)}` : '/products')
-  }
-
   return (
-    <section className="relative">
-      <div className="grid lg:grid-cols-2 min-h-[560px] lg:min-h-[640px]">
-        <div className="flex items-center bg-paper-soft order-2 lg:order-1">
-          <div className="container-page lg:pr-16 py-16 lg:py-24">
-            <p className="eyebrow mb-4">Curated Collection</p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-ink leading-[1.05]">
-              The brands you want —<br />
-              <span className="italic font-light">finally, in one place.</span>
-            </h1>
-            <p className="mt-6 text-base text-ink-muted max-w-md leading-relaxed">
-              Fashion, beauty, everyday essentials — curated by people who actually use them.
-            </p>
+    <section className="relative min-h-[560px] lg:min-h-[680px] flex items-end">
+      <img
+        src={HERO_IMAGE}
+        alt="Curated fashion rack"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/10 to-transparent" />
 
-            <form onSubmit={handleSearch} className="mt-8 max-w-md">
-              <div className="relative">
-                <Input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search products, brands, categories..."
-                  leadingIcon={<Search size={16} />}
-                  className="h-12 pr-24 shadow-card border-none"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-1.5 top-1.5 h-9 px-4 bg-ink text-white text-2xs font-semibold uppercase tracking-widest rounded hover:bg-ink-soft transition"
-                >
-                  Search
-                </button>
-              </div>
-            </form>
+      <div className="relative container-page pb-16 lg:pb-20">
+        <p className="text-2xs font-bold uppercase tracking-eyebrow text-white/70 mb-4">
+          Curated Collection
+        </p>
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.05] max-w-2xl">
+          The brands you want —<br />
+          <span className="italic font-light">finally, in one place.</span>
+        </h1>
+        <p className="mt-6 text-base text-white/80 max-w-md leading-relaxed">
+          Fashion, beauty, everyday essentials — curated by people who actually use them.
+        </p>
 
-            <div className="mt-5 flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/products"
-                className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-ink text-white text-xs font-semibold uppercase tracking-widest hover:bg-ink-soft transition rounded shadow-card hover:shadow-hover"
-              >
-                Shop now
-                <ArrowRight size={16} />
-              </Link>
-              <Link
-                to="/vendors"
-                className="inline-flex items-center justify-center h-12 px-8 border border-ink text-ink text-xs font-semibold uppercase tracking-widest hover:bg-ink hover:text-white transition rounded"
-              >
-                Explore brands
-              </Link>
-            </div>
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <Link
+            to="/products"
+            className="inline-flex items-center justify-center gap-2 h-12 px-8 bg-white text-ink text-xs font-semibold uppercase tracking-widest hover:bg-white/90 transition rounded-pill"
+          >
+            Shop now
+            <ArrowRight size={16} />
+          </Link>
+          <Link
+            to="/vendors"
+            className="inline-flex items-center justify-center h-12 px-8 border border-white text-white text-xs font-semibold uppercase tracking-widest hover:bg-white hover:text-ink transition rounded-pill"
+          >
+            Explore brands
+          </Link>
+        </div>
 
-            {(vendorCount > 0 || productCount > 0) && (
-              <div className="mt-8 flex items-center gap-6 text-xs text-ink-muted">
-                {vendorCount > 0 && (
-                  <span>
-                    <strong className="text-ink tabular-nums">{vendorCount}+</strong> trusted brands
-                  </span>
-                )}
-                {productCount > 0 && (
-                  <span>
-                    <strong className="text-ink tabular-nums">{productCount}+</strong> products
-                  </span>
-                )}
-                {avgRating && <StarRating value={avgRating} count={totalReviews} size="md" />}
-              </div>
+        {(vendorCount > 0 || productCount > 0) && (
+          <div className="mt-8 flex items-center gap-6 text-xs text-white/70">
+            {vendorCount > 0 && (
+              <span>
+                <strong className="text-white tabular-nums">{vendorCount}+</strong> trusted brands
+              </span>
+            )}
+            {productCount > 0 && (
+              <span>
+                <strong className="text-white tabular-nums">{productCount}+</strong> products
+              </span>
+            )}
+            {avgRating && (
+              <span className="inline-flex items-center gap-1">
+                <Star size={14} className="fill-rating text-rating" />
+                <strong className="text-white tabular-nums">{avgRating}</strong>
+                {totalReviews > 0 && <span>({totalReviews})</span>}
+              </span>
             )}
           </div>
-        </div>
-
-        <div className="relative bg-paper-warm order-1 lg:order-2 min-h-[320px] lg:min-h-0">
-          <img
-            src={HERO_IMAGE}
-            alt="Curated fashion rack"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
+        )}
       </div>
     </section>
   )
@@ -174,43 +148,6 @@ function BrandStrip({ vendors, isLoading }) {
                 </Link>
               ))}
         </div>
-      </div>
-    </section>
-  )
-}
-
-function CategoryGrid({ categories }) {
-  if (categories.length === 0) return null
-  const items = categories.slice(0, 6)
-  return (
-    <section className="section-md container-page">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="eyebrow mb-2">Categories</p>
-          <h2 className="text-2xl font-bold tracking-tight">Shop by category</h2>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        {items.map((cat) => (
-          <Link
-            key={cat.id}
-            to={`/products?category=${cat.slug}`}
-            className="group relative aspect-square overflow-hidden rounded-lg bg-paper-warm shadow-card hover:shadow-hover transition-shadow"
-          >
-            <img
-              src={getCategoryImage(cat)}
-              alt={cat.name}
-              className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/10 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-4">
-              <p className="text-white text-sm font-semibold tracking-wide">{cat.name}</p>
-              <p className="text-white/70 text-2xs uppercase tracking-widest mt-0.5">
-                {cat.children?.length || 0} subcategories
-              </p>
-            </div>
-          </Link>
-        ))}
       </div>
     </section>
   )
@@ -259,9 +196,20 @@ function PromoSection({ products }) {
   const bigDiscount = calcDiscount(big.price, big.compare_at_price)
 
   return (
-    <section className="bg-accent-soft border-y border-accent/20">
-      <div className="container-page section-sm">
-        <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[420px]">
+    <section className="section-md container-page">
+      <div className="flex items-end justify-between mb-8">
+        <div>
+          <p className="eyebrow mb-2">On Sale</p>
+          <h2 className="text-2xl font-bold tracking-tight">Don't miss out</h2>
+        </div>
+        <Link
+          to="/products"
+          className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
+        >
+          See all <ArrowRight size={14} />
+        </Link>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-3 md:gap-4 md:h-[420px]">
           <Link
             to={`/products/${big.slug}`}
             className="group relative col-span-2 md:row-span-2 aspect-[16/10] md:aspect-auto overflow-hidden rounded-lg bg-paper-warm"
@@ -308,7 +256,6 @@ function PromoSection({ products }) {
               </Link>
             )
           })}
-        </div>
       </div>
     </section>
   )
@@ -330,6 +277,93 @@ function TopRatedSection({ products }) {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ThreeCardSection() {
+  const cards = [
+    {
+      title: 'Dressed for the moment.',
+      subtitle: 'From everyday basics to statement pieces.',
+      cta: 'Shop new arrivals',
+      to: '/products?sort=newest',
+      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=700&q=80',
+    },
+    {
+      title: 'Skin first, makeup second.',
+      subtitle: 'Beauty essentials that actually work.',
+      cta: 'Shop beauty',
+      to: '/products',
+      image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=700&q=80',
+    },
+    {
+      title: 'Treat yourself, responsibly.',
+      subtitle: 'Great finds under Rp 200K.',
+      cta: 'Shop under 200K',
+      to: '/products?max_price=200000',
+      image: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=700&q=80',
+    },
+  ]
+
+  return (
+    <section className="section-md container-page">
+      <div className="grid md:grid-cols-3 gap-4">
+        {cards.map((card) => (
+          <Link
+            key={card.title}
+            to={card.to}
+            className="group relative aspect-[4/5] overflow-hidden rounded-lg"
+          >
+            <img
+              src={card.image}
+              alt={card.title}
+              className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-transparent to-transparent" />
+            <div className="absolute inset-x-0 top-0 p-6">
+              <h3 className="text-white text-xl font-bold tracking-tight leading-snug">{card.title}</h3>
+              <p className="mt-1.5 text-white/85 text-sm">{card.subtitle}</p>
+              <span className="mt-4 inline-flex items-center h-10 px-5 bg-white text-ink text-2xs font-semibold uppercase tracking-widest rounded-pill">
+                {card.cta}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function StyleInTheWildSection() {
+  const photos = [
+    'https://images.unsplash.com/photo-1551803091-e20673f15770?w=500&q=80',
+    'https://images.unsplash.com/photo-1485462537746-965f33f7f6a7?w=500&q=80',
+    'https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=500&q=80',
+  ]
+
+  return (
+    <section className="section-md container-page">
+      <div className="flex items-end justify-between mb-2">
+        <div>
+          <p className="eyebrow mb-2">Community</p>
+          <h2 className="text-2xl font-bold tracking-tight">Style, your way.</h2>
+        </div>
+        <Link
+          to="/products"
+          className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
+        >
+          See more <ArrowRight size={14} />
+        </Link>
+      </div>
+      <p className="text-sm text-ink-muted mb-8">Tag @sdp.id to be featured.</p>
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
+        {photos.map((src) => (
+          <div key={src} className="aspect-[4/5] overflow-hidden rounded-lg">
+            <img src={src} alt="Customer style" className="h-full w-full object-cover" />
+          </div>
         ))}
       </div>
     </section>
@@ -364,9 +398,9 @@ function EditorialBlock() {
   return (
     <section className="section-lg container-page">
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-        <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded-lg shadow-card">
+        <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded-lg">
           <img
-            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80"
+            src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=1200&q=80"
             alt="Curated editorial"
             className="h-full w-full object-cover"
           />

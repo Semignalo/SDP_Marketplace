@@ -13,7 +13,7 @@ import {
 } from '../hooks/useGuestCheckout'
 import { saveGuestToken } from '../lib/guestOrders'
 import { loadSnap } from '../lib/snap'
-import { Button, Card, Input, Spinner } from '../components/ui'
+import { Button, Card, Input, Textarea, Spinner } from '../components/ui'
 import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '../components/checkout/shared'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
@@ -365,7 +365,7 @@ export default function GuestCheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm line-clamp-1">{item.name}</p>
-                        <p className="text-2xs uppercase tracking-widest text-ink-faint mt-0.5">{item.vendor_name}</p>
+                        <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
                         <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatRupiah(item.price)} × {item.quantity}</p>
                       </div>
                       <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
@@ -375,13 +375,12 @@ export default function GuestCheckoutPage() {
               </StepCard>
 
               <StepCard title="Notes (optional)">
-                <textarea
+                <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   maxLength={500}
                   placeholder="A note for the seller or courier"
-                  className="w-full px-3 py-2.5 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink resize-none"
                 />
               </StepCard>
             </>
