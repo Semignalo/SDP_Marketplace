@@ -20,6 +20,7 @@ class Product extends Model
         'price',
         'compare_at_price',
         'stock',
+        'weight_gram',
         'sku',
         'status',
     ];

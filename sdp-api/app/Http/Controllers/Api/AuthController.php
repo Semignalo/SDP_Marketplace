@@ -87,8 +87,9 @@ class AuthController extends Controller
 
     private function uniqueReferralCode(): string
     {
+        $prefix = 'STA' . now()->format('y');
         do {
-            $code = strtoupper(Str::random(8));
+            $code = $prefix . strtoupper(Str::random(6));
         } while (User::where('reseller_code', $code)->exists());
         return $code;
     }
