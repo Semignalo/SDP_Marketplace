@@ -43,6 +43,7 @@ const WishlistPage = lazy(() => import('./pages/account/WishlistPage'))
 const OrdersPage = lazy(() => import('./pages/account/OrdersPage'))
 const OrderDetailPage = lazy(() => import('./pages/account/OrderDetailPage'))
 const InvoicePage = lazy(() => import('./pages/account/InvoicePage'))
+const AdminInvoicePage = lazy(() => import('./pages/admin/AdminInvoicePage'))
 const ResellerDashboardPage = lazy(() => import('./pages/account/ResellerDashboardPage'))
 
 const VendorLayout = lazy(() => import('./layouts/VendorLayout'))
@@ -86,6 +87,16 @@ export default function App() {
             <ProtectedRoute>
               <Suspense fallback={null}>
                 <InvoicePage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/pesanan/:orderNumber/invoice"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <Suspense fallback={null}>
+                <AdminInvoicePage />
               </Suspense>
             </ProtectedRoute>
           }

@@ -8,6 +8,7 @@ import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
+  awaiting_quote: { label: 'Menunggu Kuotasi Ongkir', variant: 'warning' },
   pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
   processing: { label: 'Diproses', variant: 'neutral' },
   shipped: { label: 'Dikirim', variant: 'info' },
@@ -69,7 +70,7 @@ export default function VendorOrderDetailPage() {
       <div className="bg-paper border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
+            <p className="eyebrow">Nomor Pesanan</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -117,7 +118,7 @@ export default function VendorOrderDetailPage() {
       </div>
 
       <section className="bg-paper border border-line rounded-lg overflow-hidden">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted px-5 py-3 border-b border-line bg-paper-soft">
+        <h3 className="eyebrow px-5 py-3 border-b border-line bg-paper-soft">
           Item dari Vendor Kamu
         </h3>
         <ul className="divide-y divide-line">
@@ -136,7 +137,7 @@ export default function VendorOrderDetailPage() {
           ))}
         </ul>
         <div className="px-5 py-3 border-t border-line flex justify-between items-baseline">
-          <p className="text-2xs uppercase tracking-widest text-ink-muted">Subtotal Vendor Kamu</p>
+          <p className="eyebrow">Subtotal Vendor Kamu</p>
           <p className="text-base font-bold tabular-nums">{formatRupiah(order.vendor_subtotal)}</p>
         </div>
       </section>
@@ -147,7 +148,7 @@ export default function VendorOrderDetailPage() {
 function InfoCard({ icon, title, children }) {
   return (
     <div className="bg-paper border border-line rounded-lg p-5">
-      <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
+      <div className="flex items-center gap-2 eyebrow mb-3">
         <span className="text-ink">{icon}</span> {title}
       </div>
       {children}

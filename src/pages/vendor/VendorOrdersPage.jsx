@@ -53,7 +53,7 @@ export default function VendorOrdersPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span>Pesanan</span>
           <span>Customer</span>
           <span>Item</span>
@@ -105,8 +105,8 @@ export default function VendorOrdersPage() {
       {data?.meta?.last_page > 1 && (
         <Pagination
           currentPage={data.meta.current_page}
-          totalPages={data.meta.last_page}
-          onPageChange={setPage}
+          lastPage={data.meta.last_page}
+          onChange={setPage}
         />
       )}
     </div>

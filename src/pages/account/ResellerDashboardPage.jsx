@@ -121,7 +121,7 @@ export default function ResellerDashboardPage() {
       )}
 
       <Card padding="md" className="bg-paper-soft">
-        <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Your Referral Link</p>
+        <p className="eyebrow mb-2">Your Referral Link</p>
         <div className="flex items-center gap-2">
           <code className="flex-1 px-3 py-2.5 bg-paper border border-line rounded text-sm text-ink tabular-nums truncate">
             {referralUrl || '—'}
@@ -196,7 +196,7 @@ export default function ResellerDashboardPage() {
         </div>
 
         <Card padding="none" className="overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+          <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
             <span>Order</span><span>Customer</span><span>Date</span>
             <span className="text-right">Commission</span><span className="text-right">Status</span>
           </div>
@@ -242,7 +242,7 @@ export default function ResellerDashboardPage() {
       {/* Tab: Withdrawals */}
       {tab === 'penarikan' && (
         <Card padding="none" className="overflow-hidden">
-          <div className="hidden md:grid grid-cols-[1fr_1.2fr_120px_140px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+          <div className="hidden md:grid grid-cols-[1fr_1.2fr_120px_140px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
             <span>Date</span><span>Account</span><span className="text-right">Amount</span><span>Status</span>
           </div>
           {wdLoading ? (
@@ -278,7 +278,7 @@ export default function ResellerDashboardPage() {
       {/* Tab: Network */}
       {tab === 'jaringan' && (
         <Card padding="none" className="overflow-hidden">
-          <div className="hidden md:grid grid-cols-[2fr_1fr_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+          <div className="hidden md:grid grid-cols-[2fr_1fr_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
             <span>Member</span><span>Joined</span><span className="text-right">Orders</span>
           </div>
           {netLoading ? (
@@ -369,7 +369,7 @@ export default function ResellerDashboardPage() {
 function StatCard({ icon, label, value, accent = false }) {
   return (
     <Card padding="md" className={cn(accent && 'bg-ink text-white')}>
-      <div className={cn('flex items-center gap-2 text-2xs uppercase tracking-widest', accent ? 'text-white/60' : 'text-ink-muted')}>
+      <div className={cn('flex items-center gap-2 text-2xs font-bold uppercase tracking-eyebrow', accent ? 'text-white/60' : 'text-ink-muted')}>
         {icon}<span>{label}</span>
       </div>
       <div className="mt-3 min-h-[28px]">

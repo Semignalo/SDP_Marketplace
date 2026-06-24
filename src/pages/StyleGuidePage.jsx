@@ -47,19 +47,23 @@ export default function StyleGuidePage() {
         <p className="text-xs font-bold uppercase tracking-eyebrow text-ink-muted mb-2">Design System</p>
         <h1 className="text-3xl font-bold text-ink">SDP Style Guide</h1>
         <p className="text-sm text-ink-muted mt-2 max-w-xl">
-          Monochrome premium minimalis. Typography Inter, radius max 8px, neutral palette — warna datang dari foto produk & aset brand.
+          "The Curated Rack" — ink-on-paper neutral dengan satu accent terracotta yang dipakai sengaja (CTA, sale badge, focus state). Typography Inter, radius max 8px. Lihat DESIGN.md untuk detail lengkap.
         </p>
       </header>
 
       <Section title="Warna">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Swatch name="ink" hex="#0a0a0a" />
-          <Swatch name="ink-soft" hex="#262626" />
-          <Swatch name="ink-muted" hex="#525252" />
+          <Swatch name="accent" hex="#b5562f" />
+          <Swatch name="accent-hover" hex="#96431f" />
+          <Swatch name="accent-soft" hex="#f5e6df" border />
+          <Swatch name="rating" hex="#f5b400" />
+          <Swatch name="ink" hex="#1a1a1a" />
+          <Swatch name="ink-soft" hex="#333333" />
+          <Swatch name="ink-muted" hex="#6b6b6b" />
           <Swatch name="ink-faint" hex="#a3a3a3" />
           <Swatch name="paper" hex="#ffffff" border />
           <Swatch name="paper-soft" hex="#fafafa" border />
-          <Swatch name="paper-warm" hex="#f5f5f5" />
+          <Swatch name="paper-warm" hex="#f5f5f5" border />
           <Swatch name="line" hex="#e5e5e5" />
           <Swatch name="line-strong" hex="#d4d4d4" />
           <Swatch name="state-success" hex="#15803d" />
@@ -285,7 +289,7 @@ function CartItemDemo({ name, vendor, price, oldPrice, qty, photo }) {
         {photo && <img src={photo} alt={name} className="h-full w-full object-cover" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-2xs uppercase tracking-wider text-ink-faint">{vendor}</p>
+        <p className="text-2xs uppercase tracking-widest text-ink-faint">{vendor}</p>
         <p className="text-sm text-ink line-clamp-2">{name}</p>
         <div className="mt-1 flex items-center justify-between">
           <PriceLabel price={price} oldPrice={oldPrice} size="sm" />

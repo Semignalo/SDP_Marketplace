@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Star } from 'lucide-react'
+import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Star, PackageSearch } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
-import { Badge, SkeletonProductCard } from '../components/ui'
+import { Badge, SkeletonProductCard, EmptyState } from '../components/ui'
 import { useProducts, useVendors } from '../hooks/useProducts'
 import { formatRupiah, calcDiscount } from '../lib/utils'
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=1600&q=80'
+const HERO_IMAGE = 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_2000/v1782316750/Gemini_Generated_Image_28yiw428yiw428yi_svibwy.png'
 
 export default function HomePage() {
   const { data: featured, isLoading: loadingFeatured } = useProducts({ per_page: 60, sort: 'newest' })
   const { data: vendors = [], isLoading: loadingVendors } = useVendors()
 
   const products = featured?.data || []
+  // In-stock items first — a wall of sold-out placeholders contradicts "curated confidence"
+  const picksForYou = [...products].sort((a, b) => (b.in_stock ? 1 : 0) - (a.in_stock ? 1 : 0))
   const promoProducts = products.filter(
     (p) => p.compare_at_price && Number(p.compare_at_price) > Number(p.price),
   )
@@ -41,7 +43,7 @@ export default function HomePage() {
 
       <PromoSection products={promoProducts} />
 
-      <FeaturedSection products={products} isLoading={loadingFeatured} />
+      <FeaturedSection products={picksForYou} isLoading={loadingFeatured} />
 
       <StyleInTheWildSection />
 
@@ -56,6 +58,7 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
       <img
         src={HERO_IMAGE}
         alt="Curated fashion rack"
+        fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/10 to-transparent" />
@@ -115,39 +118,47 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
 }
 
 function BrandStrip({ vendors, isLoading }) {
+  const isEmpty = !isLoading && vendors.length === 0
+
   return (
     <section className="border-y border-line bg-paper">
       <div className="container-page py-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="eyebrow">Featured Brands</h2>
-          <Link to="/vendors" className="text-xs text-ink-muted hover:text-ink underline-offset-4 hover:underline">
-            See all
-          </Link>
+          <h2 className="text-lg font-bold tracking-tight">Featured brands</h2>
+          {!isEmpty && (
+            <Link to="/vendors" className="text-xs text-ink-muted hover:text-ink underline-offset-4 hover:underline">
+              See all
+            </Link>
+          )}
         </div>
-        <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-20 w-20 shrink-0 rounded-pill bg-paper-warm animate-pulse" />
-              ))
-            : vendors.map((v) => (
-                <Link
-                  key={v.id}
-                  to={`/vendor/${v.slug}`}
-                  className="group shrink-0 flex flex-col items-center gap-2.5 w-24"
-                >
-                  <div className="h-20 w-20 rounded-pill bg-paper-warm border border-line flex items-center justify-center text-ink-soft text-sm font-semibold uppercase tracking-wider group-hover:border-ink transition">
-                    {v.logo ? (
-                      <img src={v.logo} alt={v.name} className="h-full w-full object-cover rounded-pill" />
-                    ) : (
-                      <span>{v.name.slice(0, 2)}</span>
-                    )}
-                  </div>
-                  <p className="text-2xs text-center text-ink-muted line-clamp-1 w-full group-hover:text-ink transition">
-                    {v.name}
-                  </p>
-                </Link>
-              ))}
-        </div>
+        {isEmpty ? (
+          <p className="text-sm text-ink-muted py-4">New brands are joining soon — check back shortly.</p>
+        ) : (
+          <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth">
+            {isLoading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-20 w-20 shrink-0 rounded-pill bg-paper-warm animate-pulse" />
+                ))
+              : vendors.map((v) => (
+                  <Link
+                    key={v.id}
+                    to={`/vendor/${v.slug}`}
+                    className="group shrink-0 snap-start flex flex-col items-center gap-2.5 w-24"
+                  >
+                    <div className="h-20 w-20 rounded-pill bg-paper-warm border border-line flex items-center justify-center text-ink-soft text-sm font-semibold uppercase tracking-wider group-hover:border-ink transition">
+                      {v.logo ? (
+                        <img src={v.logo} alt={v.name} className="h-full w-full object-cover rounded-pill" />
+                      ) : (
+                        <span>{v.name.slice(0, 2)}</span>
+                      )}
+                    </div>
+                    <p className="text-2xs text-center text-ink-muted line-clamp-1 w-full group-hover:text-ink transition">
+                      {v.name}
+                    </p>
+                  </Link>
+                ))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -155,36 +166,46 @@ function BrandStrip({ vendors, isLoading }) {
 
 function FeaturedSection({ products, isLoading }) {
   const visible = products.slice(0, 10)
+  const isEmpty = !isLoading && visible.length === 0
 
   return (
     <section className="section-md container-page">
       <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="eyebrow mb-2">New In</p>
-          <h2 className="text-2xl font-bold tracking-tight">Picks for you</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Picks for you</h2>
+        {!isEmpty && (
+          <Link
+            to="/products"
+            className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
+          >
+            See all <ArrowRight size={14} />
+          </Link>
+        )}
+      </div>
+
+      {isEmpty ? (
+        <EmptyState
+          icon={<PackageSearch size={32} strokeWidth={1.5} />}
+          title="New arrivals coming soon"
+          description="Vendors are stocking up. Check back shortly for fresh picks."
+        />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+          {isLoading
+            ? Array.from({ length: 10 }).map((_, i) => <SkeletonProductCard key={i} />)
+            : visible.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
-        <Link
-          to="/products"
-          className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
-        >
-          See all <ArrowRight size={14} />
-        </Link>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
-        {isLoading
-          ? Array.from({ length: 10 }).map((_, i) => <SkeletonProductCard key={i} />)
-          : visible.map((p) => <ProductCard key={p.id} product={p} />)}
-      </div>
-
-      <div className="mt-8 sm:hidden">
-        <Link
-          to="/products"
-          className="block w-full text-center border border-ink text-ink py-3 rounded text-xs font-semibold uppercase tracking-widest hover:bg-ink hover:text-white transition"
-        >
-          See all products
-        </Link>
-      </div>
+      {!isEmpty && (
+        <div className="mt-8 sm:hidden">
+          <Link
+            to="/products"
+            className="block w-full text-center border border-ink text-ink py-3 rounded text-xs font-semibold uppercase tracking-widest hover:bg-ink hover:text-white transition"
+          >
+            See all products
+          </Link>
+        </div>
+      )}
     </section>
   )
 }
@@ -198,10 +219,9 @@ function PromoSection({ products }) {
   return (
     <section className="section-md container-page">
       <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="eyebrow mb-2">On Sale</p>
-          <h2 className="text-2xl font-bold tracking-tight">Don't miss out</h2>
-        </div>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Don't miss out<span className="text-accent">.</span>
+        </h2>
         <Link
           to="/products"
           className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
@@ -217,6 +237,8 @@ function PromoSection({ products }) {
             <img
               src={big.primary_image || big.images?.[0]?.url}
               alt={big.name}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent" />
@@ -243,6 +265,8 @@ function PromoSection({ products }) {
                 <img
                   src={p.primary_image || p.images?.[0]?.url}
                   alt={p.name}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/75 via-ink/5 to-transparent" />
@@ -265,18 +289,15 @@ function TopRatedSection({ products }) {
   if (products.length < 3) return null
   return (
     <section className="section-md container-page">
-      <div className="flex items-end justify-between mb-8">
-        <div className="flex items-center gap-2.5">
-          <Star size={20} className="fill-rating text-rating" />
-          <div>
-            <p className="eyebrow mb-1">Customer Favorites</p>
-            <h2 className="text-2xl font-bold tracking-tight">Best rated</h2>
-          </div>
-        </div>
+      <div className="flex items-center gap-2.5 mb-8">
+        <Star size={20} className="fill-rating text-rating" />
+        <h2 className="text-2xl font-bold tracking-tight">Best rated</h2>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-8">
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth -mx-5 px-5 md:mx-0 md:px-0">
         {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <div key={p.id} className="w-44 sm:w-52 shrink-0 snap-start">
+            <ProductCard product={p} />
+          </div>
         ))}
       </div>
     </section>
@@ -290,21 +311,21 @@ function ThreeCardSection() {
       subtitle: 'From everyday basics to statement pieces.',
       cta: 'Shop new arrivals',
       to: '/products?sort=newest',
-      image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=700&q=80',
+      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1779024419/sdp/products/ttr7qvxu0lai7avtkt6a.webp',
     },
     {
       title: 'Skin first, makeup second.',
       subtitle: 'Beauty essentials that actually work.',
       cta: 'Shop beauty',
       to: '/products',
-      image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=700&q=80',
+      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1782317607/after_edit_2_zdq7qt.png',
     },
     {
       title: 'Treat yourself, responsibly.',
       subtitle: 'Great finds under Rp 200K.',
       cta: 'Shop under 200K',
       to: '/products?max_price=200000',
-      image: 'https://images.unsplash.com/photo-1591561954557-26941169b49e?w=700&q=80',
+      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1782317659/cstar_yeay_sbko6b.png',
     },
   ]
 
@@ -320,6 +341,8 @@ function ThreeCardSection() {
             <img
               src={card.image}
               alt={card.title}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover transition-transform duration-500 ease-soft group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-transparent to-transparent" />
@@ -339,18 +362,15 @@ function ThreeCardSection() {
 
 function StyleInTheWildSection() {
   const photos = [
-    'https://images.unsplash.com/photo-1551803091-e20673f15770?w=500&q=80',
-    'https://images.unsplash.com/photo-1485462537746-965f33f7f6a7?w=500&q=80',
-    'https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=500&q=80',
+    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782317995/IMG_1922_guvsqn.jpg',
+    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782317920/Gemini_Generated_Image_4abje44abje44abj_ccqiwb.png',
+    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782318051/ce_mishel_dk_j053v5.png',
   ]
 
   return (
     <section className="section-md container-page">
-      <div className="flex items-end justify-between mb-2">
-        <div>
-          <p className="eyebrow mb-2">Community</p>
-          <h2 className="text-2xl font-bold tracking-tight">Style, your way.</h2>
-        </div>
+      <div className="flex items-end justify-between mb-8">
+        <h2 className="text-2xl font-bold tracking-tight">Style, your way.</h2>
         <Link
           to="/products"
           className="hidden sm:inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-ink hover:gap-3 transition-all"
@@ -358,11 +378,10 @@ function StyleInTheWildSection() {
           See more <ArrowRight size={14} />
         </Link>
       </div>
-      <p className="text-sm text-ink-muted mb-8">Tag @sdp.id to be featured.</p>
       <div className="grid grid-cols-3 gap-3 md:gap-4">
         {photos.map((src) => (
           <div key={src} className="aspect-[4/5] overflow-hidden rounded-lg">
-            <img src={src} alt="Customer style" className="h-full w-full object-cover" />
+            <img src={src} alt="Lifestyle styling inspiration" loading="lazy" decoding="async" className="h-full w-full object-cover" />
           </div>
         ))}
       </div>
@@ -400,8 +419,10 @@ function EditorialBlock() {
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded-lg">
           <img
-            src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=1200&q=80"
+            src="https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_1200/v1782317775/tumbnail_isuroi.png"
             alt="Curated editorial"
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover"
           />
         </div>

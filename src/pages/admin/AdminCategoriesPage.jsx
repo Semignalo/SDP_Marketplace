@@ -16,6 +16,7 @@ export default function AdminCategoriesPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const tree = useMemo(() => buildTree(categories), [categories])
   const flat = useMemo(() => flatten(tree), [tree])
@@ -64,13 +65,15 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  const handleDelete = async (c) => {
-    if (!confirm(`Hapus kategori "${c.name}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await del.mutateAsync(c.id)
+      await del.mutateAsync(deleteTarget.id)
       toast.success('Kategori dihapus')
     } catch (err) {
       toast.error(err.response?.data?.message || extractErrorMessage(err))
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -94,7 +97,7 @@ export default function AdminCategoriesPage() {
         ) : (
           <ul className="divide-y divide-line">
             {tree.map((cat) => (
-              <CategoryNode key={cat.id} node={cat} onEdit={openEdit} onDelete={handleDelete} onAddChild={openCreate} />
+              <CategoryNode key={cat.id} node={cat} onEdit={openEdit} onDelete={setDeleteTarget} onAddChild={openCreate} />
             ))}
           </ul>
         )}
@@ -128,6 +131,22 @@ export default function AdminCategoriesPage() {
           </div>
         </form>
       </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus kategori ini?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Ya, hapus</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Kategori <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus. Tindakan ini tidak dapat dibatalkan.
+        </p>
+      </Modal>
     </div>
   )
 }
@@ -144,14 +163,24 @@ function CategoryNode({ node, onEdit, onDelete, onAddChild, depth = 0 }) {
         </div>
         <div className="flex items-center gap-1">
           {depth === 0 && (
-            <button onClick={() => onAddChild(node.id)} className="text-2xs text-ink-muted hover:text-ink px-2 py-1 hover:bg-paper-warm rounded inline-flex items-center gap-1">
+            <button type="button" onClick={() => onAddChild(node.id)} className="text-2xs text-ink-muted hover:text-ink px-2 py-1 hover:bg-paper-warm rounded inline-flex items-center gap-1">
               <Plus size={12} /> sub
             </button>
           )}
-          <button onClick={() => onEdit(node)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+          <button
+            type="button"
+            onClick={() => onEdit(node)}
+            aria-label={`Edit kategori: ${node.name}`}
+            className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+          >
             <Pencil size={14} />
           </button>
-          <button onClick={() => onDelete(node)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+          <button
+            type="button"
+            onClick={() => onDelete(node)}
+            aria-label={`Hapus kategori: ${node.name}`}
+            className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+          >
             <Trash2 size={14} />
           </button>
         </div>

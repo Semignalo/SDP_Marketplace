@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1.6fr_1fr_120px_1fr_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[1.6fr_1fr_120px_1fr_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span>User</span>
           <span>Role</span>
           <span>Vendor</span>
@@ -132,13 +132,29 @@ export default function AdminUsersPage() {
                   <p className="text-xs text-ink-muted mt-1 md:mt-0">{u.vendor?.name || '—'}</p>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(u.created_at)}</p>
                   <div className="flex items-center gap-1 mt-3 md:mt-0 md:justify-end">
-                    <button onClick={() => setNetworkUser(u)} title="Lihat jaringan" className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => setNetworkUser(u)}
+                      title="Lihat jaringan"
+                      aria-label={`Lihat jaringan: ${u.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
                       <Network size={14} />
                     </button>
-                    <button onClick={() => openEdit(u)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(u)}
+                      aria-label={`Edit user: ${u.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => setDeleting(u)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => setDeleting(u)}
+                      aria-label={`Hapus user: ${u.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -150,7 +166,7 @@ export default function AdminUsersPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
 
       <Modal
@@ -201,7 +217,7 @@ export default function AdminUsersPage() {
           <>
             <p className="text-xs text-ink-muted mb-3">{networkData.data.length} member diajak oleh {networkUser?.name}</p>
             <ul className="divide-y divide-line border border-line rounded-lg overflow-hidden">
-              <li className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-2 bg-paper-soft text-2xs font-bold uppercase tracking-widest text-ink-muted">
+              <li className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-2 bg-paper-soft eyebrow">
                 <span>Member</span><span>Bergabung</span><span className="text-right">Order</span>
               </li>
               {networkData.data.map((u) => (

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ export default function WishlistButton({ productId, className = '', size = 14, v
   const { data: ids = [] } = useWishlistIds()
   const toggle = useToggleWishlist()
   const isActive = ids.includes(productId)
+  const [popping, setPopping] = useState(false)
 
   const handleClick = (e) => {
     e.preventDefault()
@@ -20,6 +22,7 @@ export default function WishlistButton({ productId, className = '', size = 14, v
       navigate('/login')
       return
     }
+    setPopping(true)
     toggle.mutate(productId, {
       onSuccess: (inWishlist) => {
         toast.success(inWishlist ? 'Saved to wishlist' : 'Removed from wishlist')
@@ -40,7 +43,11 @@ export default function WishlistButton({ productId, className = '', size = 14, v
           className,
         )}
       >
-        <Heart size={size} className={isActive ? 'fill-current' : ''} />
+        <Heart
+          size={size}
+          className={cn(isActive && 'fill-current', popping && 'animate-heart-pop')}
+          onAnimationEnd={() => setPopping(false)}
+        />
         {isActive ? 'Saved' : 'Wishlist'}
       </button>
     )
@@ -58,7 +65,11 @@ export default function WishlistButton({ productId, className = '', size = 14, v
         className,
       )}
     >
-      <Heart size={size} className={isActive ? 'fill-current' : ''} />
+      <Heart
+        size={size}
+        className={cn(isActive && 'fill-current', popping && 'animate-heart-pop')}
+        onAnimationEnd={() => setPopping(false)}
+      />
     </button>
   )
 }

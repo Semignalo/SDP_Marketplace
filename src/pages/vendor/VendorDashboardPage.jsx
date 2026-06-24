@@ -97,7 +97,7 @@ function StatCard({ icon, label, value, hint, accent, danger }) {
       danger && 'border-state-danger/40',
       !accent && !danger && 'bg-paper border-line',
     )}>
-      <div className={cn('flex items-center gap-2 text-2xs uppercase tracking-widest', accent ? 'text-white/60' : 'text-ink-muted')}>
+      <div className={cn('flex items-center gap-2 text-2xs font-bold uppercase tracking-eyebrow', accent ? 'text-white/60' : 'text-ink-muted')}>
         {icon}
         <span>{label}</span>
       </div>
@@ -118,7 +118,7 @@ function RevenueChart({ data }) {
 
   return (
     <div>
-      <p className="text-2xs uppercase tracking-widest text-ink-muted">Total 30 hari</p>
+      <p className="eyebrow">Total 30 hari</p>
       <p className="text-2xl font-bold tabular-nums">{formatRupiah(total30)}</p>
 
       <div className="mt-6 flex items-end gap-[3px] h-40">

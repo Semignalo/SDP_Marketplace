@@ -148,7 +148,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/orders', [\App\Http\Controllers\Api\Admin\OrderController::class, 'index']);
     Route::get('/orders/{orderNumber}', [\App\Http\Controllers\Api\Admin\OrderController::class, 'show']);
+    Route::get('/orders/{orderNumber}/invoice', [\App\Http\Controllers\Api\Admin\OrderController::class, 'invoice']);
     Route::put('/orders/{orderNumber}/status', [\App\Http\Controllers\Api\Admin\OrderController::class, 'updateStatus']);
+    Route::post('/orders/{orderNumber}/shipping-quote', [\App\Http\Controllers\Api\Admin\OrderController::class, 'setShippingQuote']);
 
     Route::get('/commissions', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'index']);
     Route::put('/commissions/{commission}/status', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'updateStatus']);

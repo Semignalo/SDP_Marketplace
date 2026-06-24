@@ -6,6 +6,7 @@ import { Badge, Button, Card, EmptyState, Pagination, Skeleton } from '../../com
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
 const STATUS = {
+  awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
   pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
   processing: { label: 'Processing', variant: 'neutral' },
   shipped: { label: 'Shipped', variant: 'neutral' },
@@ -15,6 +16,7 @@ const STATUS = {
 
 const FILTERS = [
   { value: '', label: 'All' },
+  { value: 'awaiting_quote', label: 'Awaiting Shipping Quote' },
   { value: 'pending_payment', label: 'Awaiting Payment' },
   { value: 'processing', label: 'Processing' },
   { value: 'shipped', label: 'Shipped' },
@@ -75,7 +77,7 @@ export default function OrdersPage() {
                     <Card padding="md" interactive>
                       <div className="flex items-center justify-between gap-4 flex-wrap">
                         <div className="min-w-0">
-                          <p className="text-2xs uppercase tracking-widest text-ink-muted">
+                          <p className="eyebrow">
                             {formatDate(order.created_at)}
                           </p>
                           <p className="text-sm font-semibold text-ink mt-0.5 tabular-nums">

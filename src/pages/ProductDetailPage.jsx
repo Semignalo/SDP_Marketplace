@@ -77,6 +77,8 @@ export default function ProductDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
+                  aria-label={`View image ${i + 1} of ${images.length}`}
+                  aria-current={activeImg === i ? 'true' : undefined}
                   className={cn(
                     'shrink-0 w-16 h-16 rounded overflow-hidden bg-paper-warm border-2 transition',
                     activeImg === i ? 'border-ink' : 'border-transparent hover:border-line-strong',
@@ -125,13 +127,13 @@ export default function ProductDetailPage() {
 
           {product.description && (
             <div className="mt-6 pt-6 border-t border-line">
-              <p className="text-2xs uppercase tracking-widest text-ink-muted mb-2">Description</p>
+              <p className="eyebrow mb-2">Description</p>
               <p className="text-sm text-ink-soft leading-relaxed whitespace-pre-line">{product.description}</p>
             </div>
           )}
 
           <div className="mt-8 pt-6 border-t border-line">
-            <p className="text-2xs uppercase tracking-widest text-ink-muted mb-3">Quantity</p>
+            <p className="eyebrow mb-3">Quantity</p>
             <div className="flex items-center justify-between gap-4">
               <QuantityStepper
                 value={qty}
@@ -160,11 +162,15 @@ export default function ProductDetailPage() {
               className="inline-flex items-center gap-1.5 hover:text-ink transition"
               onClick={async () => {
                 const url = window.location.href
-                if (navigator.share) {
-                  await navigator.share({ title: product.name, url })
-                } else {
-                  await navigator.clipboard.writeText(url)
-                  toast.success('Link copied!')
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: product.name, url })
+                  } else {
+                    await navigator.clipboard.writeText(url)
+                    toast.success('Link copied!')
+                  }
+                } catch (err) {
+                  if (err.name !== 'AbortError') toast.error('Could not share link')
                 }
               }}
             >
@@ -268,11 +274,12 @@ function ReviewItem({ review }) {
   return (
     <li className="py-4">
       <div className="flex items-center gap-2 mb-1.5">
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
               size={13}
+              aria-hidden="true"
               className={i < review.rating ? 'fill-rating text-rating' : 'text-line-strong'}
             />
           ))}
@@ -303,7 +310,7 @@ function ReviewForm({ slug, productId, orderId }) {
   return (
     <Card padding="md" className="mb-8 space-y-3">
       <form onSubmit={handleSubmit} className="space-y-3">
-        <p className="text-xs font-bold uppercase tracking-widest text-ink-muted">Write a review</p>
+        <p className="eyebrow">Write a review</p>
         <div className="flex items-center gap-1">
           {Array.from({ length: 5 }).map((_, i) => (
             <button

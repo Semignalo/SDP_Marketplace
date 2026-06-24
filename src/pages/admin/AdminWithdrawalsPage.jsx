@@ -77,7 +77,7 @@ export default function AdminWithdrawalsPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_1.2fr_1.4fr_120px_140px_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[1fr_1.2fr_1.4fr_120px_140px_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span>Tanggal</span>
           <span>Reseller</span>
           <span>Rekening Tujuan</span>
@@ -123,12 +123,14 @@ export default function AdminWithdrawalsPage() {
                   {w.status === 'pending' ? (
                     <div className="flex gap-2 mt-2 md:mt-0">
                       <button
+                        type="button"
                         onClick={() => openModal(w, 'approved')}
                         className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 bg-state-success text-white rounded hover:opacity-90 transition"
                       >
                         <Check size={12} /> Setuju
                       </button>
                       <button
+                        type="button"
                         onClick={() => openModal(w, 'rejected')}
                         className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 border border-state-danger text-state-danger rounded hover:bg-state-danger/5 transition"
                       >
@@ -146,7 +148,7 @@ export default function AdminWithdrawalsPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
 
       {/* Modal konfirmasi */}

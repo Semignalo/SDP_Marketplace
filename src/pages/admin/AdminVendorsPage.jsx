@@ -48,6 +48,7 @@ export default function AdminVendorsPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_CREATE)
   const [errors, setErrors] = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const openCreate = () => {
     setEditing(null)
@@ -86,13 +87,15 @@ export default function AdminVendorsPage() {
     }
   }
 
-  const handleDelete = async (v) => {
-    if (!confirm(`Hapus vendor "${v.name}"? Akun vendor_admin terkait juga akan terdampak.`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await del.mutateAsync(v.id)
+      await del.mutateAsync(deleteTarget.id)
       toast.success('Vendor dihapus')
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -145,10 +148,20 @@ export default function AdminVendorsPage() {
                   </div>
                   <div><Badge variant={badge.variant}>{badge.label}</Badge></div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => openEdit(v)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(v)}
+                      aria-label={`Edit vendor: ${v.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(v)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(v)}
+                      aria-label={`Hapus vendor: ${v.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -160,7 +173,7 @@ export default function AdminVendorsPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
 
       <Modal
@@ -205,6 +218,22 @@ export default function AdminVendorsPage() {
             <Textarea label="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} error={errors.description} />
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus vendor ini?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Ya, hapus</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Vendor <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus. Akun vendor_admin terkait juga akan terdampak. Tindakan ini tidak dapat dibatalkan.
+        </p>
       </Modal>
     </div>
   )

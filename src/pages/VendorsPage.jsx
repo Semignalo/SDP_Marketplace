@@ -37,7 +37,7 @@ export default function VendorsPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-ink group-hover:underline leading-tight">{vendor.name}</p>
-                <p className="text-2xs text-ink-muted mt-0.5 uppercase tracking-widest">
+                <p className="eyebrow mt-0.5">
                   {vendor.products_count ?? 0} produk
                 </p>
               </div>

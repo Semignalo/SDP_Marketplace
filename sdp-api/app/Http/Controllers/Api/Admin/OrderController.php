@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderResource;
 use App\Mail\OrderShipped;
+use App\Mail\ShippingQuoteReady;
 use App\Models\Order;
 use App\Models\ResellerCommission;
 use App\Support\CourierTracking;
@@ -20,7 +22,7 @@ class OrderController extends Controller
     {
         $request->validate([
             'search' => 'nullable|string|max:50',
-            'status' => 'nullable|in:pending_payment,processing,shipped,completed,cancelled',
+            'status' => 'nullable|in:pending_payment,awaiting_quote,processing,shipped,completed,cancelled',
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
@@ -65,8 +67,18 @@ class OrderController extends Controller
         return response()->json(['data' => $this->shape($order, full: true)]);
     }
 
+    public function invoice(string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['items.product.images', 'items.vendor'])
+            ->firstOrFail();
+
+        return response()->json(['data' => new OrderResource($order)]);
+    }
+
     // Transisi status yang diizinkan. Status terminal (completed, cancelled) tidak bisa diubah lagi.
     private const ALLOWED_TRANSITIONS = [
+        'awaiting_quote'  => ['pending_payment', 'cancelled'],
         'pending_payment' => ['processing', 'cancelled'],
         'processing'      => ['shipped', 'cancelled'],
         'shipped'         => ['completed', 'cancelled'],
@@ -77,7 +89,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, string $orderNumber): JsonResponse
     {
         $data = $request->validate([
-            'status' => 'required|in:pending_payment,processing,shipped,completed,cancelled',
+            'status' => 'required|in:pending_payment,awaiting_quote,processing,shipped,completed,cancelled',
             'admin_notes' => 'nullable|string|max:500',
         ]);
 
@@ -119,6 +131,36 @@ class OrderController extends Controller
         return response()->json(['message' => 'Status pesanan diperbarui', 'data' => ['status' => $order->fresh()->status]]);
     }
 
+    /**
+     * Admin input ongkir manual untuk order awaiting_quote (international) lalu lanjut ke pending_payment.
+     */
+    public function setShippingQuote(Request $request, string $orderNumber): JsonResponse
+    {
+        $data = $request->validate([
+            'shipping_cost' => 'required|integer|min:0',
+            'shipping_courier' => 'nullable|string|max:100',
+        ]);
+
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+
+        if ($order->status !== 'awaiting_quote') {
+            return response()->json(['message' => 'Pesanan tidak menunggu kuotasi ongkir'], 422);
+        }
+
+        DB::transaction(function () use ($data, $order) {
+            $order->update([
+                'shipping_cost' => $data['shipping_cost'],
+                'shipping_courier' => $data['shipping_courier'] ?? $order->shipping_courier,
+                'total' => (float) $order->subtotal + $data['shipping_cost'],
+                'status' => 'pending_payment',
+            ]);
+        });
+
+        $this->sendShippingQuoteReadyEmail($order->fresh());
+
+        return response()->json(['message' => 'Kuotasi ongkir terkirim', 'data' => $this->shape($order->fresh())]);
+    }
+
     private function shape(Order $o, bool $full = false): array
     {
         $base = [
@@ -127,6 +169,7 @@ class OrderController extends Controller
             'status' => $o->status,
             'subtotal' => (float) $o->subtotal,
             'shipping_cost' => (float) $o->shipping_cost,
+            'shipping_country' => $o->shipping_country,
             'total' => (float) $o->total,
             'created_at' => $o->created_at?->toIso8601String(),
             'customer' => $o->customer ? ['id' => $o->customer->id, 'name' => $o->customer->name, 'email' => $o->customer->email] : null,
@@ -186,6 +229,31 @@ class OrderController extends Controller
             }
         } catch (Throwable $e) {
             Log::warning('Order shipped email failed', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Best-effort: kirim email pemberitahuan kuotasi ongkir siap & order bisa dibayar.
+     */
+    private function sendShippingQuoteReadyEmail(Order $order): void
+    {
+        try {
+            if (! $order->user_id && $order->guest_email) {
+                Mail::to($order->guest_email)->send(new ShippingQuoteReady($order));
+                return;
+            }
+
+            if ($order->user_id) {
+                $order->loadMissing('customer');
+                if ($order->customer?->email) {
+                    Mail::to($order->customer->email)->send(new ShippingQuoteReady($order));
+                }
+            }
+        } catch (Throwable $e) {
+            Log::warning('Shipping quote ready email failed', [
                 'order' => $order->order_number,
                 'error' => $e->getMessage(),
             ]);

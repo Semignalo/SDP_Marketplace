@@ -28,6 +28,7 @@ class Order extends Model
         'total',
         'shipping_name',
         'shipping_address',
+        'shipping_country',
         'shipping_phone',
         'shipping_courier',
         'tracking_number',

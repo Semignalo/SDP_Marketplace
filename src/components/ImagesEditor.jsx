@@ -73,7 +73,7 @@ export default function ImagesEditor({ images, onChange, error }) {
 
   return (
     <div>
-      <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-2">
+      <label className="eyebrow block mb-2">
         Gambar Produk
       </label>
 
@@ -148,7 +148,7 @@ export default function ImagesEditor({ images, onChange, error }) {
                     type="button"
                     onClick={() => setPrimary(i)}
                     title="Jadikan gambar utama"
-                    className="absolute bottom-1 left-1 h-6 w-6 bg-paper/80 border border-line rounded text-ink-muted hover:text-amber-500 inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute bottom-1 left-1 h-6 w-6 bg-paper/80 border border-line rounded text-ink-muted hover:text-rating inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Star size={11} />
                   </button>

@@ -169,6 +169,14 @@ export function useAdminOrder(orderNumber) {
   })
 }
 
+export function useAdminOrderInvoice(orderNumber) {
+  return useQuery({
+    queryKey: ['admin', 'order', orderNumber, 'invoice'],
+    queryFn: async () => (await api.get(`/admin/orders/${orderNumber}/invoice`)).data.data,
+    enabled: !!orderNumber,
+  })
+}
+
 export function useUpdateAdminOrderStatus() {
   const qc = useQueryClient()
   return useMutation({
@@ -177,6 +185,17 @@ export function useUpdateAdminOrderStatus() {
       qc.invalidateQueries({ queryKey: ['admin', 'orders'] })
       qc.invalidateQueries({ queryKey: ['admin', 'order', vars.orderNumber] })
       qc.invalidateQueries({ queryKey: ['admin', 'commissions'] })
+    },
+  })
+}
+
+export function useSetShippingQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ orderNumber, ...payload }) => (await api.post(`/admin/orders/${orderNumber}/shipping-quote`, payload)).data,
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'order', vars.orderNumber] })
     },
   })
 }

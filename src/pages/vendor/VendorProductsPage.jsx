@@ -50,6 +50,7 @@ export default function VendorProductsPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const flatCategories = useMemo(() => flatten(categories), [categories])
 
@@ -103,13 +104,15 @@ export default function VendorProductsPage() {
     }
   }
 
-  const handleDelete = async (p) => {
-    if (!confirm(`Hapus produk "${p.name}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await deleteMut.mutateAsync(p.id)
+      await deleteMut.mutateAsync(deleteTarget.id)
       toast.success('Produk dihapus')
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -141,7 +144,7 @@ export default function VendorProductsPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[60px_1.6fr_120px_100px_80px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[60px_1.6fr_120px_100px_80px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span></span>
           <span>Produk</span>
           <span className="text-right">Harga</span>
@@ -181,10 +184,20 @@ export default function VendorProductsPage() {
                   <p className={cn('text-sm md:text-right tabular-nums mt-1 md:mt-0', p.stock < 5 && 'text-state-danger font-semibold')}>{p.stock}</p>
                   <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
                   <div className="flex items-center gap-1 mt-3 md:mt-0 md:justify-end">
-                    <button onClick={() => openEdit(p)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      aria-label={`Edit produk: ${p.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(p)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(p)}
+                      aria-label={`Hapus produk: ${p.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -198,8 +211,8 @@ export default function VendorProductsPage() {
       {data?.meta?.last_page > 1 && (
         <Pagination
           currentPage={data.meta.current_page}
-          totalPages={data.meta.last_page}
-          onPageChange={setPage}
+          lastPage={data.meta.last_page}
+          onChange={setPage}
         />
       )}
 
@@ -256,6 +269,22 @@ export default function VendorProductsPage() {
             />
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus produk ini?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="danger" onClick={handleDelete} loading={deleteMut.isPending}>Ya, hapus</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Produk <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+        </p>
       </Modal>
     </div>
   )

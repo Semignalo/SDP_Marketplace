@@ -10,6 +10,7 @@ import { formatRupiah, formatDateTime } from '../../lib/utils'
 import { loadSnap } from '../../lib/snap'
 
 const STATUS = {
+  awaiting_quote:  { label: 'Awaiting Shipping Quote', variant: 'warning' },
   pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
   processing:      { label: 'Processing',       variant: 'neutral' },
   shipped:         { label: 'Shipped',          variant: 'neutral' },
@@ -85,6 +86,7 @@ export default function OrderDetailPage() {
 
   const statusInfo = STATUS[order.status] || { label: order.status, variant: 'neutral' }
   const isPending = order.status === 'pending_payment'
+  const isAwaitingQuote = order.status === 'awaiting_quote'
 
   return (
     <div className="space-y-6">
@@ -95,7 +97,7 @@ export default function OrderDetailPage() {
       <Card padding="md">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-muted">Order Number</p>
+            <p className="eyebrow">Order Number</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
@@ -112,14 +114,22 @@ export default function OrderDetailPage() {
         </div>
       </Card>
 
+      {isAwaitingQuote && (
+        <Card padding="md" className="bg-paper-soft">
+          <p className="text-sm font-semibold text-ink">We're calculating your international shipping</p>
+          <p className="text-sm text-ink-muted mt-1">Our team is preparing a shipping quote for this order. You'll get an email once it's ready, and you can pay right from this page.</p>
+        </Card>
+      )}
+
       {isPending && (
         <Card padding="none" className="overflow-hidden">
           <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
             <div>
-              <p className="text-2xs uppercase tracking-widest text-ink-muted">Amount Due</p>
+              <p className="eyebrow">Amount Due</p>
               <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatRupiah(order.total)}</p>
             </div>
             <button
+              type="button"
               onClick={handleCheckStatus}
               disabled={isRefetching}
               className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink border border-line rounded px-3 py-1.5 transition-colors disabled:opacity-50"
@@ -144,6 +154,7 @@ export default function OrderDetailPage() {
             </p>
             <div className="pt-1 border-t border-line">
               <button
+                type="button"
                 onClick={() => setCancelModalOpen(true)}
                 className="w-full inline-flex items-center justify-center gap-1.5 text-xs text-state-danger hover:underline py-2"
               >
@@ -179,7 +190,7 @@ export default function OrderDetailPage() {
       </div>
 
       <Card padding="none" className="overflow-hidden">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted px-5 py-3 border-b border-line bg-paper-soft">
+        <h3 className="eyebrow px-5 py-3 border-b border-line bg-paper-soft">
           Order Items
         </h3>
         <ul className="divide-y divide-line">
@@ -208,7 +219,7 @@ export default function OrderDetailPage() {
       </Card>
 
       <Card padding="md">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h3>
+        <h3 className="eyebrow mb-4">Summary</h3>
         <dl className="space-y-2 text-sm">
           <Row label="Subtotal" value={formatRupiah(Number(order.subtotal) + Number(order.tier_discount || 0))} />
           {order.tier_discount > 0 && (
@@ -243,7 +254,7 @@ export default function OrderDetailPage() {
 function InfoCard({ icon, title, children }) {
   return (
     <Card padding="md">
-      <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
+      <div className="flex items-center gap-2 eyebrow mb-3">
         <span className="text-ink">{icon}</span> {title}
       </div>
       {children}

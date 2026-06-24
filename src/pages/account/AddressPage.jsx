@@ -13,8 +13,13 @@ const EMPTY_FORM = {
   address: '',
   city: '',
   city_id: null,
+  country: 'Indonesia',
   postal_code: '',
   is_default: false,
+}
+
+function isInternational(addr) {
+  return !!addr && (addr.country || 'Indonesia').trim().toLowerCase() !== 'indonesia'
 }
 
 
@@ -27,6 +32,7 @@ export default function AddressPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const openCreate = () => {
     setEditing(null)
@@ -44,6 +50,7 @@ export default function AddressPage() {
       address: addr.address,
       city: addr.city,
       city_id: addr.city_id || null,
+      country: addr.country || 'Indonesia',
       postal_code: addr.postal_code || '',
       is_default: addr.is_default,
     })
@@ -70,13 +77,15 @@ export default function AddressPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this address?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await deleteAddress.mutateAsync(id)
+      await deleteAddress.mutateAsync(deleteTarget)
       toast.success('Address deleted')
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -107,12 +116,23 @@ export default function AddressPage() {
                 <div className="flex items-center gap-2">
                   <Badge variant="neutral">{addr.label}</Badge>
                   {addr.is_default && <Badge variant="ink">Default</Badge>}
+                  {isInternational(addr) && <Badge variant="warning">International</Badge>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => openEdit(addr)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(addr)}
+                    aria-label={`Edit address: ${addr.label}`}
+                    className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                  >
                     <Pencil size={14} />
                   </button>
-                  <button onClick={() => handleDelete(addr.id)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(addr.id)}
+                    aria-label={`Delete address: ${addr.label}`}
+                    className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+                  >
                     <Trash2 size={14} />
                   </button>
                 </div>
@@ -143,12 +163,22 @@ export default function AddressPage() {
           <Input label="Label" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Home/Office" error={errors.label} />
           <Input label="Recipient Name" value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} error={errors.recipient_name} />
           <Input label="Phone Number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
-          <CitySearchInput
-            value={form.city}
-            cityId={form.city_id}
-            onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })}
-            error={errors.city}
+          <Input
+            label="Country"
+            value={form.country}
+            onChange={(e) => setForm({ ...form, country: e.target.value, city_id: isInternational({ country: e.target.value }) ? null : form.city_id })}
+            error={errors.country}
           />
+          {isInternational(form) ? (
+            <Input label="City / State" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} error={errors.city} />
+          ) : (
+            <CitySearchInput
+              value={form.city}
+              cityId={form.city_id}
+              onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })}
+              error={errors.city}
+            />
+          )}
           <div className="sm:col-span-2">
             <Input label="Address Details" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street name, house number, RT/RW" error={errors.address} />
           </div>
@@ -165,6 +195,20 @@ export default function AddressPage() {
             </label>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete this address?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} loading={deleteAddress.isPending}>Yes, delete</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">This address will be removed. This can't be undone.</p>
       </Modal>
     </div>
   )

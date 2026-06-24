@@ -122,9 +122,10 @@ class CheckoutController extends Controller
             'shipping_name' => 'required_without:address_id|string|max:120',
             'shipping_phone' => 'required_without:address_id|string|max:30',
             'shipping_address' => 'required_without:address_id|string|max:500',
+            'shipping_country' => 'nullable|string|max:60',
             'courier' => 'nullable|string',
-            'courier_name' => 'required|string|max:100',
-            'shipping_cost' => 'required|integer|min:0',
+            'courier_name' => 'nullable|string|max:100',
+            'shipping_cost' => 'nullable|integer|min:0',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
@@ -139,19 +140,27 @@ class CheckoutController extends Controller
             $shippingName = $address->recipient_name;
             $shippingPhone = $address->phone;
             $shippingAddress = trim("{$address->address}, {$address->city} {$address->postal_code}");
+            $shippingCountry = $address->country ?: 'Indonesia';
         } else {
             $shippingName = $data['shipping_name'];
             $shippingPhone = $data['shipping_phone'];
             $shippingAddress = $data['shipping_address'];
+            $shippingCountry = $data['shipping_country'] ?? 'Indonesia';
+        }
+
+        $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
+
+        if (! $isInternational && empty($data['courier_name'])) {
+            throw ValidationException::withMessages(['courier_name' => 'Kurir wajib dipilih']);
         }
 
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
         $resellerId = $user->referrer_id ?: null;
 
-        $requestedShippingCost = (int) $data['shipping_cost'];
-        $courierName = $data['courier_name'];
+        $requestedShippingCost = (int) ($data['shipping_cost'] ?? 0);
+        $courierName = $isInternational ? null : $data['courier_name'];
 
-        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $courierName, $requestedShippingCost, $resellerId, $tierService) {
+        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $isInternational, $courierName, $requestedShippingCost, $resellerId, $tierService) {
             // Lock & verify products.
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
@@ -198,19 +207,26 @@ class CheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            // Shipping cost — subsidi max Rp shipping_max_free jika subtotal >= threshold.
-            $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
-            $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
-            $shippingCost = $subtotal >= $shippingMinFree
-                ? max(0, $requestedShippingCost - $shippingMaxFree)
-                : $requestedShippingCost;
-            $total = $subtotal + $shippingCost;
+            if ($isInternational) {
+                // Ongkir internasional belum bisa dihitung otomatis (luar jangkauan RajaOngkir) —
+                // order ditahan di awaiting_quote sampai admin input ongkir manual.
+                $shippingCost = 0;
+                $total = $subtotal;
+            } else {
+                // Shipping cost — subsidi max Rp shipping_max_free jika subtotal >= threshold.
+                $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
+                $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
+                $shippingCost = $subtotal >= $shippingMinFree
+                    ? max(0, $requestedShippingCost - $shippingMaxFree)
+                    : $requestedShippingCost;
+                $total = $subtotal + $shippingCost;
+            }
 
             $order = Order::create([
                 'user_id' => $user->id,
                 'reseller_id' => $resellerId,
                 'order_number' => $this->generateOrderNumber(),
-                'status' => 'pending_payment',
+                'status' => $isInternational ? 'awaiting_quote' : 'pending_payment',
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
                 'tier_discount' => $tierDiscount,
@@ -219,6 +235,7 @@ class CheckoutController extends Controller
                 'shipping_name' => $shippingName,
                 'shipping_phone' => $shippingPhone,
                 'shipping_address' => $shippingAddress,
+                'shipping_country' => $shippingCountry,
                 'shipping_courier' => $courierName,
             ]);
 

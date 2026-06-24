@@ -8,7 +8,7 @@ import ProductCard from '../components/ProductCard'
 export default function VendorPage() {
   const { slug } = useParams()
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useVendor(slug)
+  const { data, isLoading } = useVendor(slug, { page })
 
   const vendor   = data?.data
   const products = data?.products
@@ -53,7 +53,7 @@ export default function VendorPage() {
           {vendor.description && (
             <p className="text-sm text-ink-muted mt-1 max-w-xl">{vendor.description}</p>
           )}
-          <p className="text-2xs text-ink-muted mt-2 uppercase tracking-widest">
+          <p className="eyebrow mt-2">
             {vendor.products_count} produk aktif
           </p>
         </div>
@@ -71,8 +71,8 @@ export default function VendorPage() {
           {products?.meta?.last_page > 1 && (
             <Pagination
               currentPage={products.meta.current_page}
-              totalPages={products.meta.last_page}
-              onPageChange={setPage}
+              lastPage={products.meta.last_page}
+              onChange={setPage}
             />
           )}
         </>

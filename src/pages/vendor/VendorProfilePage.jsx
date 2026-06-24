@@ -81,11 +81,12 @@ export default function VendorProfilePage() {
               disabled={uploadingLogo}
               className="h-20 w-20 rounded-full bg-paper-warm border-2 border-dashed border-line overflow-hidden shrink-0 flex items-center justify-center hover:border-ink-muted transition-colors group relative disabled:opacity-60"
               title="Klik untuk ganti logo"
+              aria-label="Klik untuk ganti logo"
             >
               {form.logo ? (
                 <img src={form.logo} alt="logo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.opacity = 0.2 }} />
               ) : (
-                <span className="text-2xs uppercase tracking-widest text-ink-muted">Logo</span>
+                <span className="eyebrow">Logo</span>
               )}
               <div className="absolute inset-0 bg-ink/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {uploadingLogo
@@ -137,7 +138,7 @@ export default function VendorProfilePage() {
       </section>
 
       <section className="bg-paper-soft border border-line rounded-lg p-5">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-3">Info Akun</h3>
+        <h3 className="eyebrow mb-3">Info Akun</h3>
         <dl className="grid sm:grid-cols-2 gap-3 text-sm">
           <Row label="Slug Vendor" value={<code className="tabular-nums">{profile?.slug}</code>} />
           <Row label="Status" value={profile?.status} />
@@ -153,7 +154,7 @@ export default function VendorProfilePage() {
 function Row({ label, value }) {
   return (
     <div>
-      <dt className="text-2xs uppercase tracking-widest text-ink-muted">{label}</dt>
+      <dt className="eyebrow">{label}</dt>
       <dd className="text-sm text-ink mt-1">{value}</dd>
     </div>
   )

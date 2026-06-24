@@ -195,7 +195,7 @@ function TierCard({ user }) {
           </div>
         </div>
         <div className={cn('text-right', tier ? 'text-white' : 'text-ink')}>
-          <p className={cn('text-2xs uppercase tracking-widest', tier ? 'text-white/60' : 'text-ink-muted')}>Total Spent</p>
+          <p className={cn('text-2xs font-bold uppercase tracking-eyebrow', tier ? 'text-white/60' : 'text-ink-muted')}>Total Spent</p>
           <p className="text-2xl font-bold tabular-nums">{formatRupiah(spending)}</p>
           <p className={cn('text-2xs', tier ? 'text-white/50' : 'text-ink-muted')}>from completed orders</p>
         </div>
@@ -210,7 +210,14 @@ function TierCard({ user }) {
               </p>
               <TierBadge tier={next} size="sm" />
             </div>
-            <div className="h-2 bg-line rounded-pill overflow-hidden">
+            <div
+              className="h-2 bg-line rounded-pill overflow-hidden"
+              role="progressbar"
+              aria-label={`Progress to ${next.name}`}
+              aria-valuenow={Math.round(progress)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
                 className="h-full bg-ink transition-all"
                 style={{ width: `${progress}%` }}

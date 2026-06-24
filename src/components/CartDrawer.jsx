@@ -21,7 +21,7 @@ export default function CartDrawer() {
       footer={items.length > 0 && (
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
-            <span className="text-xs uppercase tracking-widest text-ink-muted">Subtotal</span>
+            <span className="text-sm text-ink-muted">Subtotal</span>
             <span className="text-lg font-bold tabular-nums">{formatRupiah(subtotal)}</span>
           </div>
           <p className="text-2xs text-ink-muted">Shipping and tax — sorted at checkout.</p>

@@ -6,6 +6,7 @@ import { Input, Select, Badge, Pagination, Skeleton, EmptyState } from '../../co
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
+  awaiting_quote: { label: 'Menunggu Kuotasi Ongkir', variant: 'warning' },
   pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
   processing: { label: 'Diproses', variant: 'neutral' },
   shipped: { label: 'Dikirim', variant: 'info' },
@@ -39,6 +40,7 @@ export default function AdminOrdersPage() {
         </div>
         <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-56">
           <option value="">Semua status</option>
+          <option value="awaiting_quote">Menunggu Kuotasi Ongkir</option>
           <option value="pending_payment">Menunggu Bayar</option>
           <option value="processing">Diproses</option>
           <option value="shipped">Dikirim</option>
@@ -48,7 +50,7 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span>Pesanan</span>
           <span>Customer</span>
           <span>Reseller</span>
@@ -104,7 +106,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
     </div>
   )

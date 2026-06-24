@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom'
+
 export default function KebijakanPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold tracking-tight text-ink">Kebijakan Privasi</h1>
-      <p className="mt-1 text-xs text-ink-muted uppercase tracking-widest">Terakhir diperbarui: Mei 2026</p>
+      <p className="mt-1 eyebrow">Terakhir diperbarui: Mei 2026</p>
 
       <div className="mt-8 space-y-8 text-sm text-ink-muted leading-relaxed">
         <Section title="1. Pendahuluan">
@@ -63,7 +65,7 @@ export default function KebijakanPage() {
             <li>Mengajukan keberatan atas pemrosesan data tertentu.</li>
           </ul>
           Untuk menggunakan hak-hak di atas, hubungi kami melalui halaman{' '}
-          <a href="/kontak" className="text-ink underline">Kontak</a>.
+          <Link to="/kontak" className="text-ink underline">Kontak</Link>.
         </Section>
 
         <Section title="8. Cookie">
@@ -79,7 +81,7 @@ export default function KebijakanPage() {
 
         <Section title="10. Kontak">
           Pertanyaan terkait kebijakan privasi dapat dikirimkan ke{' '}
-          <a href="/kontak" className="text-ink underline">halaman Kontak kami</a>.
+          <Link to="/kontak" className="text-ink underline">halaman Kontak kami</Link>.
         </Section>
       </div>
     </div>

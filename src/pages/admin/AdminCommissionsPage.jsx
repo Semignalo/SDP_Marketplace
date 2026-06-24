@@ -7,7 +7,7 @@ import {
   useUpdateAdminCommissionStatus,
   useBulkMarkCommissionsPaid,
 } from '../../hooks/useAdmin'
-import { Badge, Select, Button, Pagination, Skeleton, EmptyState } from '../../components/ui'
+import { Badge, Select, Button, Pagination, Skeleton, EmptyState, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
@@ -49,6 +49,7 @@ export default function AdminCommissionsPage() {
   const bulkPaid = useBulkMarkCommissionsPaid()
 
   const [selected, setSelected] = useState(new Set())
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
 
   const toggleSelect = (id) => {
     const next = new Set(selected)
@@ -74,13 +75,14 @@ export default function AdminCommissionsPage() {
 
   const handleBulkPaid = async () => {
     if (selected.size === 0) return
-    if (!confirm(`Tandai ${selected.size} komisi sebagai paid?`)) return
     try {
       await bulkPaid.mutateAsync(Array.from(selected))
       toast.success(`${selected.size} komisi ditandai paid`)
       setSelected(new Set())
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    } finally {
+      setBulkConfirmOpen(false)
     }
   }
 
@@ -118,7 +120,7 @@ export default function AdminCommissionsPage() {
             ))}
           </div>
           {selected.size > 0 && (
-            <Button leadingIcon={<Check size={16} />} onClick={handleBulkPaid} loading={bulkPaid.isPending}>
+            <Button leadingIcon={<Check size={16} />} onClick={() => setBulkConfirmOpen(true)}>
               Tandai {selected.size} sebagai Paid
             </Button>
           )}
@@ -136,7 +138,7 @@ export default function AdminCommissionsPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[40px_1.2fr_1fr_1fr_120px_140px_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[40px_1.2fr_1fr_1fr_120px_140px_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <label className="inline-flex items-center">
             <input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={selectableIds.length === 0} className="h-4 w-4 accent-ink" />
           </label>
@@ -204,8 +206,24 @@ export default function AdminCommissionsPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
+
+      <Modal
+        open={bulkConfirmOpen}
+        onClose={() => setBulkConfirmOpen(false)}
+        title="Tandai komisi sebagai paid?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setBulkConfirmOpen(false)}>Batal</Button>
+            <Button onClick={handleBulkPaid} loading={bulkPaid.isPending}>Ya, tandai paid</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          <span className="font-semibold text-ink">{selected.size} komisi</span> akan ditandai sebagai sudah dibayar.
+        </p>
+      </Modal>
     </div>
   )
 }
@@ -213,7 +231,7 @@ export default function AdminCommissionsPage() {
 function SummaryCard({ label, value, accent }) {
   return (
     <div className={cn('border rounded-lg p-4', accent ? 'bg-ink text-white border-ink' : 'bg-paper border-line')}>
-      <p className={cn('text-2xs uppercase tracking-widest', accent ? 'text-white/60' : 'text-ink-muted')}>{label}</p>
+      <p className={cn('text-2xs font-bold uppercase tracking-eyebrow', accent ? 'text-white/60' : 'text-ink-muted')}>{label}</p>
       <div className="mt-2 min-h-[24px]">
         {value === null ? <Skeleton className={cn('h-6 w-20', accent && 'bg-white/20')} /> : <p className="text-lg font-bold tabular-nums">{value}</p>}
       </div>

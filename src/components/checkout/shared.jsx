@@ -50,7 +50,7 @@ export function StepCard({ title, action, children }) {
   return (
     <Card padding="md" as="section">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted">{title}</h2>
+        <h2 className="eyebrow">{title}</h2>
         {action}
       </div>
       {children}

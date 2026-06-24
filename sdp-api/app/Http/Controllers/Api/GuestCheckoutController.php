@@ -86,14 +86,22 @@ class GuestCheckoutController extends Controller
             'shipping_name'    => 'required|string|max:120',
             'shipping_phone'   => 'required|string|max:30',
             'shipping_address' => 'required|string|max:500',
-            'courier_name'     => 'required|string|max:100',
-            'shipping_cost'    => 'required|integer|min:0',
+            'shipping_country' => 'nullable|string|max:60',
+            'courier_name'     => 'nullable|string|max:100',
+            'shipping_cost'    => 'nullable|integer|min:0',
             'referral_code'    => 'nullable|string|max:40',
             'notes'            => 'nullable|string|max:500',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1|max:99',
         ]);
+
+        $shippingCountry = $data['shipping_country'] ?? 'Indonesia';
+        $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
+
+        if (! $isInternational && empty($data['courier_name'])) {
+            throw ValidationException::withMessages(['courier_name' => 'Kurir wajib dipilih']);
+        }
 
         // Resolve referral code → reseller (opsional). Kalau diisi tapi invalid → error.
         $referrer = null;
@@ -107,9 +115,10 @@ class GuestCheckoutController extends Controller
             }
         }
 
-        $requestedShippingCost = (int) $data['shipping_cost'];
+        $requestedShippingCost = (int) ($data['shipping_cost'] ?? 0);
+        $courierName = $isInternational ? null : $data['courier_name'];
 
-        $order = DB::transaction(function () use ($data, $referrer, $referralCode, $requestedShippingCost, $tierService) {
+        $order = DB::transaction(function () use ($data, $shippingCountry, $isInternational, $courierName, $referrer, $referralCode, $requestedShippingCost, $tierService) {
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
                 ->lockForUpdate()
@@ -149,12 +158,17 @@ class GuestCheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
-            $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
-            $shippingCost = $subtotal >= $shippingMinFree
-                ? max(0, $requestedShippingCost - $shippingMaxFree)
-                : $requestedShippingCost;
-            $total = $subtotal + $shippingCost;
+            if ($isInternational) {
+                $shippingCost = 0;
+                $total = $subtotal;
+            } else {
+                $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
+                $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
+                $shippingCost = $subtotal >= $shippingMinFree
+                    ? max(0, $requestedShippingCost - $shippingMaxFree)
+                    : $requestedShippingCost;
+                $total = $subtotal + $shippingCost;
+            }
 
             $order = Order::create([
                 'user_id'          => null,
@@ -163,7 +177,7 @@ class GuestCheckoutController extends Controller
                 'reseller_id'      => $referrer?->id,
                 'referral_code'    => $referrer ? $referralCode : null,
                 'order_number'     => $this->generateOrderNumber(),
-                'status'           => 'pending_payment',
+                'status'           => $isInternational ? 'awaiting_quote' : 'pending_payment',
                 'subtotal'         => $subtotal,
                 'shipping_cost'    => $shippingCost,
                 'tier_discount'    => $tierDiscount,
@@ -172,7 +186,8 @@ class GuestCheckoutController extends Controller
                 'shipping_name'    => $data['shipping_name'],
                 'shipping_phone'   => $data['shipping_phone'],
                 'shipping_address' => $data['shipping_address'],
-                'shipping_courier' => $data['courier_name'],
+                'shipping_country' => $shippingCountry,
+                'shipping_courier' => $courierName,
             ]);
 
             foreach ($orderItemsData as $line) {

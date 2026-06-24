@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
 
       {Object.entries(grouped).map(([group, items]) => (
         <section key={group} className="bg-paper border border-line rounded-lg p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">{group}</h3>
+          <h3 className="eyebrow mb-4">{group}</h3>
           <div className="grid sm:grid-cols-2 gap-5">
             {items.map((s) => (
               s.type === 'textarea' ? (

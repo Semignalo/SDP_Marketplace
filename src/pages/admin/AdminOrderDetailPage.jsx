@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, MapPin, Truck, User, Wallet } from 'lucide-react'
+import { ArrowLeft, FileText, MapPin, Truck, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAdminOrder, useUpdateAdminOrderStatus } from '../../hooks/useAdmin'
-import { Badge, Button, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
+import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote } from '../../hooks/useAdmin'
+import { Badge, Button, Input, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
+  awaiting_quote: { label: 'Menunggu Kuotasi Ongkir', variant: 'warning' },
   pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
   processing: { label: 'Diproses', variant: 'neutral' },
   shipped: { label: 'Dikirim', variant: 'info' },
@@ -19,9 +20,12 @@ export default function AdminOrderDetailPage() {
   const { orderNumber } = useParams()
   const { data: order, isLoading, error } = useAdminOrder(orderNumber)
   const update = useUpdateAdminOrderStatus()
+  const setQuote = useSetShippingQuote()
 
   const [status, setStatus] = useState('')
   const [notes, setNotes] = useState('')
+  const [quoteCost, setQuoteCost] = useState('')
+  const [quoteCourier, setQuoteCourier] = useState('')
 
   if (isLoading) {
     return <div className="space-y-4"><Skeleton className="h-6 w-1/3" /><Skeleton className="h-40 w-full" /></div>
@@ -49,6 +53,25 @@ export default function AdminOrderDetailPage() {
     }
   }
 
+  const handleSendQuote = async () => {
+    if (!quoteCost || Number(quoteCost) < 0) {
+      toast.error('Isi ongkir dulu')
+      return
+    }
+    try {
+      await setQuote.mutateAsync({
+        orderNumber,
+        shipping_cost: Number(quoteCost),
+        shipping_courier: quoteCourier || undefined,
+      })
+      toast.success('Kuotasi ongkir terkirim, pesanan siap dibayar')
+      setQuoteCost('')
+      setQuoteCourier('')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Link to="/admin/pesanan" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
@@ -58,19 +81,25 @@ export default function AdminOrderDetailPage() {
       <div className="bg-paper border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
+            <p className="eyebrow">Nomor Pesanan</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
-          <Badge variant={badge.variant}>{badge.label}</Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant={badge.variant}>{badge.label}</Badge>
+            <Link to={`/admin/pesanan/${orderNumber}/invoice`} target="_blank">
+              <Button variant="outline" leadingIcon={<FileText size={14} />}>Cetak Invoice</Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Status update */}
       <section className="bg-paper border border-line rounded-lg p-5">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Update Status</h3>
+        <h3 className="eyebrow mb-4">Update Status</h3>
         <div className="grid sm:grid-cols-[1fr_2fr_auto] gap-3 items-end">
           <Select label="Status Baru" value={currentStatus} onChange={(e) => setStatus(e.target.value)}>
+            <option value="awaiting_quote">Menunggu Kuotasi Ongkir</option>
             <option value="pending_payment">Menunggu Bayar</option>
             <option value="processing">Diproses (verify payment)</option>
             <option value="shipped">Dikirim</option>
@@ -85,6 +114,18 @@ export default function AdminOrderDetailPage() {
         )}
       </section>
 
+      {order.status === 'awaiting_quote' && (
+        <section className="bg-paper border border-line rounded-lg p-5">
+          <h3 className="eyebrow mb-1">Kirim Kuotasi Ongkir Internasional</h3>
+          <p className="text-xs text-ink-muted mb-4">Pesanan ini dikirim ke {order.shipping_country || 'luar negeri'} — input ongkir manual untuk membuka pembayaran.</p>
+          <div className="grid sm:grid-cols-[1fr_2fr_auto] gap-3 items-end">
+            <Input label="Ongkir (Rp)" type="number" min="0" value={quoteCost} onChange={(e) => setQuoteCost(e.target.value)} placeholder="150000" />
+            <Input label="Kurir (opsional)" value={quoteCourier} onChange={(e) => setQuoteCourier(e.target.value)} placeholder="DHL Express / FedEx" />
+            <Button onClick={handleSendQuote} loading={setQuote.isPending}>Kirim Quote & Minta Bayar</Button>
+          </div>
+        </section>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-4">
         <InfoCard icon={<User size={16} />} title="Customer">
           <p className="text-sm font-semibold">{order.customer?.name}</p>
@@ -92,7 +133,10 @@ export default function AdminOrderDetailPage() {
           <p className="text-xs text-ink-muted">{order.customer?.phone}</p>
         </InfoCard>
         <InfoCard icon={<MapPin size={16} />} title="Alamat Pengiriman">
-          <p className="text-sm font-semibold">{order.shipping_name}</p>
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-semibold">{order.shipping_name}</p>
+            {order.shipping_country && order.shipping_country !== 'Indonesia' && <Badge variant="warning">International</Badge>}
+          </div>
           <p className="text-xs text-ink-muted mt-0.5">{order.shipping_phone}</p>
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">{order.shipping_address}</p>
         </InfoCard>
@@ -122,12 +166,12 @@ export default function AdminOrderDetailPage() {
             {order.commission && (
               <>
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Komisi</p>
+                  <p className="eyebrow">Komisi</p>
                   <p className="text-sm font-semibold tabular-nums">{formatRupiah(order.commission.amount)}</p>
                   <p className="text-2xs text-ink-muted tabular-nums">rate {order.commission.rate}%</p>
                 </div>
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Status Komisi</p>
+                  <p className="eyebrow">Status Komisi</p>
                   <Badge variant={order.commission.status === 'paid' ? 'success' : order.commission.status === 'cancelled' ? 'danger' : 'neutral'}>
                     {order.commission.status}
                   </Badge>
@@ -139,7 +183,7 @@ export default function AdminOrderDetailPage() {
       )}
 
       <section className="bg-paper border border-line rounded-lg overflow-hidden">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-ink-muted px-5 py-3 border-b border-line bg-paper-soft">Item Pesanan</h3>
+        <h3 className="eyebrow px-5 py-3 border-b border-line bg-paper-soft">Item Pesanan</h3>
         <ul className="divide-y divide-line">
           {(order.items || []).map((item) => (
             <li key={item.id} className="p-5 flex items-center justify-between gap-4">
@@ -168,7 +212,7 @@ export default function AdminOrderDetailPage() {
 
       {order.admin_notes && (
         <div className="bg-paper-soft border border-line rounded-lg p-4">
-          <p className="text-2xs uppercase tracking-widest text-ink-muted mb-1">Catatan Admin</p>
+          <p className="eyebrow mb-1">Catatan Admin</p>
           <p className="text-sm text-ink-soft">{order.admin_notes}</p>
         </div>
       )}
@@ -179,7 +223,7 @@ export default function AdminOrderDetailPage() {
 function InfoCard({ icon, title, children }) {
   return (
     <div className="bg-paper border border-line rounded-lg p-5">
-      <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
+      <div className="flex items-center gap-2 eyebrow mb-3">
         <span className="text-ink">{icon}</span> {title}
       </div>
       {children}

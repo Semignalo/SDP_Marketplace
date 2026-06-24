@@ -32,6 +32,7 @@ export default function AdminProductsPage() {
   const [editing, setEditing] = useState(null)
   const [form, setForm]       = useState(EMPTY_FORM)
   const [errors, setErrors]   = useState({})
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const params = useMemo(() => ({
     page,
@@ -117,13 +118,15 @@ export default function AdminProductsPage() {
     }
   }
 
-  const handleDelete = async (p) => {
-    if (!confirm(`Hapus produk "${p.name}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await del.mutateAsync(p.id)
+      await del.mutateAsync(deleteTarget.id)
       toast.success('Produk dihapus')
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -161,7 +164,7 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
-        <div className="hidden md:grid grid-cols-[50px_1.8fr_1fr_100px_80px_140px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+        <div className="hidden md:grid grid-cols-[50px_1.8fr_1fr_100px_80px_140px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span></span><span>Produk</span><span>Vendor</span>
           <span className="text-right">Harga</span><span className="text-right">Stok</span>
           <span>Status</span><span className="text-right">Aksi</span>
@@ -200,10 +203,20 @@ export default function AdminProductsPage() {
                     </Select>
                   </div>
                   <div className="flex items-center justify-end gap-1 mt-2 md:mt-0">
-                    <button onClick={() => openEdit(p)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      aria-label={`Edit produk: ${p.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => handleDelete(p)} className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded">
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(p)}
+                      aria-label={`Hapus produk: ${p.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -215,7 +228,7 @@ export default function AdminProductsPage() {
       </div>
 
       {data?.meta?.last_page > 1 && (
-        <Pagination currentPage={data.meta.current_page} totalPages={data.meta.last_page} onPageChange={setPage} />
+        <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
 
       {/* Modal Tambah/Edit Produk */}
@@ -224,80 +237,50 @@ export default function AdminProductsPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             {/* Vendor */}
             <div className="sm:col-span-2">
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Vendor *</label>
-              <Select value={form.vendor_id} onChange={(e) => setForm({ ...form, vendor_id: e.target.value })} required>
+              <Select label="Vendor *" value={form.vendor_id} onChange={(e) => setForm({ ...form, vendor_id: e.target.value })} required error={errors.vendor_id?.[0]}>
                 <option value="">Pilih vendor...</option>
                 {vendors?.data?.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
               </Select>
-              {errors.vendor_id && <p className="text-xs text-state-danger mt-1">{errors.vendor_id[0]}</p>}
             </div>
 
             {/* Nama */}
             <div className="sm:col-span-2">
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Nama Produk *</label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nama produk" required />
-              {errors.name && <p className="text-xs text-state-danger mt-1">{errors.name[0]}</p>}
+              <Input label="Nama Produk *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nama produk" required error={errors.name?.[0]} />
             </div>
 
             {/* Kategori */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Kategori *</label>
-              <Select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} required>
-                <option value="">Pilih kategori...</option>
-                {flatCategories.map((c) => (
-                  <option key={c.id} value={c.id}>{' '.repeat(c.depth * 3)}{c.name}</option>
-                ))}
-              </Select>
-              {errors.category_id && <p className="text-xs text-state-danger mt-1">{errors.category_id[0]}</p>}
-            </div>
+            <Select label="Kategori *" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} required error={errors.category_id?.[0]}>
+              <option value="">Pilih kategori...</option>
+              {flatCategories.map((c) => (
+                <option key={c.id} value={c.id}>{' '.repeat(c.depth * 3)}{c.name}</option>
+              ))}
+            </Select>
 
             {/* Status */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Status *</label>
-              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                <option value="active">Aktif</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Arsip</option>
-              </Select>
-            </div>
+            <Select label="Status *" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <option value="active">Aktif</option>
+              <option value="draft">Draft</option>
+              <option value="archived">Arsip</option>
+            </Select>
 
             {/* Harga */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Harga *</label>
-              <Input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" required />
-              {errors.price && <p className="text-xs text-state-danger mt-1">{errors.price[0]}</p>}
-            </div>
+            <Input label="Harga *" type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" required error={errors.price?.[0]} />
 
             {/* Harga Coret (diskon) */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Harga Coret</label>
-              <Input type="number" min="0" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: e.target.value })} placeholder="Opsional, harus lebih besar dari harga" />
-              {errors.compare_at_price && <p className="text-xs text-state-danger mt-1">{errors.compare_at_price[0]}</p>}
-            </div>
+            <Input label="Harga Coret" type="number" min="0" value={form.compare_at_price} onChange={(e) => setForm({ ...form, compare_at_price: e.target.value })} placeholder="Opsional, harus lebih besar dari harga" error={errors.compare_at_price?.[0]} />
 
             {/* Stok */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Stok *</label>
-              <Input type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="0" required />
-              {errors.stock && <p className="text-xs text-state-danger mt-1">{errors.stock[0]}</p>}
-            </div>
+            <Input label="Stok *" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="0" required error={errors.stock?.[0]} />
 
             {/* SKU */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">SKU</label>
-              <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Opsional" />
-            </div>
+            <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Opsional" />
 
             {/* Slug */}
-            <div>
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Slug</label>
-              <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="Auto-generate jika kosong" />
-            </div>
+            <Input label="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="Auto-generate jika kosong" />
 
             {/* Deskripsi */}
             <div className="sm:col-span-2">
-              <label className="block text-2xs font-bold uppercase tracking-widest text-ink-muted mb-1">Deskripsi</label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Deskripsi produk..." />
+              <Textarea label="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Deskripsi produk..." />
             </div>
 
             {/* Images */}
@@ -311,6 +294,22 @@ export default function AdminProductsPage() {
             <Button type="submit" disabled={isSaving}>{isSaving ? 'Menyimpan...' : editing ? 'Simpan Perubahan' : 'Tambah Produk'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Hapus produk ini?"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Ya, hapus</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-ink-soft">
+          Produk <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+        </p>
       </Modal>
     </div>
   )

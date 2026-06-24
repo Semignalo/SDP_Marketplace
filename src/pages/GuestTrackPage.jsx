@@ -103,7 +103,7 @@ export default function GuestTrackPage() {
             <>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="text-2xs uppercase tracking-widest text-ink-muted">Nomor Pesanan</p>
+                  <p className="eyebrow">Nomor Pesanan</p>
                   <p className="text-lg font-bold text-ink tabular-nums">{order.order_number}</p>
                 </div>
                 {(() => {

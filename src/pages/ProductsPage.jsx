@@ -70,9 +70,7 @@ export default function ProductsPage() {
         >
           <SlidersHorizontal size={16} /> Filter
         </button>
-        <div className="hidden lg:block text-2xs uppercase tracking-eyebrow text-ink-muted">
-          Filter
-        </div>
+        <div className="hidden lg:block eyebrow">Filter</div>
         <div className="flex-1 lg:flex-none">
           <Select
             options={SORT_OPTIONS}
@@ -113,7 +111,7 @@ export default function ProductsPage() {
             />
           ) : (
             <>
-              <ProductGrid>
+              <ProductGrid isFetching={isFetching}>
                 {products.map((p) => <ProductCard key={p.id} product={p} />)}
               </ProductGrid>
               {meta.last_page > 1 && (
@@ -154,7 +152,7 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
       {search && (
         <div className="bg-paper-soft rounded-lg shadow-card p-3 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-2xs uppercase tracking-widest text-ink-muted">Search</p>
+            <p className="eyebrow">Search</p>
             <p className="text-sm text-ink mt-0.5 truncate">{search}</p>
           </div>
           <button
@@ -168,10 +166,8 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
       )}
 
       <div>
-        <h3 className="text-2xs font-bold uppercase tracking-widest text-ink-muted mb-3">
-          Category
-        </h3>
-        <ul className="space-y-0.5">
+        <h3 className="eyebrow mb-3">Category</h3>
+        <ul className="space-y-0.5 max-h-[60vh] overflow-y-auto pr-1">
           <li>
             <button
               type="button"
@@ -222,9 +218,14 @@ function FilterPanel({ categories, activeCategory, search, onCategoryChange, onS
   )
 }
 
-function ProductGrid({ children }) {
+function ProductGrid({ children, isFetching = false }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+    <div
+      className={cn(
+        'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 transition-opacity duration-200',
+        isFetching && 'opacity-60',
+      )}
+    >
       {children}
     </div>
   )

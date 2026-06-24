@@ -1,12 +1,12 @@
 import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useOrder } from '../../hooks/useAccount'
+import { useAdminOrderInvoice } from '../../hooks/useAdmin'
 import { usePublicSettings } from '../../hooks/useProducts'
 import InvoiceDocument from '../../components/InvoiceDocument'
 
-export default function InvoicePage() {
+export default function AdminInvoicePage() {
   const { orderNumber } = useParams()
-  const { data: order, isLoading } = useOrder(orderNumber)
+  const { data: order, isLoading } = useAdminOrderInvoice(orderNumber)
   const { data: settings } = usePublicSettings()
 
   useEffect(() => {
@@ -24,5 +24,5 @@ export default function InvoicePage() {
     )
   }
 
-  return <InvoiceDocument order={order} settings={settings} backHref={`/akun/pesanan/${orderNumber}`} />
+  return <InvoiceDocument order={order} settings={settings} backHref={`/admin/pesanan/${orderNumber}`} />
 }

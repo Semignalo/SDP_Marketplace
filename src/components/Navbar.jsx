@@ -187,11 +187,32 @@ function AnnounceBar({ settings }) {
 }
 
 function CategoryStrip({ categories }) {
+  const scrollRef = useRef(null)
+  const [showLeftFade, setShowLeftFade] = useState(false)
+  const [showRightFade, setShowRightFade] = useState(false)
+
+  const updateFades = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setShowLeftFade(el.scrollLeft > 4)
+    setShowRightFade(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  useEffect(() => {
+    updateFades()
+    window.addEventListener('resize', updateFades)
+    return () => window.removeEventListener('resize', updateFades)
+  }, [categories])
+
   if (!categories || categories.length === 0) return null
   return (
     <div className="hidden lg:block border-t border-line">
-      <div className="container-page">
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+      <div className="container-page relative">
+        <nav
+          ref={scrollRef}
+          onScroll={updateFades}
+          className="flex items-center gap-1 overflow-x-auto scrollbar-hide"
+        >
           {categories.slice(0, 8).map((cat) => (
             <NavLink
               key={cat.id}
@@ -207,6 +228,12 @@ function CategoryStrip({ categories }) {
             </NavLink>
           ))}
         </nav>
+        {showLeftFade && (
+          <div className="pointer-events-none absolute left-5 top-0 bottom-0 w-10 bg-gradient-to-r from-paper to-transparent" />
+        )}
+        {showRightFade && (
+          <div className="pointer-events-none absolute right-5 top-0 bottom-0 w-10 bg-gradient-to-l from-paper to-transparent" />
+        )}
       </div>
     </div>
   )

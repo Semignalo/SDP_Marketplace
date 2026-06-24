@@ -11,7 +11,7 @@ export default function Footer() {
   const facebook = settings?.social_facebook
 
   return (
-    <footer className="bg-ink text-white mt-24">
+    <footer className="bg-ink text-white mt-24 pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">
       <div className="container-page py-16">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4">

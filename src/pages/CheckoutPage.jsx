@@ -28,8 +28,13 @@ const EMPTY_ADDR = {
   address: '',
   city: '',
   city_id: null,
+  country: 'Indonesia',
   postal_code: '',
   is_default: true,
+}
+
+function isInternational(addr) {
+  return !!addr && (addr.country || 'Indonesia').trim().toLowerCase() !== 'indonesia'
 }
 
 export default function CheckoutPage() {
@@ -82,10 +87,12 @@ export default function CheckoutPage() {
   const shippingCost = calcShippingCost(courierCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
+  const isIntl = isInternational(selectedAddress)
+  const finalTotal = isIntl ? subtotalAfterTier : total
 
   const canNext = (s) => {
     if (s === 1) return !!selectedAddressId
-    if (s === 2) return !!selectedCourier
+    if (s === 2) return isIntl || !!selectedCourier
     return true
   }
 
@@ -117,27 +124,37 @@ export default function CheckoutPage() {
       return
     }
     const nextStep = Math.min(3, step + 1)
-    if (nextStep === 2 && selectedAddressId) {
+    if (nextStep === 2 && selectedAddressId && !isIntl) {
       fetchShippingRates(selectedAddressId)
     }
     setStep(nextStep)
   }
 
   const handleSubmit = async () => {
-    if (!selectedAddressId || !selectedCourier) {
+    if (!selectedAddressId || (!isIntl && !selectedCourier)) {
       toast.error('Add your address and courier first')
       return
     }
     try {
       const order = await createOrder.mutateAsync({
         address_id: selectedAddressId,
-        courier_name: selectedCourier ? `${selectedCourier.name} ${selectedCourier.service}` : 'Courier',
-        shipping_cost: selectedCourier?.cost || 0,
+        ...(isIntl
+          ? {}
+          : {
+              courier_name: selectedCourier ? `${selectedCourier.name} ${selectedCourier.service}` : 'Courier',
+              shipping_cost: selectedCourier?.cost || 0,
+            }),
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       })
       orderPlacedRef.current = true
       clearCart()
+
+      if (isIntl) {
+        toast.success("Order placed! We'll email your shipping quote soon.")
+        navigate(`/akun/pesanan/${order.order_number}`, { replace: true })
+        return
+      }
 
       const { token, client_key, is_production } = await snapMut.mutateAsync(order.order_number)
       const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
@@ -222,7 +239,11 @@ export default function CheckoutPage() {
 
           {step === 2 && (
             <StepCard title="Choose a Courier">
-              {shippingRatesMut.isPending ? (
+              {isIntl ? (
+                <div className="px-4 py-3 bg-state-warning/10 rounded text-xs text-state-warning">
+                  This is an international address — automatic shipping rates aren't available. We'll calculate your shipping manually and email you a quote before payment is required.
+                </div>
+              ) : shippingRatesMut.isPending ? (
                 <div className="py-8 flex flex-col items-center gap-3">
                   <Spinner />
                   <p className="text-sm text-ink-muted">Calculating shipping...</p>
@@ -260,7 +281,7 @@ export default function CheckoutPage() {
 
           {step === 3 && (
             <>
-              <StepCard title="Address" action={<button onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+              <StepCard title="Address" action={<button type="button" onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
                 {selectedAddress && (
                   <div>
                     <p className="text-sm font-semibold">{selectedAddress.recipient_name}</p>
@@ -270,8 +291,10 @@ export default function CheckoutPage() {
                 )}
               </StepCard>
 
-              <StepCard title="Courier" action={<button onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
-                {selectedCourier && (
+              <StepCard title="Courier" action={<button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+                {isIntl ? (
+                  <p className="text-sm text-ink-muted">International shipping — to be quoted by our team after checkout.</p>
+                ) : selectedCourier && (
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold">{selectedCourier.name} — {selectedCourier.service}</p>
@@ -336,7 +359,7 @@ export default function CheckoutPage() {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card padding="md">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h2>
+            <h2 className="eyebrow mb-4">Summary</h2>
             {tier && (
               <div className="mb-4 pb-4 border-b border-line flex items-center gap-2">
                 <TierBadge tier={tier} size="sm" />
@@ -353,14 +376,16 @@ export default function CheckoutPage() {
               )}
               <Row
                 label="Shipping"
-                value={selectedCourier
-                  ? (shippingCost === 0
-                      ? <span className="text-state-success">FREE</span>
-                      : formatRupiah(shippingCost))
-                  : <span className="text-ink-muted text-xs">Pick a courier</span>}
+                value={isIntl
+                  ? <span className="text-ink-muted text-xs">To be quoted</span>
+                  : selectedCourier
+                    ? (shippingCost === 0
+                        ? <span className="text-state-success">FREE</span>
+                        : formatRupiah(shippingCost))
+                    : <span className="text-ink-muted text-xs">Pick a courier</span>}
               />
               <div className="pt-3 border-t border-line">
-                <Row label="Total" value={formatRupiah(total)} bold />
+                <Row label="Total" value={formatRupiah(finalTotal)} bold />
               </div>
             </dl>
 
@@ -389,7 +414,17 @@ export default function CheckoutPage() {
           <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Home/Office" error={addrErrors.label} />
           <Input label="Recipient name *" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
           <Input label="Phone number *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
-          <CitySearchInput value={addrForm.city} cityId={addrForm.city_id} onChange={({ name, id }) => setAddrForm({ ...addrForm, city: name, city_id: id })} error={addrErrors.city} />
+          <Input
+            label="Country *"
+            value={addrForm.country}
+            onChange={(e) => setAddrForm({ ...addrForm, country: e.target.value, city_id: isInternational({ country: e.target.value }) ? null : addrForm.city_id })}
+            error={addrErrors.country}
+          />
+          {isInternational(addrForm) ? (
+            <Input label="City / State *" value={addrForm.city} onChange={(e) => setAddrForm({ ...addrForm, city: e.target.value })} error={addrErrors.city} />
+          ) : (
+            <CitySearchInput value={addrForm.city} cityId={addrForm.city_id} onChange={({ name, id }) => setAddrForm({ ...addrForm, city: name, city_id: id })} error={addrErrors.city} />
+          )}
           <div className="sm:col-span-2">
             <Input label="Address details *" value={addrForm.address} onChange={(e) => setAddrForm({ ...addrForm, address: e.target.value })} placeholder="Street, RT/RW, district, sub-district" error={addrErrors.address} />
           </div>
@@ -417,7 +452,7 @@ function AddressOption({ addr, selected, onSelect }) {
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs font-bold uppercase tracking-widest text-ink-muted">{addr.label}</span>
+          <span className="eyebrow">{addr.label}</span>
           {addr.is_default && <span className="text-2xs px-1.5 py-0.5 bg-ink text-white rounded">Default</span>}
         </div>
         <p className="text-sm font-semibold text-ink">{addr.recipient_name}</p>

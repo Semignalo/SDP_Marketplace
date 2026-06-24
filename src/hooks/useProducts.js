@@ -45,14 +45,15 @@ export function useVendors() {
   })
 }
 
-export function useVendor(slug) {
+export function useVendor(slug, params = {}) {
   return useQuery({
-    queryKey: ['vendor', slug],
+    queryKey: ['vendor', slug, params],
     queryFn: async () => {
-      const { data } = await api.get(`/vendors/${slug}`)
+      const { data } = await api.get(`/vendors/${slug}`, { params })
       return data
     },
     enabled: !!slug,
+    placeholderData: (prev) => prev,
   })
 }
 

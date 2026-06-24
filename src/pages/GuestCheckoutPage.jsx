@@ -33,7 +33,12 @@ const EMPTY_FORM = {
   address: '',
   city: '',
   city_id: null,
+  country: 'Indonesia',
   postal_code: '',
+}
+
+function isInternational(form) {
+  return !!form && (form.country || 'Indonesia').trim().toLowerCase() !== 'indonesia'
 }
 
 export default function GuestCheckoutPage() {
@@ -85,6 +90,8 @@ export default function GuestCheckoutPage() {
   const courierCost = Number(selectedCourier?.cost || 0)
   const shippingCost = calcShippingCost(courierCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
+  const isIntl = isInternational(form)
+  const finalTotal = isIntl ? subtotalAfterTier : total
 
   const checkReferral = async (code) => {
     const c = (code || '').trim()
@@ -120,7 +127,11 @@ export default function GuestCheckoutPage() {
     if (!form.email.trim()) e.email = 'Email is required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email'
     if (!form.phone.trim()) e.phone = 'Phone number is required'
-    if (!form.city_id) e.city = 'Pick a city'
+    if (isInternational(form)) {
+      if (!form.city.trim()) e.city = 'City / state is required'
+    } else if (!form.city_id) {
+      e.city = 'Pick a city'
+    }
     if (!form.address.trim()) e.address = 'Address details are required'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -156,6 +167,10 @@ export default function GuestCheckoutPage() {
         toast.error('That referral code isn\'t valid. Clear it or fix it.')
         return
       }
+      if (isIntl) {
+        setStep(3)
+        return
+      }
       fetchShippingRates()
       setStep(2)
       return
@@ -173,7 +188,7 @@ export default function GuestCheckoutPage() {
     [form.address, `${form.city}`, form.postal_code].filter(Boolean).join(', ').trim()
 
   const handleSubmit = async () => {
-    if (!selectedCourier) {
+    if (!isIntl && !selectedCourier) {
       toast.error('Choose a courier first')
       return
     }
@@ -186,8 +201,13 @@ export default function GuestCheckoutPage() {
         shipping_name: form.name.trim(),
         shipping_phone: form.phone.trim(),
         shipping_address: fullAddress(),
-        courier_name: `${selectedCourier.name} ${selectedCourier.service}`,
-        shipping_cost: selectedCourier.cost || 0,
+        shipping_country: form.country,
+        ...(isIntl
+          ? {}
+          : {
+              courier_name: `${selectedCourier.name} ${selectedCourier.service}`,
+              shipping_cost: selectedCourier.cost || 0,
+            }),
         referral_code: refToSend,
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
@@ -200,6 +220,12 @@ export default function GuestCheckoutPage() {
       clearCart()
 
       const trackUrl = `/lacak/${order.order_number}?token=${encodeURIComponent(token)}`
+
+      if (isIntl) {
+        toast.success("Order placed! We'll email your shipping quote soon.")
+        navigate(trackUrl, { replace: true })
+        return
+      }
 
       try {
         const { token: snapToken, client_key, is_production } = await snapMut.mutateAsync({
@@ -249,7 +275,17 @@ export default function GuestCheckoutPage() {
                   <Input label="Recipient name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
                   <Input label="Email *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="for confirmation & order tracking" error={errors.email} />
                   <Input label="Phone number *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
-                  <CitySearchInput value={form.city} cityId={form.city_id} onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })} error={errors.city} />
+                  <Input
+                    label="Country *"
+                    value={form.country}
+                    onChange={(e) => setForm({ ...form, country: e.target.value, city_id: isInternational({ country: e.target.value }) ? null : form.city_id })}
+                    error={errors.country}
+                  />
+                  {isInternational(form) ? (
+                    <Input label="City / State *" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} error={errors.city} />
+                  ) : (
+                    <CitySearchInput value={form.city} cityId={form.city_id} onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })} error={errors.city} />
+                  )}
                   <div className="sm:col-span-2">
                     <Input label="Address details *" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street, RT/RW, district, sub-district" error={errors.address} />
                   </div>
@@ -270,6 +306,7 @@ export default function GuestCheckoutPage() {
                           setReferralMsg('')
                         }}
                         onBlur={() => checkReferral(referralCode)}
+                        aria-label="Referral code"
                         placeholder="Enter a referral code"
                         className={cn(
                           'w-full pl-9 pr-9 py-2.5 text-sm border rounded focus:outline-none focus:ring-2 uppercase tracking-wide',
@@ -336,14 +373,16 @@ export default function GuestCheckoutPage() {
 
           {step === 3 && (
             <>
-              <StepCard title="Shipping" action={<button onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+              <StepCard title="Shipping" action={<button type="button" onClick={() => setStep(1)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
                 <p className="text-sm font-semibold">{form.name}</p>
                 <p className="text-xs text-ink-muted mt-0.5">{form.email} · {form.phone}</p>
                 <p className="text-sm text-ink-soft mt-2">{fullAddress()}</p>
               </StepCard>
 
-              <StepCard title="Courier" action={<button onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
-                {selectedCourier && (
+              <StepCard title="Courier" action={!isIntl && <button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+                {isIntl ? (
+                  <p className="text-sm text-ink-muted">International shipping — to be quoted by our team after checkout.</p>
+                ) : selectedCourier && (
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold">{selectedCourier.name} — {selectedCourier.service}</p>
@@ -388,7 +427,7 @@ export default function GuestCheckoutPage() {
 
           <div className="flex justify-between gap-3 pt-2">
             {step > 1 ? (
-              <Button variant="outline" onClick={() => setStep(step - 1)}>← Back</Button>
+              <Button variant="outline" onClick={() => setStep(isIntl && step === 3 ? 1 : step - 1)}>← Back</Button>
             ) : (
               <Link to="/keranjang"><Button variant="ghost">← Cart</Button></Link>
             )}
@@ -404,7 +443,7 @@ export default function GuestCheckoutPage() {
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card padding="md">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h2>
+            <h2 className="eyebrow mb-4">Summary</h2>
             <dl className="space-y-3 text-sm">
               <Row label={`Subtotal (${items.length} products)`} value={formatRupiah(subtotal)} />
               {guestTier && tierDiscount > 0 && (
@@ -415,15 +454,17 @@ export default function GuestCheckoutPage() {
               )}
               <Row
                 label="Shipping"
-                value={selectedCourier
-                  ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatRupiah(shippingCost))
-                  : <span className="text-ink-muted text-xs">Pick a courier</span>}
+                value={isIntl
+                  ? <span className="text-ink-muted text-xs">To be quoted</span>
+                  : selectedCourier
+                    ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatRupiah(shippingCost))
+                    : <span className="text-ink-muted text-xs">Pick a courier</span>}
               />
               {referralStatus === 'valid' && (
                 <Row label="Referral" value={<span className="text-state-success text-xs">{referralCode}</span>} />
               )}
               <div className="pt-3 border-t border-line">
-                <Row label="Total" value={formatRupiah(total)} bold />
+                <Row label="Total" value={formatRupiah(finalTotal)} bold />
               </div>
             </dl>
 

@@ -50,7 +50,7 @@ export default function CartPage() {
       <div className="grid lg:grid-cols-[1fr_360px] gap-8">
         <div>
           <Card padding="none" className="overflow-hidden">
-            <div className="hidden md:grid grid-cols-[1fr_140px_140px_40px] gap-4 px-5 py-3 bg-paper-soft border-b border-line text-2xs font-bold uppercase tracking-widest text-ink-muted">
+            <div className="hidden md:grid grid-cols-[1fr_140px_140px_40px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
               <span>Product</span>
               <span className="text-center">Quantity</span>
               <span className="text-right">Subtotal</span>
@@ -121,7 +121,7 @@ export default function CartPage() {
 
         <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
           <Card padding="md">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-ink-muted mb-4">Summary</h2>
+            <h2 className="eyebrow mb-4">Summary</h2>
 
             {tier && (
               <div className="mb-4 pb-4 border-b border-line flex items-center gap-2">
@@ -175,7 +175,14 @@ export default function CartPage() {
                       <p className="text-xs text-ink-soft">
                         Add <strong className="text-ink tabular-nums">{formatRupiah(remaining)}</strong> more for free shipping.
                       </p>
-                      <div className="mt-2 h-1 bg-line rounded-full overflow-hidden">
+                      <div
+                        className="mt-2 h-1 bg-line rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-label="Progress to free shipping"
+                        aria-valuenow={Math.round(progress)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
                         <div className="h-full bg-ink transition-all" style={{ width: `${progress}%` }} />
                       </div>
                     </>

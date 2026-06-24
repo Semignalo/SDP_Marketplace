@@ -68,7 +68,7 @@ function StatCard({ icon, label, value, hint, accent, danger, compact }) {
       danger && 'border-state-danger/40',
       !accent && !danger && 'bg-paper border-line',
     )}>
-      <div className={cn('flex items-center gap-2 text-2xs uppercase tracking-widest', accent ? 'text-white/60' : 'text-ink-muted')}>
+      <div className={cn('flex items-center gap-2 text-2xs font-bold uppercase tracking-eyebrow', accent ? 'text-white/60' : 'text-ink-muted')}>
         {icon}
         <span>{label}</span>
       </div>
@@ -129,11 +129,11 @@ function RevenueChart({ data }) {
     <div>
       <div className="flex items-baseline gap-6 flex-wrap">
         <div>
-          <p className="text-2xs uppercase tracking-widest text-ink-muted">Total 30 hari</p>
+          <p className="eyebrow">Total 30 hari</p>
           <p className="text-2xl font-bold tabular-nums">{formatRupiah(total30)}</p>
         </div>
         <div>
-          <p className="text-2xs uppercase tracking-widest text-ink-muted">Pesanan</p>
+          <p className="eyebrow">Pesanan</p>
           <p className="text-2xl font-bold tabular-nums">{orders30}</p>
         </div>
       </div>

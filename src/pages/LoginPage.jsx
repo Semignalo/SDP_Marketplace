@@ -89,7 +89,12 @@ export default function LoginPage() {
               error={errors.password}
               autoComplete="current-password"
               trailingIcon={
-                <button type="button" onClick={() => setShowPass(!showPass)} className="hover:text-ink">
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="hover:text-ink"
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               }
