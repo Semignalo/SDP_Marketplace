@@ -80,25 +80,32 @@ export default function LoginPage() {
               error={errors.email}
               autoComplete="email"
             />
-            <Input
-              label="Password"
-              type={showPass ? 'text' : 'password'}
-              value={form.password}
-              onChange={update('password')}
-              placeholder="••••••••"
-              error={errors.password}
-              autoComplete="current-password"
-              trailingIcon={
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="hover:text-ink"
-                  aria-label={showPass ? 'Hide password' : 'Show password'}
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              }
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-ink">Password</label>
+                <Link to="/forgot-password" className="text-xs font-semibold text-ink-muted hover:text-ink underline underline-offset-4">
+                  Forgot password?
+                </Link>
+              </div>
+              <Input
+                type={showPass ? 'text' : 'password'}
+                value={form.password}
+                onChange={update('password')}
+                placeholder="••••••••"
+                error={errors.password}
+                autoComplete="current-password"
+                trailingIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="hover:text-ink"
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                  >
+                    {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                }
+              />
+            </div>
 
             {generalError && (
               <div className="text-xs text-state-danger bg-state-danger/5 border border-state-danger/20 rounded px-3 py-2 space-y-2">

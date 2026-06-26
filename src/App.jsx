@@ -23,6 +23,8 @@ const GuestCheckoutPage = lazy(() => import('./pages/GuestCheckoutPage'))
 const GuestTrackPage = lazy(() => import('./pages/GuestTrackPage'))
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
 const EmailVerifiedPage = lazy(() => import('./pages/EmailVerifiedPage'))
@@ -133,6 +135,8 @@ function AppShell() {
                 element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>}
               />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/email-verified" element={<EmailVerifiedPage />} />
