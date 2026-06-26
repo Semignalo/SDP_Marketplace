@@ -150,21 +150,32 @@ export default function Navbar() {
 
 function CurrencyToggle({ className = '' }) {
   const currency = useCurrencyStore((s) => s.currency)
-  const toggle = useCurrencyStore((s) => s.toggle)
+  const setCurrency = useCurrencyStore((s) => s.setCurrency)
 
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      className={cn(
-        'h-10 px-3 rounded inline-flex items-center justify-center text-xs font-semibold tabular-nums text-ink hover:bg-paper-warm transition',
-        className,
-      )}
+    <div
+      role="group"
       aria-label="Switch currency"
       title="Prices shown for reference only — you'll be charged in IDR at checkout"
+      className={cn(
+        'h-9 inline-flex items-center rounded-pill border border-line bg-paper-soft p-0.5 shrink-0',
+        className,
+      )}
     >
-      {currency}
-    </button>
+      {['IDR', 'USD'].map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => setCurrency(c)}
+          className={cn(
+            'h-8 px-3 rounded-pill text-2xs font-bold tracking-wide transition',
+            currency === c ? 'bg-ink text-white shadow-card' : 'text-ink-muted hover:text-ink',
+          )}
+        >
+          {c}
+        </button>
+      ))}
+    </div>
   )
 }
 
