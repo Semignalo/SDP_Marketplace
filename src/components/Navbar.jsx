@@ -130,7 +130,8 @@ export default function Navbar() {
           )}
         </nav>
 
-        <div className="flex lg:hidden items-center gap-1 ml-auto">
+        <div className="flex lg:hidden items-center gap-1.5 ml-auto">
+          <CurrencyToggle />
           <button
             type="button"
             onClick={openCart}
