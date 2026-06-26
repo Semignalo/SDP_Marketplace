@@ -1,6 +1,7 @@
 import { Check } from 'lucide-react'
 import { Card } from '../ui'
-import { cn, formatRupiah } from '../../lib/utils'
+import { cn } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
 
 // Unified fallback courier rates — used when the live shipping-rate check is unavailable.
 export const FALLBACK_COURIER_RATES = [
@@ -59,6 +60,7 @@ export function StepCard({ title, action, children }) {
 }
 
 export function CourierOption({ courier, selected, freeShipping, freeMax, onSelect }) {
+  const formatPrice = useFormatPrice()
   const afterSubsidy = freeShipping ? Math.max(0, courier.cost - freeMax) : courier.cost
   const isFullyFree = freeShipping && afterSubsidy === 0
 
@@ -76,9 +78,9 @@ export function CourierOption({ courier, selected, freeShipping, freeMax, onSele
           <div className="text-right">
             {isFullyFree
               ? <span className="text-sm font-semibold text-state-success">FREE</span>
-              : <span className="text-sm font-semibold tabular-nums">{formatRupiah(afterSubsidy)}</span>}
+              : <span className="text-sm font-semibold tabular-nums">{formatPrice(afterSubsidy)}</span>}
             {freeShipping && !isFullyFree && (
-              <p className="text-2xs text-ink-faint line-through">{formatRupiah(courier.cost)}</p>
+              <p className="text-2xs text-ink-faint line-through">{formatPrice(courier.cost)}</p>
             )}
           </div>
         </div>

@@ -6,7 +6,8 @@ import { useOrder } from '../../hooks/useAccount'
 import { useSnapToken, useCancelOrder } from '../../hooks/useCheckout'
 import { Badge, Card, Skeleton, EmptyState, Button, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
-import { formatRupiah, formatDateTime } from '../../lib/utils'
+import { formatDateTime } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
 import { loadSnap } from '../../lib/snap'
 
 const STATUS = {
@@ -24,6 +25,7 @@ export default function OrderDetailPage() {
   const snapMut = useSnapToken()
   const cancelMut = useCancelOrder()
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const formatPrice = useFormatPrice()
 
   const handleCheckStatus = async () => {
     try {
@@ -126,7 +128,7 @@ export default function OrderDetailPage() {
           <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
             <div>
               <p className="eyebrow">Amount Due</p>
-              <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatRupiah(order.total)}</p>
+              <p className="text-2xl font-bold text-ink tabular-nums mt-0.5">{formatPrice(order.total)}</p>
             </div>
             <button
               type="button"
@@ -206,10 +208,10 @@ export default function OrderDetailPage() {
                 <p className="text-sm text-ink line-clamp-2 mt-0.5">{item.product_name}</p>
                 <div className="mt-2 flex items-center justify-between">
                   <p className="text-xs text-ink-muted tabular-nums">
-                    {formatRupiah(item.price)} × {item.quantity}
+                    {formatPrice(item.price)} × {item.quantity}
                   </p>
                   <p className="text-sm font-semibold text-ink tabular-nums">
-                    {formatRupiah(item.subtotal)}
+                    {formatPrice(item.subtotal)}
                   </p>
                 </div>
               </div>
@@ -221,13 +223,13 @@ export default function OrderDetailPage() {
       <Card padding="md">
         <h3 className="eyebrow mb-4">Summary</h3>
         <dl className="space-y-2 text-sm">
-          <Row label="Subtotal" value={formatRupiah(Number(order.subtotal) + Number(order.tier_discount || 0))} />
+          <Row label="Subtotal" value={formatPrice(Number(order.subtotal) + Number(order.tier_discount || 0))} />
           {order.tier_discount > 0 && (
-            <Row label={`${order.tier_name || ''} tier discount`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
+            <Row label={`${order.tier_name || ''} tier discount`} value={<span className="text-state-success">−{formatPrice(order.tier_discount)}</span>} />
           )}
-          <Row label="Shipping" value={formatRupiah(order.shipping_cost)} />
+          <Row label="Shipping" value={formatPrice(order.shipping_cost)} />
           <div className="pt-2 mt-2 border-t border-line">
-            <Row label="Total" value={formatRupiah(order.total)} bold />
+            <Row label="Total" value={formatPrice(order.total)} bold />
           </div>
         </dl>
       </Card>

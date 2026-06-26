@@ -5,8 +5,8 @@ import { useAuthStore } from '../stores/useAuthStore'
 import { usePublicSettings } from '../hooks/useProducts'
 import { Button, Card, EmptyState, PriceLabel, QuantityStepper } from '../components/ui'
 import TierBadge from '../components/TierBadge'
-import { formatRupiah } from '../lib/utils'
 import { calcTierDiscount } from '../lib/pricing'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items)
@@ -15,6 +15,7 @@ export default function CartPage() {
   const setQuantity = useCartStore((s) => s.setQuantity)
   const { data: settings } = usePublicSettings()
   const user = useAuthStore((s) => s.user)
+  const formatPrice = useFormatPrice()
 
   const tier = user?.tier
   const tierMaxDiscount = Number(settings?.tier_max_discount_rupiah || 0)
@@ -73,7 +74,7 @@ export default function CartPage() {
                       <div className="mt-1.5 md:hidden">
                         <PriceLabel price={item.price} size="sm" />
                       </div>
-                      <p className="hidden md:block text-xs text-ink-muted mt-1 tabular-nums">{formatRupiah(item.price)}</p>
+                      <p className="hidden md:block text-xs text-ink-muted mt-1 tabular-nums">{formatPrice(item.price)}</p>
                     </div>
                   </div>
 
@@ -84,10 +85,10 @@ export default function CartPage() {
                       max={item.stock}
                       onChange={(n) => setQuantity(item.product_id, Math.min(Math.max(1, n), item.stock))}
                     />
-                    <p className="md:hidden text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
+                    <p className="md:hidden text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
                   </div>
 
-                  <p className="hidden md:block text-right text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
+                  <p className="hidden md:block text-right text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
 
                   <div className="hidden md:flex justify-end">
                     <button
@@ -133,12 +134,12 @@ export default function CartPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Subtotal</dt>
-                <dd className="text-ink tabular-nums">{formatRupiah(subtotal)}</dd>
+                <dd className="text-ink tabular-nums">{formatPrice(subtotal)}</dd>
               </div>
               {tier && tierDiscount > 0 && (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">{tier.name} discount</dt>
-                  <dd className="text-state-success tabular-nums">−{formatRupiah(tierDiscount)}</dd>
+                  <dd className="text-state-success tabular-nums">−{formatPrice(tierDiscount)}</dd>
                 </div>
               )}
               <div className="flex justify-between">
@@ -147,7 +148,7 @@ export default function CartPage() {
               </div>
               <div className="pt-3 border-t border-line flex justify-between items-baseline">
                 <dt className="text-sm font-semibold">Estimated total</dt>
-                <dd className="text-lg font-bold tabular-nums">{formatRupiah(subtotalAfterTier)}</dd>
+                <dd className="text-lg font-bold tabular-nums">{formatPrice(subtotalAfterTier)}</dd>
               </div>
             </dl>
 
@@ -173,7 +174,7 @@ export default function CartPage() {
                   {remaining > 0 ? (
                     <>
                       <p className="text-xs text-ink-soft">
-                        Add <strong className="text-ink tabular-nums">{formatRupiah(remaining)}</strong> more for free shipping.
+                        Add <strong className="text-ink tabular-nums">{formatPrice(remaining)}</strong> more for free shipping.
                       </p>
                       <div
                         className="mt-2 h-1 bg-line rounded-full overflow-hidden"

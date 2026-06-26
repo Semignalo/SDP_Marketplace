@@ -3,7 +3,8 @@ import { ArrowRight, Truck, ShieldCheck, RotateCcw, Headset, Star, PackageSearch
 import ProductCard from '../components/ProductCard'
 import { Badge, SkeletonProductCard, EmptyState } from '../components/ui'
 import { useProducts, useVendors } from '../hooks/useProducts'
-import { formatRupiah, calcDiscount } from '../lib/utils'
+import { calcDiscount } from '../lib/utils'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 const HERO_IMAGE = 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_2000/v1782316750/Gemini_Generated_Image_28yiw428yiw428yi_svibwy.png'
 
@@ -211,6 +212,7 @@ function FeaturedSection({ products, isLoading }) {
 }
 
 function PromoSection({ products }) {
+  const formatPrice = useFormatPrice()
   if (products.length < 3) return null
   const [big, ...rest] = products
   const small = rest.slice(0, 4)
@@ -250,7 +252,7 @@ function PromoSection({ products }) {
               <h3 className="text-white text-base md:text-lg font-semibold leading-snug mb-1.5 line-clamp-2">
                 {big.name}
               </h3>
-              <p className="text-white font-bold tabular-nums">{formatRupiah(big.price)}</p>
+              <p className="text-white font-bold tabular-nums">{formatPrice(big.price)}</p>
             </div>
           </Link>
 
@@ -275,7 +277,7 @@ function PromoSection({ products }) {
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-2.5">
                   <p className="text-white text-xs font-semibold leading-snug line-clamp-1">{p.name}</p>
-                  <p className="text-white text-xs font-bold tabular-nums">{formatRupiah(p.price)}</p>
+                  <p className="text-white text-xs font-bold tabular-nums">{formatPrice(p.price)}</p>
                 </div>
               </Link>
             )

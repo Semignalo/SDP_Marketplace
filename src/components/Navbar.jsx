@@ -4,6 +4,7 @@ import { Search, Menu, X, User, ShoppingBag, Heart, LayoutDashboard } from 'luci
 import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
+import { useCurrencyStore } from '../stores/useCurrencyStore'
 import { useCategories, usePublicSettings } from '../hooks/useProducts'
 import { cn } from '../lib/utils'
 import { Input, CartBadge } from './ui'
@@ -79,6 +80,7 @@ export default function Navbar() {
         </form>
 
         <nav className="hidden lg:flex items-center gap-1 ml-auto">
+          <CurrencyToggle />
           <Link to="/wishlist" className="h-10 w-10 rounded inline-flex items-center justify-center text-ink hover:bg-paper-warm transition" aria-label="Wishlist">
             <Heart size={20} strokeWidth={1.6} />
           </Link>
@@ -143,6 +145,26 @@ export default function Navbar() {
 
       <CategoryStrip categories={categories} />
     </header>
+  )
+}
+
+function CurrencyToggle({ className = '' }) {
+  const currency = useCurrencyStore((s) => s.currency)
+  const toggle = useCurrencyStore((s) => s.toggle)
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={cn(
+        'h-10 px-3 rounded inline-flex items-center justify-center text-xs font-semibold tabular-nums text-ink hover:bg-paper-warm transition',
+        className,
+      )}
+      aria-label="Switch currency"
+      title="Prices shown for reference only — you'll be charged in IDR at checkout"
+    >
+      {currency}
+    </button>
   )
 }
 
@@ -265,9 +287,12 @@ export function MobileMenuDrawer() {
     <div className="fixed inset-0 z-50 bg-paper lg:hidden flex flex-col">
       <div className="flex items-center justify-between px-5 h-16 border-b border-line">
         <span className="text-xl font-bold tracking-logo text-ink">SDP</span>
-        <button onClick={close} className="text-ink p-2" aria-label="Close">
-          <X size={22} />
-        </button>
+        <div className="flex items-center gap-1">
+          <CurrencyToggle />
+          <button onClick={close} className="text-ink p-2" aria-label="Close">
+            <X size={22} />
+          </button>
+        </div>
       </div>
       <div className="px-5 py-4 border-b border-line">
         <form onSubmit={submitSearch}>

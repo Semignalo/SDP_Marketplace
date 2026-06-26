@@ -3,7 +3,7 @@ import { ShoppingBag, Trash2 } from 'lucide-react'
 import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
 import { Drawer, Button, EmptyState, PriceLabel, QuantityStepper } from './ui'
-import { formatRupiah } from '../lib/utils'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 export default function CartDrawer() {
   const open = useUIStore((s) => s.cartOpen)
@@ -12,6 +12,7 @@ export default function CartDrawer() {
   const subtotal = useCartStore((s) => s.subtotal())
   const removeItem = useCartStore((s) => s.remove)
   const setQuantity = useCartStore((s) => s.setQuantity)
+  const formatPrice = useFormatPrice()
 
   return (
     <Drawer
@@ -22,7 +23,7 @@ export default function CartDrawer() {
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
             <span className="text-sm text-ink-muted">Subtotal</span>
-            <span className="text-lg font-bold tabular-nums">{formatRupiah(subtotal)}</span>
+            <span className="text-lg font-bold tabular-nums">{formatPrice(subtotal)}</span>
           </div>
           <p className="text-2xs text-ink-muted">Shipping and tax — sorted at checkout.</p>
           <Link to="/checkout" onClick={close}>

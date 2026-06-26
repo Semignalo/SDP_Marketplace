@@ -11,7 +11,8 @@ import { useUIStore } from '../stores/useUIStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { Button, Card, PriceLabel, Skeleton, EmptyState, QuantityStepper, Spinner, StarRating, Textarea } from '../components/ui'
 import { extractErrorMessage } from '../lib/api'
-import { formatRupiah, cn } from '../lib/utils'
+import { cn } from '../lib/utils'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 export default function ProductDetailPage() {
   const { slug } = useParams()
@@ -21,6 +22,7 @@ export default function ProductDetailPage() {
   const navigate = useNavigate()
   const addToCart = useCartStore((s) => s.add)
   const openCart = useUIStore((s) => s.openCart)
+  const formatPrice = useFormatPrice()
 
   if (isLoading) return <ProductDetailSkeleton />
   if (error || !data?.data) {
@@ -141,7 +143,7 @@ export default function ProductDetailPage() {
                 onChange={(n) => setQty(Math.min(Math.max(1, n), product.stock))}
               />
               <p className="text-sm text-ink-muted">
-                Subtotal: <strong className="text-ink tabular-nums">{formatRupiah(price * qty)}</strong>
+                Subtotal: <strong className="text-ink tabular-nums">{formatPrice(price * qty)}</strong>
               </p>
             </div>
           </div>

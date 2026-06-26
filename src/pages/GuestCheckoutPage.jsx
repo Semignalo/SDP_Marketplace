@@ -17,7 +17,8 @@ import { Button, Card, Input, Textarea, Spinner } from '../components/ui'
 import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '../components/checkout/shared'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
-import { formatRupiah, cn } from '../lib/utils'
+import { cn } from '../lib/utils'
+import { useFormatPrice } from '../hooks/useCurrency'
 import { calcShippingCost, calcTierDiscount } from '../lib/pricing'
 
 const STEPS = [
@@ -61,6 +62,7 @@ export default function GuestCheckoutPage() {
   const [selectedCourier, setSelectedCourier] = useState(null)
   const [notes, setNotes] = useState('')
   const [shippingRates, setShippingRates] = useState(null)
+  const formatPrice = useFormatPrice()
 
   // Referral
   const [referralCode, setReferralCode] = useState('')
@@ -389,7 +391,7 @@ export default function GuestCheckoutPage() {
                       <p className="text-xs text-ink-muted mt-0.5">Estimated {selectedCourier.eta}</p>
                     </div>
                     <p className="text-sm font-semibold tabular-nums">
-                      {shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatRupiah(shippingCost)}
+                      {shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatPrice(shippingCost)}
                     </p>
                   </div>
                 )}
@@ -405,9 +407,9 @@ export default function GuestCheckoutPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm line-clamp-1">{item.name}</p>
                         <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
-                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatRupiah(item.price)} × {item.quantity}</p>
+                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatPrice(item.price)} × {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
+                      <p className="text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
                     </li>
                   ))}
                 </ul>
@@ -445,11 +447,11 @@ export default function GuestCheckoutPage() {
           <Card padding="md">
             <h2 className="eyebrow mb-4">Summary</h2>
             <dl className="space-y-3 text-sm">
-              <Row label={`Subtotal (${items.length} products)`} value={formatRupiah(subtotal)} />
+              <Row label={`Subtotal (${items.length} products)`} value={formatPrice(subtotal)} />
               {guestTier && tierDiscount > 0 && (
                 <Row
                   label={`${guestTier.name} tier discount (-${guestTier.discount}%)`}
-                  value={<span className="text-state-success">-{formatRupiah(tierDiscount)}</span>}
+                  value={<span className="text-state-success">-{formatPrice(tierDiscount)}</span>}
                 />
               )}
               <Row
@@ -457,14 +459,14 @@ export default function GuestCheckoutPage() {
                 value={isIntl
                   ? <span className="text-ink-muted text-xs">To be quoted</span>
                   : selectedCourier
-                    ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatRupiah(shippingCost))
+                    ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatPrice(shippingCost))
                     : <span className="text-ink-muted text-xs">Pick a courier</span>}
               />
               {referralStatus === 'valid' && (
                 <Row label="Referral" value={<span className="text-state-success text-xs">{referralCode}</span>} />
               )}
               <div className="pt-3 border-t border-line">
-                <Row label="Total" value={formatRupiah(finalTotal)} bold />
+                <Row label="Total" value={formatPrice(finalTotal)} bold />
               </div>
             </dl>
 

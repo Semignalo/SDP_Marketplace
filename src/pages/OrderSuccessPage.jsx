@@ -6,8 +6,8 @@ import { useOrder } from '../hooks/useAccount'
 import { useSnapToken } from '../hooks/useCheckout'
 import { Button, Skeleton, Badge } from '../components/ui'
 import { extractErrorMessage } from '../lib/api'
-import { formatRupiah } from '../lib/utils'
 import { loadSnap } from '../lib/snap'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 const STATUS_META = {
   pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
@@ -24,6 +24,7 @@ export default function OrderSuccessPage() {
 
   const { data: order, isLoading, error, refetch } = useOrder(orderNumber)
   const snapMut = useSnapToken()
+  const formatPrice = useFormatPrice()
 
   const isPending = order?.status === 'pending_payment'
 
@@ -102,7 +103,7 @@ export default function OrderSuccessPage() {
               </div>
 
               <dl className="mt-6 space-y-2.5 text-sm">
-                <Row label="Total" value={formatRupiah(order.total)} bold />
+                <Row label="Total" value={formatPrice(order.total)} bold />
                 <Row label="Kurir" value={order.shipping_courier || '-'} />
                 <Row label="Penerima" value={order.shipping_name} />
               </dl>

@@ -22,6 +22,7 @@ class SettingController extends Controller
         'social_instagram',
         'social_facebook',
         'email_cs',
+        'usd_idr_rate',
     ];
 
     public function publicIndex()

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Package, ChevronRight } from 'lucide-react'
 import { useOrders } from '../../hooks/useAccount'
 import { Badge, Button, Card, EmptyState, Pagination, Skeleton } from '../../components/ui'
-import { formatRupiah, formatDate, cn } from '../../lib/utils'
+import { formatDate, cn } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
 
 const STATUS = {
   awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
@@ -29,6 +30,7 @@ export default function OrdersPage() {
   const { data, isLoading } = useOrders({ status: status || undefined, page })
   const orders = data?.data || []
   const meta = data?.meta || { last_page: 1, current_page: 1 }
+  const formatPrice = useFormatPrice()
 
   return (
     <div>
@@ -90,7 +92,7 @@ export default function OrdersPage() {
                         <div className="text-right">
                           <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                           <p className="text-sm font-bold text-ink tabular-nums mt-2">
-                            {formatRupiah(order.total)}
+                            {formatPrice(order.total)}
                           </p>
                         </div>
                         <ChevronRight size={16} className="text-ink-faint" />

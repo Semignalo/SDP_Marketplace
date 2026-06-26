@@ -26,6 +26,9 @@ class SettingsSeeder extends Seeder
             'bank_account_number' => '1234567890',
             'bank_account_name' => 'PT SDP Marketplace',
 
+            // Kurs tampilan USD (estimasi browsing saja — pembayaran tetap charge IDR via Midtrans)
+            'usd_idr_rate' => '16000',
+
             // RajaOngkir
             'rajaongkir_origin_city_id' => '23',
 

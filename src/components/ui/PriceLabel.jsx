@@ -1,7 +1,8 @@
-import { formatRupiah, calcDiscount } from '../../lib/utils'
-import { cn } from '../../lib/utils'
+import { calcDiscount, cn } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
 
 export function PriceLabel({ price, oldPrice, size = 'md', className = '' }) {
+  const formatPrice = useFormatPrice()
   const hasDiscount = oldPrice && Number(oldPrice) > Number(price)
   const discountPct = hasDiscount ? calcDiscount(price, oldPrice) : 0
 
@@ -15,12 +16,12 @@ export function PriceLabel({ price, oldPrice, size = 'md', className = '' }) {
   return (
     <div className={cn('flex items-baseline flex-wrap gap-x-2 gap-y-0', className)}>
       <span className={cn('font-bold tabular-nums', hasDiscount ? 'text-accent' : 'text-ink', s.price)}>
-        {formatRupiah(price)}
+        {formatPrice(price)}
       </span>
       {hasDiscount && (
         <>
           <span className={cn('text-ink-faint line-through tabular-nums', s.old)}>
-            {formatRupiah(oldPrice)}
+            {formatPrice(oldPrice)}
           </span>
           <span className={cn('font-semibold bg-accent-soft text-accent-hover rounded-sm px-1', s.discount)}>
             -{discountPct}%

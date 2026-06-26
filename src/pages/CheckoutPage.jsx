@@ -12,7 +12,8 @@ import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '.
 import TierBadge from '../components/TierBadge'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
-import { formatRupiah, cn } from '../lib/utils'
+import { cn } from '../lib/utils'
+import { useFormatPrice } from '../hooks/useCurrency'
 import { calcTierDiscount, calcShippingCost } from '../lib/pricing'
 
 const STEPS = [
@@ -61,6 +62,7 @@ export default function CheckoutPage() {
   const [addrForm, setAddrForm] = useState(EMPTY_ADDR)
   const [addrErrors, setAddrErrors] = useState({})
   const [shippingRates, setShippingRates] = useState(null) // null = belum dimuat
+  const formatPrice = useFormatPrice()
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
@@ -303,7 +305,7 @@ export default function CheckoutPage() {
                     <p className="text-sm font-semibold tabular-nums">
                       {shippingCost === 0
                         ? <span className="text-state-success">FREE</span>
-                        : formatRupiah(shippingCost)}
+                        : formatPrice(shippingCost)}
                     </p>
                   </div>
                 )}
@@ -320,10 +322,10 @@ export default function CheckoutPage() {
                         <p className="text-sm line-clamp-1">{item.name}</p>
                         <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
                         <p className="text-xs text-ink-muted mt-0.5 tabular-nums">
-                          {formatRupiah(item.price)} × {item.quantity}
+                          {formatPrice(item.price)} × {item.quantity}
                         </p>
                       </div>
-                      <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.price * item.quantity)}</p>
+                      <p className="text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
                     </li>
                   ))}
                 </ul>
@@ -367,11 +369,11 @@ export default function CheckoutPage() {
               </div>
             )}
             <dl className="space-y-3 text-sm">
-              <Row label={`Subtotal (${items.length} products)`} value={formatRupiah(subtotal)} />
+              <Row label={`Subtotal (${items.length} products)`} value={formatPrice(subtotal)} />
               {tier && tierDiscount > 0 && (
                 <Row
                   label={`${tier.name} discount (-${tier.discount}%)`}
-                  value={<span className="text-state-success">−{formatRupiah(tierDiscount)}</span>}
+                  value={<span className="text-state-success">−{formatPrice(tierDiscount)}</span>}
                 />
               )}
               <Row
@@ -381,11 +383,11 @@ export default function CheckoutPage() {
                   : selectedCourier
                     ? (shippingCost === 0
                         ? <span className="text-state-success">FREE</span>
-                        : formatRupiah(shippingCost))
+                        : formatPrice(shippingCost))
                     : <span className="text-ink-muted text-xs">Pick a courier</span>}
               />
               <div className="pt-3 border-t border-line">
-                <Row label="Total" value={formatRupiah(finalTotal)} bold />
+                <Row label="Total" value={formatPrice(finalTotal)} bold />
               </div>
             </dl>
 

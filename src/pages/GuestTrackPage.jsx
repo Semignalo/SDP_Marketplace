@@ -6,8 +6,8 @@ import { useGuestOrder, useGuestSnapToken, useResendGuestTrackingLink } from '..
 import { getGuestToken } from '../lib/guestOrders'
 import { api, extractErrorMessage } from '../lib/api'
 import { Button, Skeleton, Badge } from '../components/ui'
-import { formatRupiah } from '../lib/utils'
 import { loadSnap } from '../lib/snap'
+import { useFormatPrice } from '../hooks/useCurrency'
 
 const STATUS_META = {
   pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
@@ -25,6 +25,7 @@ export default function GuestTrackPage() {
 
   const { data: order, isLoading, error, refetch } = useGuestOrder(orderNumber, token)
   const snapMut = useGuestSnapToken()
+  const formatPrice = useFormatPrice()
 
   const isPending = order?.status === 'pending_payment'
 
@@ -113,14 +114,14 @@ export default function GuestTrackPage() {
               </div>
 
               <dl className="mt-6 space-y-2.5 text-sm">
-                <Row label="Subtotal" value={formatRupiah(order.subtotal)} />
+                <Row label="Subtotal" value={formatPrice(order.subtotal)} />
                 {order.tier_discount > 0 && (
                   <Row
                     label={`Diskon Tier ${order.tier_name || ''}`}
-                    value={<span className="text-state-success">-{formatRupiah(order.tier_discount)}</span>}
+                    value={<span className="text-state-success">-{formatPrice(order.tier_discount)}</span>}
                   />
                 )}
-                <Row label="Total" value={formatRupiah(order.total)} bold />
+                <Row label="Total" value={formatPrice(order.total)} bold />
                 <Row label="Kurir" value={order.shipping_courier || '-'} />
                 <Row label="Penerima" value={order.shipping_name} />
                 {order.tracking_number && <Row label="No. Resi" value={order.tracking_number} />}
@@ -145,7 +146,7 @@ export default function GuestTrackPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm line-clamp-1">{item.product_name}</p>
-                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatRupiah(item.price)} × {item.quantity}</p>
+                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatPrice(item.price)} × {item.quantity}</p>
                       </div>
                     </li>
                   ))}
