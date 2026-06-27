@@ -49,7 +49,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     addToCart(product, qty)
-    navigate('/checkout')
+    navigate('/keranjang')
   }
 
   return (
