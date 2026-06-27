@@ -8,6 +8,8 @@ import { Button, Skeleton, Badge } from '../components/ui'
 import { extractErrorMessage } from '../lib/api'
 import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { formatDateTime } from '../lib/utils'
+import { PAYMENT_LABEL } from '../lib/payment'
 
 const STATUS_META = {
   pending_payment: { label: 'Awaiting Payment', variant: 'warning', icon: Clock },
@@ -103,9 +105,25 @@ export default function OrderSuccessPage() {
               </div>
 
               <dl className="mt-6 space-y-2.5 text-sm">
+                <Row label="Order Date" value={formatDateTime(order.created_at)} />
+                <Row label="Subtotal" value={formatPrice(order.subtotal)} />
+                {order.tier_discount > 0 && (
+                  <Row
+                    label={`${order.tier_name || ''} tier discount`}
+                    value={<span className="text-state-success">-{formatPrice(order.tier_discount)}</span>}
+                  />
+                )}
+                <Row label="Shipping" value={Number(order.shipping_cost) === 0 ? 'Free' : formatPrice(order.shipping_cost)} />
                 <Row label="Total" value={formatPrice(order.total)} bold />
                 <Row label="Courier" value={order.shipping_courier || '-'} />
                 <Row label="Recipient" value={order.shipping_name} />
+                {order.payment_type && (
+                  <Row
+                    label="Payment Method"
+                    value={PAYMENT_LABEL[order.payment_channel] || PAYMENT_LABEL[order.payment_type] || order.payment_type}
+                  />
+                )}
+                {order.payment_verified_at && <Row label="Paid At" value={formatDateTime(order.payment_verified_at)} />}
               </dl>
 
               {/* Pay button only shows on manual access (not right after checkout) while still pending */}

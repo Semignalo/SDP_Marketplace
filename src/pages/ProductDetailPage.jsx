@@ -153,7 +153,7 @@ export default function ProductDetailPage() {
               Add to cart
             </Button>
             <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!product.in_stock}>
-              Buy now
+              Checkout
             </Button>
           </div>
 
@@ -213,12 +213,13 @@ export default function ProductDetailPage() {
               onClick={handleAddToCart}
               disabled={!product.in_stock}
               aria-label="Add to cart"
-              className="px-4"
+              leadingIcon={<ShoppingBag size={16} />}
+              className="px-3"
             >
-              <ShoppingBag size={18} />
+              Add
             </Button>
-            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!product.in_stock} className="px-6">
-              {product.in_stock ? 'Buy now' : 'Sold out'}
+            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!product.in_stock} className="px-5">
+              {product.in_stock ? 'Checkout' : 'Sold out'}
             </Button>
           </div>
         </div>

@@ -20,6 +20,7 @@ class Order extends Model
         'reseller_id',
         'referral_code',
         'order_number',
+        'midtrans_order_id',
         'status',
         'subtotal',
         'shipping_cost',

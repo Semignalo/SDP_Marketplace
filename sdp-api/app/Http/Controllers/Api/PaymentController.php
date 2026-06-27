@@ -80,7 +80,7 @@ class PaymentController extends Controller
         }
 
         try {
-            $result = $midtrans->checkTransactionStatus($orderNumber);
+            $result = $midtrans->checkTransactionStatus($order);
         } catch (Throwable $e) {
             // Transaksi belum ada di Midtrans (belum pernah bayar)
             return response()->json(['data' => ['status' => $order->status]]);
@@ -123,7 +123,9 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Invalid signature or payload'], 400);
         }
 
-        $order = Order::where('order_number', $result['order_number'])->first();
+        $order = Order::where('order_number', $result['order_number'])
+            ->orWhere('midtrans_order_id', $result['order_number'])
+            ->first();
         if (! $order) {
             Log::warning('Midtrans webhook: order not found', ['order' => $result['order_number']]);
             return response()->json(['message' => 'Order not found'], 404);

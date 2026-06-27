@@ -290,7 +290,7 @@ class GuestCheckoutController extends Controller
         }
 
         try {
-            $result = $midtrans->checkTransactionStatus($orderNumber);
+            $result = $midtrans->checkTransactionStatus($order);
         } catch (Throwable $e) {
             return response()->json(['data' => ['status' => $order->status]]);
         }

@@ -8,6 +8,8 @@ import { api, extractErrorMessage } from '../lib/api'
 import { Button, Skeleton, Badge } from '../components/ui'
 import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { formatDateTime } from '../lib/utils'
+import { PAYMENT_LABEL } from '../lib/payment'
 
 const STATUS_META = {
   awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning', icon: Clock },
@@ -127,6 +129,7 @@ export default function GuestTrackPage() {
               </div>
 
               <dl className="mt-6 space-y-2.5 text-sm">
+                <Row label="Order Date" value={formatDateTime(order.created_at)} />
                 <Row label="Subtotal" value={formatPrice(order.subtotal)} />
                 {order.tier_discount > 0 && (
                   <Row
@@ -134,9 +137,22 @@ export default function GuestTrackPage() {
                     value={<span className="text-state-success">-{formatPrice(order.tier_discount)}</span>}
                   />
                 )}
+                {!isAwaitingQuote && (
+                  <Row
+                    label="Shipping"
+                    value={Number(order.shipping_cost) === 0 ? 'Free' : formatPrice(order.shipping_cost)}
+                  />
+                )}
                 <Row label="Total" value={isAwaitingQuote ? formatPrice(order.subtotal) : formatPrice(order.total)} bold />
                 {!isAwaitingQuote && <Row label="Courier" value={order.shipping_courier || '-'} />}
                 <Row label="Recipient" value={order.shipping_name} />
+                {order.payment_type && (
+                  <Row
+                    label="Payment Method"
+                    value={PAYMENT_LABEL[order.payment_channel] || PAYMENT_LABEL[order.payment_type] || order.payment_type}
+                  />
+                )}
+                {order.payment_verified_at && <Row label="Paid At" value={formatDateTime(order.payment_verified_at)} />}
                 {order.tracking_number && <Row label="Tracking Number" value={order.tracking_number} />}
                 {order.tracking_number && order.tracking_url && (
                   <Row

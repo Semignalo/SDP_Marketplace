@@ -8,6 +8,7 @@ import { Badge, Card, Skeleton, EmptyState, Button, Modal } from '../../componen
 import { extractErrorMessage } from '../../lib/api'
 import { formatDateTime } from '../../lib/utils'
 import { useFormatPrice } from '../../hooks/useCurrency'
+import { PAYMENT_LABEL } from '../../lib/payment'
 import { loadSnap } from '../../lib/snap'
 
 const STATUS = {
@@ -227,10 +228,17 @@ export default function OrderDetailPage() {
           {order.tier_discount > 0 && (
             <Row label={`${order.tier_name || ''} tier discount`} value={<span className="text-state-success">−{formatPrice(order.tier_discount)}</span>} />
           )}
-          <Row label="Shipping" value={formatPrice(order.shipping_cost)} />
+          <Row label="Shipping" value={Number(order.shipping_cost) === 0 ? 'Free' : formatPrice(order.shipping_cost)} />
           <div className="pt-2 mt-2 border-t border-line">
             <Row label="Total" value={formatPrice(order.total)} bold />
           </div>
+          {order.payment_type && (
+            <Row
+              label="Payment Method"
+              value={PAYMENT_LABEL[order.payment_channel] || PAYMENT_LABEL[order.payment_type] || order.payment_type}
+            />
+          )}
+          {order.payment_verified_at && <Row label="Paid At" value={formatDateTime(order.payment_verified_at)} />}
         </dl>
       </Card>
 

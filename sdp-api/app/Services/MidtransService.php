@@ -61,9 +61,9 @@ class MidtransService
         // Sanity check: gross_amount harus sama dengan SUM(item.price * qty)
         $grossAmount = (int) round($order->total);
 
-        $payload = [
+        $buildPayload = fn (string $midtransOrderId) => [
             'transaction_details' => [
-                'order_id' => $order->order_number,
+                'order_id' => $midtransOrderId,
                 'gross_amount' => $grossAmount,
             ],
             'item_details' => $itemDetails,
@@ -79,34 +79,38 @@ class MidtransService
             ],
         ];
 
+        // Reuse the last Midtrans order_id we issued for this order, if any —
+        // otherwise this is the first attempt, so use the plain order number.
+        $midtransOrderId = $order->midtrans_order_id ?: $order->order_number;
+
         try {
-            return Snap::getSnapToken($payload);
+            $token = Snap::getSnapToken($buildPayload($midtransOrderId));
+            if ($order->midtrans_order_id !== $midtransOrderId) {
+                $order->update(['midtrans_order_id' => $midtransOrderId]);
+            }
+            return $token;
         } catch (\Exception $e) {
             if (! $this->isOrderIdTakenError($e->getMessage())) {
                 throw $e;
             }
 
-            // Order ID already has an open transaction at Midtrans (e.g. customer closed
-            // Snap without paying) — free it up, then retry once.
-            try {
-                Transaction::cancel($order->order_number);
-            } catch (\Exception) {
-                try {
-                    Transaction::expire($order->order_number);
-                } catch (\Exception) {
-                    // Couldn't free up the order ID — let the retry below decide the final outcome.
-                }
+            // That Midtrans order_id already has an open transaction (e.g. the customer
+            // closed Snap without paying earlier). Rather than fight over the same ID,
+            // mint a brand new one for this attempt — guaranteed to be unused.
+            $attempt = 2;
+            if (preg_match('/-r(\d+)$/', (string) $order->midtrans_order_id, $m)) {
+                $attempt = ((int) $m[1]) + 1;
             }
+            $nextOrderId = "{$order->order_number}-r{$attempt}";
 
             try {
-                return Snap::getSnapToken($payload);
+                $token = Snap::getSnapToken($buildPayload($nextOrderId));
+                $order->update(['midtrans_order_id' => $nextOrderId]);
+                return $token;
             } catch (\Exception $retryException) {
-                if ($this->isOrderIdTakenError($retryException->getMessage())) {
-                    throw new RuntimeException(
-                        "We couldn't restart this payment automatically. Please refresh the page and try again in a moment."
-                    );
-                }
-                throw $retryException;
+                throw new RuntimeException(
+                    "We couldn't restart this payment automatically. Please refresh the page and try again in a moment."
+                );
             }
         }
     }
@@ -120,13 +124,13 @@ class MidtransService
      * Cek status transaksi langsung ke Midtrans API (untuk fallback saat webhook tidak masuk).
      * Returns next_status sama seperti resolveNotification.
      */
-    public function checkTransactionStatus(string $orderNumber): array
+    public function checkTransactionStatus(Order $order): array
     {
         if (! $this->isConfigured()) {
             throw new RuntimeException('Midtrans is not configured');
         }
 
-        $status = Transaction::status($orderNumber);
+        $status = Transaction::status($order->midtrans_order_id ?: $order->order_number);
 
         $transactionStatus = $status->transaction_status ?? null;
         $fraudStatus = $status->fraud_status ?? null;
