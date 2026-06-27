@@ -171,16 +171,23 @@ export default function OrderSuccessPage() {
   )
 }
 
+const HEADER_BY_STATUS = {
+  processing: { title: 'Payment Successful', desc: 'Thank you, your order is being processed.' },
+  shipped: { title: 'Order Shipped', desc: 'Your order is on its way.' },
+  completed: { title: 'Order Completed', desc: 'Your order has been delivered. Thanks for shopping with us!' },
+}
+
 function Header({ order }) {
   const status = order?.status
-  if (status === 'processing' || status === 'shipped' || status === 'completed') {
+  if (HEADER_BY_STATUS[status]) {
+    const { title, desc } = HEADER_BY_STATUS[status]
     return (
       <div className="text-center">
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-state-success text-white mb-6">
           <CheckCircle2 size={32} strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Payment Successful</h1>
-        <p className="mt-2 text-sm text-ink-muted">Thank you, your order is being processed.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">{title}</h1>
+        <p className="mt-2 text-sm text-ink-muted">{desc}</p>
       </div>
     )
   }

@@ -4,8 +4,10 @@ namespace App\Mail;
 
 use App\Models\Order;
 use App\Models\Setting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -20,7 +22,7 @@ class PaymentConfirmation extends Mailable
 
     public function __construct(public Order $order)
     {
-        $this->order->loadMissing('items');
+        $this->order->loadMissing('items.vendor');
         $this->isInternational = $order->shipping_country && strcasecmp(trim($order->shipping_country), 'Indonesia') !== 0;
         $this->usdRate = (float) (Setting::where('key', 'usd_idr_rate')->value('value') ?: 16000);
 
@@ -49,5 +51,23 @@ class PaymentConfirmation extends Mailable
         return new Content(
             view: 'emails.payment-confirmation',
         );
+    }
+
+    public function attachments(): array
+    {
+        $settings = \App\Models\Setting::whereIn('key', ['site_name', 'site_tagline'])->pluck('value', 'key');
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'order' => $this->order,
+            'isInternational' => $this->isInternational,
+            'usdRate' => $this->usdRate,
+            'siteName' => $settings['site_name'] ?? 'SDP Marketplace',
+            'siteTagline' => $settings['site_tagline'] ?? 'Multi-Brand Marketplace',
+        ]);
+
+        return [
+            Attachment::fromData(fn () => $pdf->output(), "Invoice-{$this->order->order_number}.pdf")
+                ->withMime('application/pdf'),
+        ];
     }
 }

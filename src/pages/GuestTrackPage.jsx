@@ -72,6 +72,18 @@ export default function GuestTrackPage() {
 
   const showSuccess = paidFromCheckout || (order && !['pending_payment', 'awaiting_quote', 'cancelled'].includes(order.status))
 
+  const HEADER_BY_STATUS = {
+    awaiting_quote: { title: 'Order Received', desc: "We're calculating your international shipping cost." },
+    pending_payment: { title: 'Track Order', desc: 'Complete payment to process your order.' },
+    processing: { title: 'Order Processing', desc: 'Thank you, your order is being processed.' },
+    shipped: { title: 'Order Shipped', desc: "Your order is on its way." },
+    completed: { title: 'Order Completed', desc: "Your order has been delivered. Thanks for shopping with us!" },
+    cancelled: { title: 'Order Cancelled', desc: 'This order has been cancelled.' },
+  }
+  const header = paidFromCheckout
+    ? { title: 'Payment Successful!', desc: 'Thank you, your order is being processed.' }
+    : (order && HEADER_BY_STATUS[order.status]) || { title: 'Track Order', desc: '' }
+
   return (
     <div className="container-page py-12 lg:py-20">
       <div className="max-w-xl mx-auto">
@@ -84,14 +96,10 @@ export default function GuestTrackPage() {
               : <CheckCircle2 size={32} strokeWidth={1.5} />}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">
-            {paidFromCheckout ? 'Payment Successful!' : showSuccess ? 'Order Processing' : order?.status === 'cancelled' ? 'Order Cancelled' : isAwaitingQuote ? 'Order Received' : 'Track Order'}
+            {header.title}
           </h1>
           <p className="mt-2 text-sm text-ink-muted">
-            {isAwaitingQuote
-              ? "We're calculating your international shipping cost."
-              : isPending
-                ? 'Complete payment to process your order.'
-                : 'Thank you, your order is being processed.'}
+            {header.desc}
           </p>
         </div>
 
