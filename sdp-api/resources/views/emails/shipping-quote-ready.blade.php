@@ -67,17 +67,20 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px;">
                                 <tr>
                                     <td style="padding:4px 0; font-size:13px; color:#52525b;">Subtotal</td>
-                                    <td align="right" style="padding:4px 0; font-size:13px;">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:4px 0; font-size:13px;">${{ number_format($order->subtotal / $usdRate, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:4px 0; font-size:13px; color:#52525b;">International Shipping</td>
-                                    <td align="right" style="padding:4px 0; font-size:13px;">Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:4px 0; font-size:13px;">${{ number_format($order->shipping_cost / $usdRate, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">Total Due</td>
-                                    <td align="right" style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">${{ number_format($order->total / $usdRate, 2) }}</td>
                                 </tr>
                             </table>
+                            <p style="margin:-12px 0 24px; font-size:11px; color:#a1a1aa; text-align:right;">
+                                ≈ Rp {{ number_format($order->total, 0, ',', '.') }} — you'll be charged this amount in IDR at checkout (Midtrans only settles in Indonesian Rupiah).
+                            </p>
 
                             <!-- CTA -->
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">

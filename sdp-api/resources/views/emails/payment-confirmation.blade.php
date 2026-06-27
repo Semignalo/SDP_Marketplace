@@ -84,7 +84,7 @@
                                         <span style="color:#a1a1aa;"> × {{ $item->quantity }}</span>
                                     </td>
                                     <td align="right" style="padding:8px 0; border-bottom:1px solid #f4f4f5; font-size:14px; font-weight:600; white-space:nowrap;">
-                                        Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                                        @if ($isInternational) ${{ number_format($item->subtotal / $usdRate, 2) }} @else Rp {{ number_format($item->subtotal, 0, ',', '.') }} @endif
                                     </td>
                                 </tr>
                                 @endforeach
@@ -94,25 +94,42 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 24px;">
                                 <tr>
                                     <td style="padding:4px 0; font-size:13px; color:#52525b;">Subtotal</td>
-                                    <td align="right" style="padding:4px 0; font-size:13px;">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:4px 0; font-size:13px;">
+                                        @if ($isInternational) ${{ number_format($order->subtotal / $usdRate, 2) }} @else Rp {{ number_format($order->subtotal, 0, ',', '.') }} @endif
+                                    </td>
                                 </tr>
                                 @if ((float) ($order->tier_discount ?? 0) > 0)
                                 <tr>
                                     <td style="padding:4px 0; font-size:13px; color:#16a34a;">{{ $order->tier_name ?? '' }} tier discount</td>
-                                    <td align="right" style="padding:4px 0; font-size:13px; color:#16a34a;">−Rp {{ number_format($order->tier_discount, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:4px 0; font-size:13px; color:#16a34a;">
+                                        @if ($isInternational) −${{ number_format($order->tier_discount / $usdRate, 2) }} @else −Rp {{ number_format($order->tier_discount, 0, ',', '.') }} @endif
+                                    </td>
                                 </tr>
                                 @endif
                                 <tr>
                                     <td style="padding:4px 0; font-size:13px; color:#52525b;">Shipping ({{ $order->shipping_courier }})</td>
                                     <td align="right" style="padding:4px 0; font-size:13px;">
-                                        @if ((float) $order->shipping_cost === 0.0) FREE @else Rp {{ number_format($order->shipping_cost, 0, ',', '.') }} @endif
+                                        @if ((float) $order->shipping_cost === 0.0)
+                                            FREE
+                                        @elseif ($isInternational)
+                                            ${{ number_format($order->shipping_cost / $usdRate, 2) }}
+                                        @else
+                                            Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>
                                     <td style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">Total Paid</td>
-                                    <td align="right" style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">Rp {{ number_format($order->total, 0, ',', '.') }}</td>
+                                    <td align="right" style="padding:12px 0 0; font-size:15px; font-weight:700; border-top:1px solid #e4e4e7;">
+                                        @if ($isInternational) ${{ number_format($order->total / $usdRate, 2) }} @else Rp {{ number_format($order->total, 0, ',', '.') }} @endif
+                                    </td>
                                 </tr>
                             </table>
+                            @if ($isInternational)
+                            <p style="margin:-12px 0 24px; font-size:11px; color:#a1a1aa; text-align:right;">
+                                Estimated in USD. Rp {{ number_format($order->total, 0, ',', '.') }} was charged via Midtrans.
+                            </p>
+                            @endif
 
                             <!-- Shipping address -->
                             <p style="margin:0 0 4px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#a1a1aa;">Shipping to</p>

@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,10 +15,12 @@ class ShippingQuoteReady extends Mailable
     use Queueable, SerializesModels;
 
     public string $trackingUrl;
+    public float $usdRate;
 
     public function __construct(public Order $order)
     {
         $this->order->loadMissing('items');
+        $this->usdRate = (float) (Setting::where('key', 'usd_idr_rate')->value('value') ?: 16000);
 
         $base = rtrim(config('app.frontend_url'), '/');
 
