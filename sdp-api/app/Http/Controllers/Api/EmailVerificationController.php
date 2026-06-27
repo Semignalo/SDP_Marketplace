@@ -39,11 +39,11 @@ class EmailVerificationController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email sudah diverifikasi.'], 422);
+            return response()->json(['message' => 'Email is already verified.'], 422);
         }
 
         $user->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Email verifikasi telah dikirim ulang.']);
+        return response()->json(['message' => 'Verification email resent.']);
     }
 }

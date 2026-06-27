@@ -38,12 +38,12 @@ class ProfileController extends Controller
 
         if (!Hash::check($data['current_password'], $user->password)) {
             throw ValidationException::withMessages([
-                'current_password' => ['Password saat ini tidak benar.'],
+                'current_password' => ['Your current password is incorrect.'],
             ]);
         }
 
         $user->update(['password' => $data['password']]);
 
-        return response()->json(['message' => 'Password berhasil diubah.']);
+        return response()->json(['message' => 'Password changed successfully.']);
     }
 }

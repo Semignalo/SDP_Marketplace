@@ -38,7 +38,7 @@ class AuthController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json([
-            'message' => 'Akun berhasil dibuat. Cek email untuk verifikasi.',
+            'message' => 'Account created. Check your email to verify it.',
             'email' => $user->email,
         ], 201);
     }
@@ -57,7 +57,7 @@ class AuthController extends Controller
 
         if (!$user->hasVerifiedEmail() && $user->role !== 'admin') {
             return response()->json([
-                'message' => 'Email belum diverifikasi. Cek inbox kamu.',
+                'message' => 'Email not verified yet. Check your inbox.',
                 'email' => $user->email,
                 'unverified' => true,
             ], 403);
@@ -75,7 +75,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Berhasil keluar.']);
+        return response()->json(['message' => 'Signed out successfully.']);
     }
 
     public function me(Request $request): JsonResponse

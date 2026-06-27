@@ -18,8 +18,8 @@ export default function ImagesEditor({ images, onChange, error }) {
   const handleFiles = async (files) => {
     const remaining = 8 - images.length
     const batch = Array.from(files).slice(0, remaining)
-    if (batch.length === 0) { toast.error('Maksimal 8 gambar'); return }
-    if (files.length > remaining) toast.warning(`Hanya ${remaining} gambar pertama yang diupload`)
+    if (batch.length === 0) { toast.error('Max 8 images'); return }
+    if (files.length > remaining) toast.warning(`Only first ${remaining} images uploaded`)
     setUploading(true)
     const results = []
     for (const file of batch) {
@@ -29,7 +29,7 @@ export default function ImagesEditor({ images, onChange, error }) {
         const res = await api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
         results.push(res.data.url)
       } catch (err) {
-        toast.error(`Gagal upload ${file.name}: ${extractErrorMessage(err)}`)
+        toast.error(`Failed to upload ${file.name}: ${extractErrorMessage(err)}`)
       }
     }
     setUploading(false)
@@ -40,7 +40,7 @@ export default function ImagesEditor({ images, onChange, error }) {
   const addUrl = () => {
     const url = draft.trim()
     if (!url) return
-    if (isFull) { toast.error('Maksimal 8 gambar'); return }
+    if (isFull) { toast.error('Max 8 images'); return }
     onChange([...images, url])
     setDraft('')
   }
@@ -74,7 +74,7 @@ export default function ImagesEditor({ images, onChange, error }) {
   return (
     <div>
       <label className="eyebrow block mb-2">
-        Gambar Produk
+        Product Images
       </label>
 
       {/* Tab */}
@@ -96,8 +96,8 @@ export default function ImagesEditor({ images, onChange, error }) {
           <button type="button" disabled={isFull || uploading} onClick={() => fileRef.current?.click()}
             className="w-full border-2 border-dashed border-line rounded-lg p-5 text-center hover:border-ink-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             {uploading
-              ? <><Loader2 size={22} className="mx-auto text-ink-muted mb-1.5 animate-spin" /><p className="text-xs text-ink-muted">Mengupload...</p></>
-              : <><Upload size={22} className="mx-auto text-ink-faint mb-1.5" strokeWidth={1.2} /><p className="text-xs text-ink-muted">Klik untuk pilih gambar<br /><span className="text-ink-muted">JPG, PNG, WebP · Maks 5 MB · {8 - images.length} slot tersisa</span></p></>
+              ? <><Loader2 size={22} className="mx-auto text-ink-muted mb-1.5 animate-spin" /><p className="text-xs text-ink-muted">Uploading...</p></>
+              : <><Upload size={22} className="mx-auto text-ink-faint mb-1.5" strokeWidth={1.2} /><p className="text-xs text-ink-muted">Click to select images<br /><span className="text-ink-muted">JPG, PNG, WebP · Max 5 MB · {8 - images.length} slots left</span></p></>
             }
           </button>
         </>
@@ -105,7 +105,7 @@ export default function ImagesEditor({ images, onChange, error }) {
         <div className="flex gap-2">
           <Input placeholder="https://..." value={draft} onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUrl() } }} disabled={isFull} />
-          <Button type="button" variant="outline" onClick={addUrl} disabled={isFull}>Tambah</Button>
+          <Button type="button" variant="outline" onClick={addUrl} disabled={isFull}>Add</Button>
         </div>
       )}
 
@@ -113,7 +113,7 @@ export default function ImagesEditor({ images, onChange, error }) {
 
       {images.length > 0 ? (
         <>
-          <p className="text-2xs text-ink-muted mt-3 mb-2">Drag untuk urutkan · Klik ★ untuk jadikan gambar utama</p>
+          <p className="text-2xs text-ink-muted mt-3 mb-2">Drag to reorder · Click ★ to set as primary</p>
           <ul className="grid grid-cols-4 gap-2">
             {images.map((url, i) => (
               <li
@@ -142,12 +142,12 @@ export default function ImagesEditor({ images, onChange, error }) {
 
                 {/* Badge utama / tombol set utama */}
                 {i === 0 ? (
-                  <span className="absolute bottom-1 left-1 text-2xs bg-ink text-white px-1.5 py-0.5 rounded">Utama</span>
+                  <span className="absolute bottom-1 left-1 text-2xs bg-ink text-white px-1.5 py-0.5 rounded">Primary</span>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setPrimary(i)}
-                    title="Jadikan gambar utama"
+                    title="Set as primary image"
                     className="absolute bottom-1 left-1 h-6 w-6 bg-paper/80 border border-line rounded text-ink-muted hover:text-rating inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Star size={11} />
@@ -159,7 +159,7 @@ export default function ImagesEditor({ images, onChange, error }) {
                   type="button"
                   onClick={() => remove(i)}
                   className="absolute top-1 right-1 h-6 w-6 bg-paper/80 border border-line rounded text-ink-muted hover:text-state-danger inline-flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Hapus"
+                  aria-label="Remove"
                 >
                   <X size={11} />
                 </button>
@@ -170,7 +170,7 @@ export default function ImagesEditor({ images, onChange, error }) {
       ) : (
         <div className="mt-4 border border-dashed border-line rounded p-6 text-center">
           <ImageIcon size={28} className="mx-auto text-ink-faint mb-2" strokeWidth={1.2} />
-          <p className="text-xs text-ink-muted">Belum ada gambar</p>
+          <p className="text-xs text-ink-muted">No images yet</p>
         </div>
       )}
     </div>

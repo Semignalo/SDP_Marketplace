@@ -7,16 +7,16 @@ import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
 const STATUS = {
-  pending:  { label: 'Diproses', variant: 'warning' },
-  approved: { label: 'Disetujui', variant: 'success' },
-  rejected: { label: 'Ditolak', variant: 'danger' },
+  pending:  { label: 'Processing', variant: 'warning' },
+  approved: { label: 'Approved', variant: 'success' },
+  rejected: { label: 'Rejected', variant: 'danger' },
 }
 
 const FILTERS = [
-  { value: '', label: 'Semua' },
-  { value: 'pending', label: 'Diproses' },
-  { value: 'approved', label: 'Disetujui' },
-  { value: 'rejected', label: 'Ditolak' },
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Processing' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
 ]
 
 export default function AdminWithdrawalsPage() {
@@ -38,7 +38,7 @@ export default function AdminWithdrawalsPage() {
   const handleConfirm = async () => {
     try {
       await updateStatus.mutateAsync({ id: selected.id, status: action, admin_notes: adminNotes || undefined })
-      toast.success(action === 'approved' ? 'Penarikan disetujui' : 'Penarikan ditolak')
+      toast.success(action === 'approved' ? 'Withdrawal approved' : 'Withdrawal rejected')
       setSelected(null)
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -50,13 +50,13 @@ export default function AdminWithdrawalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-ink">Penarikan Komisi</h2>
-        <p className="text-sm text-ink-muted mt-1">Kelola permintaan penarikan saldo komisi reseller.</p>
+        <h2 className="text-base font-semibold text-ink">Commission Withdrawals</h2>
+        <p className="text-sm text-ink-muted mt-1">Manage reseller commission withdrawal requests.</p>
       </div>
 
       {pendingCount > 0 && (
         <div className="px-4 py-3 bg-state-warning/10 border border-state-warning/30 rounded text-sm text-ink-soft">
-          Ada <strong className="text-ink">{pendingCount} permintaan</strong> yang menunggu diproses.
+          There <strong className="text-ink">{pendingCount} request(s)</strong> awaiting processing.
         </div>
       )}
 
@@ -78,10 +78,10 @@ export default function AdminWithdrawalsPage() {
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
         <div className="hidden md:grid grid-cols-[1fr_1.2fr_1.4fr_120px_140px_120px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
-          <span>Tanggal</span>
+          <span>Date</span>
           <span>Reseller</span>
-          <span>Rekening Tujuan</span>
-          <span className="text-right">Jumlah</span>
+          <span>Destination Account</span>
+          <span className="text-right">Amount</span>
           <span>Status</span>
           <span></span>
         </div>
@@ -92,7 +92,7 @@ export default function AdminWithdrawalsPage() {
           </div>
         ) : !data?.data?.length ? (
           <div className="p-10">
-            <EmptyState icon={<ArrowDownToLine size={40} strokeWidth={1.2} />} title="Tidak ada permintaan penarikan" />
+            <EmptyState icon={<ArrowDownToLine size={40} strokeWidth={1.2} />} title="No withdrawal requests" />
           </div>
         ) : (
           <ul className="divide-y divide-line">
@@ -109,7 +109,7 @@ export default function AdminWithdrawalsPage() {
 
                   <div className="mt-1 md:mt-0">
                     <p className="text-sm text-ink">{w.bank_name} — {w.bank_account_number}</p>
-                    <p className="text-xs text-ink-muted">a.n. {w.bank_account_name}</p>
+                    <p className="text-xs text-ink-muted">a/n {w.bank_account_name}</p>
                     {w.notes && <p className="text-2xs text-ink-muted mt-0.5 italic">"{w.notes}"</p>}
                   </div>
 
@@ -127,14 +127,14 @@ export default function AdminWithdrawalsPage() {
                         onClick={() => openModal(w, 'approved')}
                         className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 bg-state-success text-white rounded hover:opacity-90 transition"
                       >
-                        <Check size={12} /> Setuju
+                        <Check size={12} /> Approve
                       </button>
                       <button
                         type="button"
                         onClick={() => openModal(w, 'rejected')}
                         className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 border border-state-danger text-state-danger rounded hover:bg-state-danger/5 transition"
                       >
-                        <X size={12} /> Tolak
+                        <X size={12} /> Reject
                       </button>
                     </div>
                   ) : (
@@ -151,20 +151,20 @@ export default function AdminWithdrawalsPage() {
         <Pagination currentPage={data.meta.current_page} lastPage={data.meta.last_page} onChange={setPage} />
       )}
 
-      {/* Modal konfirmasi */}
+      {/* Confirmation modal */}
       <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
-        title={action === 'approved' ? 'Setujui Penarikan?' : 'Tolak Penarikan?'}
+        title={action === 'approved' ? 'Approve Withdrawal?' : 'Reject Withdrawal?'}
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setSelected(null)}>Batal</Button>
+            <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
             <Button
               variant={action === 'approved' ? 'primary' : 'danger'}
               onClick={handleConfirm}
               loading={updateStatus.isPending}
             >
-              {action === 'approved' ? 'Ya, Setujui' : 'Ya, Tolak'}
+              {action === 'approved' ? 'Yes, Approve' : 'Yes, Reject'}
             </Button>
           </div>
         }
@@ -173,16 +173,16 @@ export default function AdminWithdrawalsPage() {
           <div className="space-y-4">
             <div className="p-4 bg-paper-soft rounded space-y-1.5 text-sm">
               <p><span className="text-ink-muted">Reseller:</span> <strong>{selected.user?.name}</strong></p>
-              <p><span className="text-ink-muted">Jumlah:</span> <strong>{formatRupiah(selected.amount)}</strong></p>
-              <p><span className="text-ink-muted">Rekening:</span> {selected.bank_name} {selected.bank_account_number} a.n. {selected.bank_account_name}</p>
+              <p><span className="text-ink-muted">Amount:</span> <strong>{formatRupiah(selected.amount)}</strong></p>
+              <p><span className="text-ink-muted">Account:</span> {selected.bank_name} {selected.bank_account_number} a/n {selected.bank_account_name}</p>
             </div>
             <div>
-              <label className="text-xs font-medium text-ink-soft block mb-1.5">Catatan untuk reseller (opsional)</label>
+              <label className="text-xs font-medium text-ink-soft block mb-1.5">Note for the reseller (optional)</label>
               <textarea
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows={2}
-                placeholder={action === 'approved' ? 'Misal: Sudah ditransfer' : 'Misal: Rekening tidak valid'}
+                placeholder={action === 'approved' ? 'E.g.: Transferred' : 'E.g.: Invalid bank account'}
                 className="w-full px-3 py-2.5 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink resize-none"
               />
             </div>

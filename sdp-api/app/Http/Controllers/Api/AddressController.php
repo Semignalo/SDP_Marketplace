@@ -61,7 +61,7 @@ class AddressController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Alamat dihapus.']);
+        return response()->json(['message' => 'Address deleted.']);
     }
 
     protected function validated(Request $request): array

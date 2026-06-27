@@ -39,7 +39,7 @@ export default function AdminSettingsPage() {
       await update.mutateAsync(
         settings.map((s) => ({ key: s.key, value: String(values[s.key] ?? '') })),
       )
-      toast.success('Pengaturan disimpan')
+      toast.success('Settings saved')
       setDirty(false)
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -54,11 +54,11 @@ export default function AdminSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-base font-semibold text-ink">Pengaturan</h2>
-          <p className="text-sm text-ink-muted mt-1">Konfigurasi situs, komisi, ongkir, dll.</p>
+          <h2 className="text-base font-semibold text-ink">Settings</h2>
+          <p className="text-sm text-ink-muted mt-1">Site, commission, shipping configuration, and more.</p>
         </div>
         <Button onClick={handleSave} loading={update.isPending} disabled={!dirty}>
-          Simpan Perubahan
+          Save Changes
         </Button>
       </div>
 
@@ -95,7 +95,7 @@ export default function AdminSettingsPage() {
 
       <div className="flex justify-end">
         <Button onClick={handleSave} loading={update.isPending} disabled={!dirty}>
-          Simpan Perubahan
+          Save Changes
         </Button>
       </div>
     </div>

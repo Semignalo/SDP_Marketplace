@@ -33,10 +33,10 @@ export default class ErrorBoundary extends Component {
             <AlertTriangle size={28} strokeWidth={1.5} />
           </div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-ink">
-            Terjadi kesalahan
+            Something went wrong
           </h1>
           <p className="mt-2 text-sm text-ink-muted">
-            Ada yang salah saat menampilkan halaman ini. Coba refresh atau kembali ke beranda.
+            We had trouble displaying this page. Try refreshing or go back to the homepage.
           </p>
           {import.meta.env.DEV && this.state.error && (
             <pre className="mt-4 text-2xs text-state-danger bg-state-danger/5 border border-state-danger/20 rounded p-3 text-left overflow-x-auto">
@@ -48,7 +48,7 @@ export default class ErrorBoundary extends Component {
               Refresh
             </Button>
             <Button variant="outline" onClick={() => { window.location.href = '/' }} leadingIcon={<Home size={14} />}>
-              Beranda
+              Home
             </Button>
           </div>
         </div>

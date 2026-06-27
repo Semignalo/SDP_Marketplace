@@ -25,9 +25,9 @@ const EMPTY = {
 }
 
 const STATUS_BADGE = {
-  active: { label: 'Aktif', variant: 'success' },
+  active: { label: 'Active', variant: 'success' },
   draft: { label: 'Draft', variant: 'warning' },
-  archived: { label: 'Arsip', variant: 'neutral' },
+  archived: { label: 'Archived', variant: 'neutral' },
 }
 
 export default function VendorProductsPage() {
@@ -90,7 +90,7 @@ export default function VendorProductsPage() {
         category_id: Number(form.category_id),
         images: form.images.filter(Boolean),
       })
-      toast.success(editing ? 'Produk diperbarui' : 'Produk ditambahkan')
+      toast.success(editing ? 'Product updated' : 'Product added')
       setModalOpen(false)
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -108,7 +108,7 @@ export default function VendorProductsPage() {
     if (!deleteTarget) return
     try {
       await deleteMut.mutateAsync(deleteTarget.id)
-      toast.success('Produk dihapus')
+      toast.success('Product deleted')
     } catch (err) {
       toast.error(extractErrorMessage(err))
     } finally {
@@ -120,37 +120,37 @@ export default function VendorProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-base font-semibold text-ink">Daftar Produk</h2>
-          <p className="text-sm text-ink-muted mt-1">Kelola katalog produk vendormu.</p>
+          <h2 className="text-base font-semibold text-ink">Product List</h2>
+          <p className="text-sm text-ink-muted mt-1">Manage your store's product catalog.</p>
         </div>
-        <Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Tambah Produk</Button>
+        <Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Add Product</Button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Cari nama atau SKU..."
+            placeholder="Search name or SKU..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             leadingIcon={<Search size={14} />}
           />
         </div>
         <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-48">
-          <option value="">Semua status</option>
-          <option value="active">Aktif</option>
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
           <option value="draft">Draft</option>
-          <option value="archived">Arsip</option>
+          <option value="archived">Archived</option>
         </Select>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
         <div className="hidden md:grid grid-cols-[60px_1.6fr_120px_100px_80px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
           <span></span>
-          <span>Produk</span>
-          <span className="text-right">Harga</span>
-          <span className="text-right">Stok</span>
+          <span>Product</span>
+          <span className="text-right">Price</span>
+          <span className="text-right">Stock</span>
           <span>Status</span>
-          <span className="text-right">Aksi</span>
+          <span className="text-right">Actions</span>
         </div>
 
         {isLoading ? (
@@ -161,9 +161,9 @@ export default function VendorProductsPage() {
           <div className="p-10">
             <EmptyState
               icon={<Package size={40} strokeWidth={1.2} />}
-              title="Belum ada produk"
-              description="Tambahkan produk pertama untuk mulai berjualan."
-              action={<Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Tambah Produk</Button>}
+              title="No products yet"
+              description="Add your first product to start selling."
+              action={<Button leadingIcon={<Plus size={16} />} onClick={openCreate}>Add Product</Button>}
             />
           </div>
         ) : (
@@ -187,7 +187,7 @@ export default function VendorProductsPage() {
                     <button
                       type="button"
                       onClick={() => openEdit(p)}
-                      aria-label={`Edit produk: ${p.name}`}
+                      aria-label={`Edit product: ${p.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
                     >
                       <Pencil size={14} />
@@ -195,7 +195,7 @@ export default function VendorProductsPage() {
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(p)}
-                      aria-label={`Hapus produk: ${p.name}`}
+                      aria-label={`Delete product: ${p.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
                     >
                       <Trash2 size={14} />
@@ -219,41 +219,41 @@ export default function VendorProductsPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Edit Produk' : 'Tambah Produk'}
+        title={editing ? 'Edit Product' : 'Add Product'}
         size="xl"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} loading={saveMut.isPending}>Simpan</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} loading={saveMut.isPending}>Save</Button>
           </div>
         }
       >
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <Input label="Nama Produk" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
+            <Input label="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
           </div>
-          <Input label="Slug (opsional)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dibuat otomatis" error={errors.slug} />
-          <Select label="Kategori" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} error={errors.category_id}>
-            <option value="">Pilih kategori</option>
+          <Input label="Slug (optional)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="Auto-generated" error={errors.slug} />
+          <Select label="Category" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} error={errors.category_id}>
+            <option value="">Select category</option>
             {flatCategories.map((c) => (
               <option key={c.id} value={c.id}>{'— '.repeat(c.depth)}{c.name}</option>
             ))}
           </Select>
 
-          <Input label="Harga" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" error={errors.price} />
-          <Input label="Stok" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} error={errors.stock} />
+          <Input label="Price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" error={errors.price} />
+          <Input label="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} error={errors.stock} />
 
           <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} error={errors.sku} />
 
           <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} error={errors.status}>
-            <option value="active">Aktif</option>
+            <option value="active">Active</option>
             <option value="draft">Draft</option>
-            <option value="archived">Arsip</option>
+            <option value="archived">Archived</option>
           </Select>
 
           <div className="sm:col-span-2">
             <Textarea
-              label="Deskripsi"
+              label="Description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={4}
@@ -274,16 +274,16 @@ export default function VendorProductsPage() {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Hapus produk ini?"
+        title="Delete this product?"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
-            <Button variant="danger" onClick={handleDelete} loading={deleteMut.isPending}>Ya, hapus</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} loading={deleteMut.isPending}>Yes, delete</Button>
           </div>
         }
       >
         <p className="text-sm text-ink-soft">
-          Produk <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.
+          <span className="font-semibold text-ink">{deleteTarget?.name}</span> will be permanently deleted. This action cannot be undone.
         </p>
       </Modal>
     </div>

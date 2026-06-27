@@ -15,17 +15,17 @@ export default function AdminLayout() {
     { to: '/admin', icon: <LayoutDashboard size={16} />, label: 'Dashboard', end: true },
     { to: '/admin/users', icon: <Users size={16} />, label: 'Users' },
     { to: '/admin/vendors', icon: <Store size={16} />, label: 'Vendors' },
-    { to: '/admin/categories', icon: <FolderTree size={16} />, label: 'Kategori' },
-    { to: '/admin/products', icon: <Package size={16} />, label: 'Produk' },
-    { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Pesanan' },
-    { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Komisi' },
-    { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Penarikan' },
-    { to: '/admin/settings', icon: <SettingsIcon size={16} />, label: 'Pengaturan' },
+    { to: '/admin/categories', icon: <FolderTree size={16} />, label: 'Categories' },
+    { to: '/admin/products', icon: <Package size={16} />, label: 'Products' },
+    { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Orders' },
+    { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Commissions' },
+    { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Withdrawals' },
+    { to: '/admin/settings', icon: <SettingsIcon size={16} />, label: 'Settings' },
   ]
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Berhasil keluar')
+    toast.success('Signed out')
     navigate('/')
   }
 
@@ -35,11 +35,11 @@ export default function AdminLayout() {
         <header className="mb-8 pb-6 border-b border-line flex items-start justify-between flex-wrap gap-4">
           <div>
             <p className="text-2xs font-bold uppercase tracking-eyebrow text-ink-muted mb-2">Admin Panel</p>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Selamat datang, {user?.name?.split(' ')[0]}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Welcome, {user?.name?.split(' ')[0]}</h1>
             <p className="text-sm text-ink-muted mt-1">{user?.email}</p>
           </div>
           <Link to="/" target="_blank" className="text-xs inline-flex items-center gap-1.5 text-ink-muted hover:text-ink">
-            Lihat situs publik <ExternalLink size={12} />
+            View public site <ExternalLink size={12} />
           </Link>
         </header>
 
@@ -68,7 +68,7 @@ export default function AdminLayout() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm text-ink-soft hover:bg-paper transition mt-4 pt-4 border-t border-line"
               >
                 <LogOut size={16} className="shrink-0" />
-                <span>Keluar</span>
+                <span>Sign out</span>
               </button>
             </nav>
           </aside>

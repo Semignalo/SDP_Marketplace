@@ -6,12 +6,12 @@ import { Input, Select, Badge, Pagination, Skeleton, EmptyState } from '../../co
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
-  awaiting_quote: { label: 'Menunggu Kuotasi Ongkir', variant: 'warning' },
-  pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
-  processing: { label: 'Diproses', variant: 'neutral' },
-  shipped: { label: 'Dikirim', variant: 'info' },
-  completed: { label: 'Selesai', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
+  processing: { label: 'Processing', variant: 'neutral' },
+  shipped: { label: 'Shipped', variant: 'info' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
 export default function AdminOrdersPage() {
@@ -25,33 +25,33 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-ink">Pesanan</h2>
-        <p className="text-sm text-ink-muted mt-1">Semua pesanan cross-vendor.</p>
+        <h2 className="text-base font-semibold text-ink">Orders</h2>
+        <p className="text-sm text-ink-muted mt-1">All cross-vendor orders.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Cari no. pesanan..."
+            placeholder="Search order number..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             leadingIcon={<Search size={14} />}
           />
         </div>
         <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-56">
-          <option value="">Semua status</option>
-          <option value="awaiting_quote">Menunggu Kuotasi Ongkir</option>
-          <option value="pending_payment">Menunggu Bayar</option>
-          <option value="processing">Diproses</option>
-          <option value="shipped">Dikirim</option>
-          <option value="completed">Selesai</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="">All statuses</option>
+          <option value="awaiting_quote">Awaiting Shipping Quote</option>
+          <option value="pending_payment">Awaiting Payment</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </Select>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
         <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_80px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
-          <span>Pesanan</span>
+          <span>Order</span>
           <span>Customer</span>
           <span>Reseller</span>
           <span className="text-right">Total</span>
@@ -64,7 +64,7 @@ export default function AdminOrdersPage() {
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
           </div>
         ) : data?.data?.length === 0 ? (
-          <div className="p-10"><EmptyState icon={<ShoppingCart size={40} strokeWidth={1.2} />} title="Tidak ada pesanan" /></div>
+          <div className="p-10"><EmptyState icon={<ShoppingCart size={40} strokeWidth={1.2} />} title="No orders" /></div>
         ) : (
           <ul className="divide-y divide-line">
             {data?.data?.map((o) => {

@@ -13,14 +13,14 @@ export default function VendorLayout() {
 
   const items = [
     { to: '/vendor', icon: <LayoutDashboard size={16} />, label: 'Dashboard', end: true },
-    { to: '/vendor/produk', icon: <Package size={16} />, label: 'Produk' },
-    { to: '/vendor/pesanan', icon: <ShoppingCart size={16} />, label: 'Pesanan' },
-    { to: '/vendor/profil', icon: <Store size={16} />, label: 'Profil Toko' },
+    { to: '/vendor/produk', icon: <Package size={16} />, label: 'Products' },
+    { to: '/vendor/pesanan', icon: <ShoppingCart size={16} />, label: 'Orders' },
+    { to: '/vendor/profil', icon: <Store size={16} />, label: 'Shop Profile' },
   ]
 
   const handleLogout = async () => {
     await logout()
-    toast.success('Berhasil keluar')
+    toast.success('Signed out')
     navigate('/')
   }
 
@@ -39,7 +39,7 @@ export default function VendorLayout() {
               target="_blank"
               className="text-xs inline-flex items-center gap-1.5 text-ink-muted hover:text-ink"
             >
-              Lihat produk publik <ExternalLink size={12} />
+              View public products <ExternalLink size={12} />
             </Link>
           )}
         </header>
@@ -69,7 +69,7 @@ export default function VendorLayout() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded text-sm text-ink-soft hover:bg-paper transition mt-4 pt-4 border-t border-line"
               >
                 <LogOut size={16} className="shrink-0" />
-                <span>Keluar</span>
+                <span>Sign Out</span>
               </button>
             </nav>
           </aside>

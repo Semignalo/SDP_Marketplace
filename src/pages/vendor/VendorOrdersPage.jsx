@@ -6,11 +6,11 @@ import { Input, Select, Badge, Pagination, Skeleton, EmptyState } from '../../co
 import { formatRupiah, formatDateTime, cn } from '../../lib/utils'
 
 const STATUS_BADGE = {
-  pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
-  processing: { label: 'Diproses', variant: 'neutral' },
-  shipped: { label: 'Dikirim', variant: 'info' },
-  completed: { label: 'Selesai', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
+  processing: { label: 'Processing', variant: 'neutral' },
+  shipped: { label: 'Shipped', variant: 'info' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
 export default function VendorOrdersPage() {
@@ -29,37 +29,37 @@ export default function VendorOrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-ink">Pesanan</h2>
-        <p className="text-sm text-ink-muted mt-1">Pesanan yang berisi item dari vendor kamu.</p>
+        <h2 className="text-base font-semibold text-ink">Orders</h2>
+        <p className="text-sm text-ink-muted mt-1">Orders containing items from your store.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Cari no. pesanan..."
+            placeholder="Search order number..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             leadingIcon={<Search size={14} />}
           />
         </div>
         <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-52">
-          <option value="">Semua status</option>
-          <option value="pending_payment">Menunggu Bayar</option>
-          <option value="processing">Diproses</option>
-          <option value="shipped">Dikirim</option>
-          <option value="completed">Selesai</option>
-          <option value="cancelled">Dibatalkan</option>
+          <option value="">All statuses</option>
+          <option value="pending_payment">Awaiting Payment</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </Select>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
         <div className="hidden md:grid grid-cols-[1.4fr_1fr_1fr_1fr_120px_100px] gap-4 px-5 py-3 bg-paper-soft border-b border-line eyebrow">
-          <span>Pesanan</span>
+          <span>Order</span>
           <span>Customer</span>
-          <span>Item</span>
+          <span>Items</span>
           <span className="text-right">Subtotal</span>
           <span>Status</span>
-          <span className="text-right">Detail</span>
+          <span className="text-right">Details</span>
         </div>
 
         {isLoading ? (
@@ -70,8 +70,8 @@ export default function VendorOrdersPage() {
           <div className="p-10">
             <EmptyState
               icon={<Package size={40} strokeWidth={1.2} />}
-              title="Belum ada pesanan"
-              description="Pesanan customer untuk produkmu akan muncul di sini."
+              title="No orders yet"
+              description="Customer orders for your products will show up here."
             />
           </div>
         ) : (
@@ -87,12 +87,12 @@ export default function VendorOrdersPage() {
                     <p className="text-xs text-ink-muted tabular-nums mt-0.5">{formatDateTime(o.created_at)}</p>
                   </div>
                   <p className="text-sm text-ink-soft mt-2 md:mt-0">{o.customer?.name || '—'}</p>
-                  <p className="text-sm text-ink-soft mt-1 md:mt-0">{o.items_count} produk</p>
+                  <p className="text-sm text-ink-soft mt-1 md:mt-0">{o.items_count} products</p>
                   <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatRupiah(o.vendor_subtotal)}</p>
                   <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
                   <div className="mt-2 md:mt-0 md:text-right">
                     <Link to={`/vendor/pesanan/${o.order_number}`} className="text-xs text-ink-muted hover:text-ink underline-offset-4 hover:underline">
-                      Lihat →
+                      View →
                     </Link>
                   </div>
                 </li>

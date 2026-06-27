@@ -12,7 +12,7 @@ export default function ReferralRedirectPage() {
   useEffect(() => {
     if (code) {
       saveReferral(code)
-      toast.success('Kode referral tersimpan & akan dipakai saat checkout')
+      toast.success('Referral code saved & will be applied at checkout')
     }
   }, [code, saveReferral])
 

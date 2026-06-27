@@ -53,7 +53,7 @@ class WithdrawalController extends Controller
         ]);
 
         if ($withdrawal->status !== 'pending') {
-            return response()->json(['message' => 'Permintaan ini sudah diproses.'], 422);
+            return response()->json(['message' => 'This request has already been processed.'], 422);
         }
 
         DB::transaction(function () use ($withdrawal, $data) {
@@ -82,7 +82,7 @@ class WithdrawalController extends Controller
 
                 // Jika saldo earned ternyata kurang (edge case: race condition terlambat terdeteksi), tolak.
                 if ($remaining > 0.01) {
-                    throw new \RuntimeException('Saldo komisi earned tidak mencukupi untuk penarikan ini.');
+                    throw new \RuntimeException('Earned commission balance is not enough for this withdrawal.');
                 }
             }
         });
@@ -90,7 +90,7 @@ class WithdrawalController extends Controller
         $withdrawal = $withdrawal->fresh('user');
         $this->sendWithdrawalStatusEmail($withdrawal);
 
-        return response()->json(['message' => 'Status penarikan diperbarui.', 'data' => $this->shape($withdrawal)]);
+        return response()->json(['message' => 'Withdrawal status updated.', 'data' => $this->shape($withdrawal)]);
     }
 
     /**

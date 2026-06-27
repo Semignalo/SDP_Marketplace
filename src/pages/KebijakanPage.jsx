@@ -3,85 +3,85 @@ import { Link } from 'react-router-dom'
 export default function KebijakanPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Kebijakan Privasi</h1>
-      <p className="mt-1 eyebrow">Terakhir diperbarui: Mei 2026</p>
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Privacy Policy</h1>
+      <p className="mt-1 eyebrow">Last updated: May 2026</p>
 
       <div className="mt-8 space-y-8 text-sm text-ink-muted leading-relaxed">
-        <Section title="1. Pendahuluan">
-          SDP Marketplace ("kami", "platform") berkomitmen melindungi privasi pengguna sesuai
-          Undang-Undang Nomor 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP).
-          Kebijakan ini menjelaskan data apa yang kami kumpulkan, bagaimana kami menggunakannya,
-          dan hak-hak kamu atas data tersebut.
+        <Section title="1. Introduction">
+          SDP Marketplace ("we", "the platform") is committed to protecting user privacy in
+          accordance with Indonesian Law No. 27 of 2022 on Personal Data Protection (UU PDP).
+          This policy explains what data we collect, how we use it, and your rights over that
+          data.
         </Section>
 
-        <Section title="2. Data yang Kami Kumpulkan">
+        <Section title="2. Data We Collect">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li><strong>Data identitas:</strong> nama, alamat email, nomor telepon.</li>
-            <li><strong>Data transaksi:</strong> riwayat pesanan, produk yang dibeli, alamat pengiriman.</li>
-            <li><strong>Data pembayaran:</strong> diproses sepenuhnya oleh Midtrans. Kami tidak menyimpan data kartu atau rekening bank kamu.</li>
-            <li><strong>Data penggunaan:</strong> halaman yang dikunjungi, produk yang dilihat, wishlist.</li>
-            <li><strong>Data referral:</strong> kode referral dan jaringan downline kamu.</li>
+            <li><strong>Identity data:</strong> name, email address, phone number.</li>
+            <li><strong>Transaction data:</strong> order history, products purchased, shipping address.</li>
+            <li><strong>Payment data:</strong> processed entirely by Midtrans. We do not store your card or bank account details.</li>
+            <li><strong>Usage data:</strong> pages visited, products viewed, wishlist.</li>
+            <li><strong>Referral data:</strong> your referral code and downline network.</li>
           </ul>
         </Section>
 
-        <Section title="3. Tujuan Penggunaan Data">
+        <Section title="3. How We Use Your Data">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Memproses dan mengelola pesanan kamu.</li>
-            <li>Mengirimkan notifikasi terkait pesanan via email.</li>
-            <li>Menghitung dan membayar komisi referral.</li>
-            <li>Meningkatkan layanan dan pengalaman belanja.</li>
-            <li>Memenuhi kewajiban hukum yang berlaku.</li>
+            <li>Processing and managing your orders.</li>
+            <li>Sending order-related notifications via email.</li>
+            <li>Calculating and paying referral commissions.</li>
+            <li>Improving our service and shopping experience.</li>
+            <li>Complying with applicable legal obligations.</li>
           </ul>
         </Section>
 
-        <Section title="4. Berbagi Data dengan Pihak Ketiga">
-          Kami membagikan data hanya dalam kondisi berikut:
+        <Section title="4. Sharing Data with Third Parties">
+          We only share data under the following circumstances:
           <ul className="list-disc list-outside pl-5 mt-2 space-y-1.5">
-            <li><strong>Vendor:</strong> nama, alamat, dan nomor telepon penerima diteruskan ke vendor untuk keperluan pengiriman.</li>
-            <li><strong>Midtrans:</strong> data transaksi untuk pemrosesan pembayaran.</li>
-            <li><strong>Kurir:</strong> nama dan alamat penerima untuk pengiriman paket.</li>
-            <li><strong>Pihak berwenang:</strong> jika diwajibkan oleh hukum atau perintah pengadilan.</li>
+            <li><strong>Vendors:</strong> recipient name, address, and phone number are passed to vendors for shipping purposes.</li>
+            <li><strong>Midtrans:</strong> transaction data for payment processing.</li>
+            <li><strong>Couriers:</strong> recipient name and address for package delivery.</li>
+            <li><strong>Authorities:</strong> when required by law or court order.</li>
           </ul>
-          Kami tidak menjual data pribadimu kepada pihak ketiga untuk tujuan pemasaran.
+          We do not sell your personal data to third parties for marketing purposes.
         </Section>
 
-        <Section title="5. Keamanan Data">
-          Kami menerapkan enkripsi HTTPS, hashing password (bcrypt), dan kontrol akses berbasis peran
-          untuk melindungi data kamu. Meski demikian, tidak ada sistem yang 100% aman — harap
-          jaga kerahasiaan kredensial akunmu.
+        <Section title="5. Data Security">
+          We use HTTPS encryption, password hashing (bcrypt), and role-based access control to
+          protect your data. That said, no system is 100% secure — please keep your account
+          credentials confidential.
         </Section>
 
-        <Section title="6. Retensi Data">
-          Data akun disimpan selama akunmu aktif. Data transaksi dan keuangan disimpan minimal
-          5 tahun sesuai kebutuhan perpajakan dan audit. Kamu dapat mengajukan penghapusan akun
-          melalui menu Kontak.
+        <Section title="6. Data Retention">
+          Account data is kept while your account is active. Transaction and financial data is
+          retained for at least 5 years to meet tax and audit requirements. You may request
+          account deletion via the Contact page.
         </Section>
 
-        <Section title="7. Hak-Hak Kamu (UU PDP)">
+        <Section title="7. Your Rights (UU PDP)">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Mengakses data pribadimu yang kami simpan.</li>
-            <li>Memperbarui atau mengoreksi data yang tidak akurat.</li>
-            <li>Meminta penghapusan data (dengan ketentuan tertentu).</li>
-            <li>Mengajukan keberatan atas pemrosesan data tertentu.</li>
+            <li>Access the personal data we hold about you.</li>
+            <li>Update or correct inaccurate data.</li>
+            <li>Request deletion of your data (subject to certain conditions).</li>
+            <li>Object to certain data processing.</li>
           </ul>
-          Untuk menggunakan hak-hak di atas, hubungi kami melalui halaman{' '}
-          <Link to="/kontak" className="text-ink underline">Kontak</Link>.
+          To exercise any of the rights above, contact us via the{' '}
+          <Link to="/kontak" className="text-ink underline">Contact page</Link>.
         </Section>
 
-        <Section title="8. Cookie">
-          Kami menggunakan localStorage untuk menyimpan token sesi dan preferensi pengguna
-          (misalnya status keranjang). Tidak ada cookie pihak ketiga untuk pelacakan iklan.
+        <Section title="8. Cookies">
+          We use localStorage to store session tokens and user preferences (e.g. cart state).
+          We do not use third-party cookies for ad tracking.
         </Section>
 
-        <Section title="9. Perubahan Kebijakan">
-          Kebijakan ini dapat diperbarui sewaktu-waktu. Perubahan material akan diberitahukan
-          melalui email atau notifikasi di platform. Penggunaan platform setelah perubahan berlaku
-          dianggap sebagai persetujuan.
+        <Section title="9. Changes to This Policy">
+          This policy may be updated from time to time. Material changes will be communicated
+          via email or an in-platform notification. Continued use of the platform after changes
+          take effect constitutes acceptance.
         </Section>
 
-        <Section title="10. Kontak">
-          Pertanyaan terkait kebijakan privasi dapat dikirimkan ke{' '}
-          <Link to="/kontak" className="text-ink underline">halaman Kontak kami</Link>.
+        <Section title="10. Contact">
+          Questions about this privacy policy can be sent to our{' '}
+          <Link to="/kontak" className="text-ink underline">Contact page</Link>.
         </Section>
       </div>
     </div>

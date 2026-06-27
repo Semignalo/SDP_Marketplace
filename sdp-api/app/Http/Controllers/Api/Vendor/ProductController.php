@@ -78,7 +78,7 @@ class ProductController extends Controller
             return $product->fresh(['images', 'category:id,name,slug']);
         });
 
-        return response()->json(['data' => new ProductResource($product), 'message' => 'Produk berhasil ditambahkan'], 201);
+        return response()->json(['data' => new ProductResource($product), 'message' => 'Product added successfully'], 201);
     }
 
     public function update(Request $request, Product $product): JsonResponse
@@ -113,14 +113,14 @@ class ProductController extends Controller
         });
 
         $product->load(['images', 'category:id,name,slug']);
-        return response()->json(['data' => new ProductResource($product), 'message' => 'Produk diperbarui']);
+        return response()->json(['data' => new ProductResource($product), 'message' => 'Product updated']);
     }
 
     public function destroy(Request $request, Product $product): JsonResponse
     {
         $this->authorize($request, $product);
         $product->delete();
-        return response()->json(['message' => 'Produk dihapus']);
+        return response()->json(['message' => 'Product deleted']);
     }
 
     private function authorize(Request $request, Product $product): void

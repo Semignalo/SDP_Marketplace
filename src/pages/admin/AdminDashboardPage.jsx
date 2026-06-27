@@ -11,24 +11,24 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<TrendingUp size={18} />} label="Revenue Diakui" value={isLoading ? null : formatRupiah(s?.revenue || 0)} accent />
-        <StatCard icon={<ShoppingCart size={18} />} label="Total Pesanan" value={isLoading ? null : String(s?.orders_count || 0)} hint={`${s?.orders_pending || 0} menunggu bayar`} />
+        <StatCard icon={<TrendingUp size={18} />} label="Recognized Revenue" value={isLoading ? null : formatRupiah(s?.revenue || 0)} accent />
+        <StatCard icon={<ShoppingCart size={18} />} label="Total Orders" value={isLoading ? null : String(s?.orders_count || 0)} hint={`${s?.orders_pending || 0} awaiting payment`} />
         <StatCard icon={<Wallet size={18} />} label="AOV" value={isLoading ? null : formatRupiah(s?.aov || 0)} hint="Average Order Value" />
-        <StatCard icon={<Clock size={18} />} label="Menunggu Bayar" value={isLoading ? null : String(s?.orders_pending || 0)} danger={!isLoading && s?.orders_pending > 0} />
+        <StatCard icon={<Clock size={18} />} label="Awaiting Payment" value={isLoading ? null : String(s?.orders_pending || 0)} danger={!isLoading && s?.orders_pending > 0} />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Users size={18} />} label="Customer" value={isLoading ? null : String(s?.users_count || 0)} compact />
-        <StatCard icon={<Users size={18} />} label="Referrer Aktif" value={isLoading ? null : String(s?.referrers_count || 0)} compact />
-        <StatCard icon={<Store size={18} />} label="Vendor Aktif" value={isLoading ? null : String(s?.vendors_count || 0)} compact />
-        <StatCard icon={<Package size={18} />} label="Produk Aktif" value={isLoading ? null : String(s?.products_count || 0)} compact />
+        <StatCard icon={<Users size={18} />} label="Customers" value={isLoading ? null : String(s?.users_count || 0)} compact />
+        <StatCard icon={<Users size={18} />} label="Active Referrers" value={isLoading ? null : String(s?.referrers_count || 0)} compact />
+        <StatCard icon={<Store size={18} />} label="Active Vendors" value={isLoading ? null : String(s?.vendors_count || 0)} compact />
+        <StatCard icon={<Package size={18} />} label="Active Products" value={isLoading ? null : String(s?.products_count || 0)} compact />
       </div>
 
       <section className="bg-paper border border-line rounded-lg p-5 lg:p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-semibold text-ink">Revenue 30 Hari</h2>
-            <p className="text-xs text-ink-muted mt-0.5">Hanya pesanan processing/shipped/completed.</p>
+            <h2 className="text-base font-semibold text-ink">30-Day Revenue</h2>
+            <p className="text-xs text-ink-muted mt-0.5">Processing/shipped/completed orders only.</p>
           </div>
         </div>
         {chartLoading ? <Skeleton className="h-48 w-full" /> : <RevenueChart data={chart} />}
@@ -37,9 +37,9 @@ export default function AdminDashboardPage() {
       <div className="grid lg:grid-cols-2 gap-4">
         <section className="bg-paper border border-line rounded-lg">
           <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-            <h2 className="text-base font-semibold text-ink">Top Vendor</h2>
+            <h2 className="text-base font-semibold text-ink">Top Vendors</h2>
             <Link to="/admin/vendors" className="text-xs text-ink-muted hover:text-ink inline-flex items-center gap-1">
-              Semua <ArrowRight size={12} />
+              All <ArrowRight size={12} />
             </Link>
           </div>
           <RankList loading={isLoading} items={s?.top_vendors} type="vendor" />
@@ -47,9 +47,9 @@ export default function AdminDashboardPage() {
 
         <section className="bg-paper border border-line rounded-lg">
           <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-            <h2 className="text-base font-semibold text-ink">Top Produk</h2>
+            <h2 className="text-base font-semibold text-ink">Top Products</h2>
             <Link to="/admin/products" className="text-xs text-ink-muted hover:text-ink inline-flex items-center gap-1">
-              Semua <ArrowRight size={12} />
+              All <ArrowRight size={12} />
             </Link>
           </div>
           <RankList loading={isLoading} items={s?.top_products} type="product" />
@@ -95,8 +95,8 @@ function RankList({ loading, items, type }) {
       <div className="p-8">
         <EmptyState
           icon={type === 'vendor' ? <Store size={36} strokeWidth={1.2} /> : <Package size={36} strokeWidth={1.2} />}
-          title="Belum ada data"
-          description="Akan muncul setelah ada pesanan."
+          title="No data yet"
+          description="This will show up once there are orders."
         />
       </div>
     )
@@ -110,7 +110,7 @@ function RankList({ loading, items, type }) {
             <Link to={type === 'vendor' ? `/products?vendor=${item.slug}` : `/products/${item.slug}`} className="text-sm text-ink hover:underline line-clamp-1">
               {item.name}
             </Link>
-            <p className="text-xs text-ink-muted tabular-nums">{type === 'vendor' ? `${item.qty} item terjual` : `${item.qty} terjual`}</p>
+            <p className="text-xs text-ink-muted tabular-nums">{type === 'vendor' ? `${item.qty} items sold` : `${item.qty} sold`}</p>
           </div>
           <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.revenue)}</p>
         </li>
@@ -129,11 +129,11 @@ function RevenueChart({ data }) {
     <div>
       <div className="flex items-baseline gap-6 flex-wrap">
         <div>
-          <p className="eyebrow">Total 30 hari</p>
+          <p className="eyebrow">30-Day Total</p>
           <p className="text-2xl font-bold tabular-nums">{formatRupiah(total30)}</p>
         </div>
         <div>
-          <p className="eyebrow">Pesanan</p>
+          <p className="eyebrow">Orders</p>
           <p className="text-2xl font-bold tabular-nums">{orders30}</p>
         </div>
       </div>
@@ -149,7 +149,7 @@ function RevenueChart({ data }) {
               />
               <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 -translate-x-1/2 z-10 bg-ink text-white text-2xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
                 <p className="tabular-nums font-semibold">{formatRupiahShort(d.total)}</p>
-                <p className="opacity-60">{d.orders} pesanan · {d.date}</p>
+                <p className="opacity-60">{d.orders} orders · {d.date}</p>
               </div>
             </div>
           )

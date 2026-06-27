@@ -37,7 +37,7 @@ export default function VendorProfilePage() {
       const res = await api.post('/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       setForm((f) => ({ ...f, logo: res.data.url }))
     } catch (err) {
-      toast.error(`Gagal upload logo: ${extractErrorMessage(err)}`)
+      toast.error(`Failed to upload logo: ${extractErrorMessage(err)}`)
     } finally {
       setUploadingLogo(false)
     }
@@ -48,7 +48,7 @@ export default function VendorProfilePage() {
     setErrors({})
     try {
       await update.mutateAsync(form)
-      toast.success('Profil vendor diperbarui')
+      toast.success('Vendor profile updated')
     } catch (err) {
       const apiErrors = err.response?.data?.errors
       if (apiErrors) {
@@ -69,8 +69,8 @@ export default function VendorProfilePage() {
     <div className="space-y-8">
       <section className="bg-paper border border-line rounded-lg p-5 lg:p-6">
         <header className="mb-5">
-          <h2 className="text-base font-semibold text-ink">Profil Toko</h2>
-          <p className="text-sm text-ink-muted mt-1">Info ini ditampilkan ke customer di halaman vendor publik.</p>
+          <h2 className="text-base font-semibold text-ink">Shop Profile</h2>
+          <p className="text-sm text-ink-muted mt-1">This info is shown to customers on the public vendor page.</p>
         </header>
 
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-5">
@@ -80,8 +80,8 @@ export default function VendorProfilePage() {
               onClick={() => logoRef.current?.click()}
               disabled={uploadingLogo}
               className="h-20 w-20 rounded-full bg-paper-warm border-2 border-dashed border-line overflow-hidden shrink-0 flex items-center justify-center hover:border-ink-muted transition-colors group relative disabled:opacity-60"
-              title="Klik untuk ganti logo"
-              aria-label="Klik untuk ganti logo"
+              title="Click to change logo"
+              aria-label="Click to change logo"
             >
               {form.logo ? (
                 <img src={form.logo} alt="logo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.opacity = 0.2 }} />
@@ -104,47 +104,47 @@ export default function VendorProfilePage() {
             />
             <div className="flex-1">
               <Input
-                label="URL Logo"
+                label="Logo URL"
                 value={form.logo}
                 onChange={(e) => setForm({ ...form, logo: e.target.value })}
-                placeholder="https://... atau klik lingkaran untuk upload"
+                placeholder="https://... or click the circle to upload"
                 error={errors.logo}
               />
             </div>
           </div>
 
           <div className="sm:col-span-2">
-            <Input label="Nama Toko" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
+            <Input label="Shop Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
           </div>
 
-          <Input label="Email Kontak" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} error={errors.email} />
-          <Input label="Nomor HP" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} />
+          <Input label="Contact Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} error={errors.email} />
+          <Input label="Phone Number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} />
 
           <div className="sm:col-span-2">
             <Textarea
-              label="Deskripsi Toko"
+              label="Shop Description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={5}
               error={errors.description}
-              placeholder="Cerita brand, value, koleksi unggulan, dll."
+              placeholder="Brand story, values, featured collections, etc."
             />
           </div>
 
           <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
-            <Button type="submit" loading={update.isPending}>Simpan Profil</Button>
+            <Button type="submit" loading={update.isPending}>Save Profile</Button>
           </div>
         </form>
       </section>
 
       <section className="bg-paper-soft border border-line rounded-lg p-5">
-        <h3 className="eyebrow mb-3">Info Akun</h3>
+        <h3 className="eyebrow mb-3">Account Info</h3>
         <dl className="grid sm:grid-cols-2 gap-3 text-sm">
-          <Row label="Slug Vendor" value={<code className="tabular-nums">{profile?.slug}</code>} />
+          <Row label="Vendor Slug" value={<code className="tabular-nums">{profile?.slug}</code>} />
           <Row label="Status" value={profile?.status} />
         </dl>
         <p className="mt-4 text-2xs text-ink-muted">
-          Slug & commission rate hanya bisa diubah oleh admin.
+          Slug and commission rate can only be changed by an admin.
         </p>
       </section>
     </div>

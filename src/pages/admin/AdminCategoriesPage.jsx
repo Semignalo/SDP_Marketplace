@@ -51,7 +51,7 @@ export default function AdminCategoriesPage() {
         parent_id: form.parent_id ? Number(form.parent_id) : null,
         sort_order: Number(form.sort_order) || 0,
       })
-      toast.success(editing ? 'Kategori diperbarui' : 'Kategori dibuat')
+      toast.success(editing ? 'Category updated' : 'Category created')
       setModalOpen(false)
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -69,7 +69,7 @@ export default function AdminCategoriesPage() {
     if (!deleteTarget) return
     try {
       await del.mutateAsync(deleteTarget.id)
-      toast.success('Kategori dihapus')
+      toast.success('Category deleted')
     } catch (err) {
       toast.error(err.response?.data?.message || extractErrorMessage(err))
     } finally {
@@ -81,10 +81,10 @@ export default function AdminCategoriesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-base font-semibold text-ink">Kategori</h2>
-          <p className="text-sm text-ink-muted mt-1">Struktur kategori produk (max 2 level).</p>
+          <h2 className="text-base font-semibold text-ink">Categories</h2>
+          <p className="text-sm text-ink-muted mt-1">Product category structure (max 2 levels).</p>
         </div>
-        <Button leadingIcon={<Plus size={16} />} onClick={() => openCreate()}>Tambah Kategori</Button>
+        <Button leadingIcon={<Plus size={16} />} onClick={() => openCreate()}>Add Category</Button>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
@@ -93,7 +93,7 @@ export default function AdminCategoriesPage() {
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           </div>
         ) : tree.length === 0 ? (
-          <div className="p-10"><EmptyState icon={<FolderTree size={40} strokeWidth={1.2} />} title="Belum ada kategori" /></div>
+          <div className="p-10"><EmptyState icon={<FolderTree size={40} strokeWidth={1.2} />} title="No categories yet" /></div>
         ) : (
           <ul className="divide-y divide-line">
             {tree.map((cat) => (
@@ -106,24 +106,24 @@ export default function AdminCategoriesPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Edit Kategori' : 'Tambah Kategori'}
+        title={editing ? 'Edit Category' : 'Add Category'}
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
-            <Button onClick={handleSave} loading={save.isPending}>Simpan</Button>
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} loading={save.isPending}>Save</Button>
           </div>
         }
       >
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
-            <Input label="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
+            <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
           </div>
-          <Input label="Slug (opsional)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="dibuat otomatis" error={errors.slug} />
-          <Input label="Urutan" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} error={errors.sort_order} />
+          <Input label="Slug (optional)" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="auto-generated" error={errors.slug} />
+          <Input label="Sort order" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} error={errors.sort_order} />
           <div className="sm:col-span-2">
-            <Select label="Parent (opsional)" value={form.parent_id} onChange={(e) => setForm({ ...form, parent_id: e.target.value })} error={errors.parent_id}>
-              <option value="">— Tidak ada (root) —</option>
+            <Select label="Parent (optional)" value={form.parent_id} onChange={(e) => setForm({ ...form, parent_id: e.target.value })} error={errors.parent_id}>
+              <option value="">— None (root) —</option>
               {flat.filter((c) => c.id !== editing).map((c) => (
                 <option key={c.id} value={c.id}>{'— '.repeat(c.depth)}{c.name}</option>
               ))}
@@ -135,16 +135,16 @@ export default function AdminCategoriesPage() {
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Hapus kategori ini?"
+        title="Delete this category?"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Batal</Button>
-            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Ya, hapus</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Yes, delete</Button>
           </div>
         }
       >
         <p className="text-sm text-ink-soft">
-          Kategori <span className="font-semibold text-ink">{deleteTarget?.name}</span> akan dihapus. Tindakan ini tidak dapat dibatalkan.
+          Category <span className="font-semibold text-ink">{deleteTarget?.name}</span> will be deleted. This action cannot be undone.
         </p>
       </Modal>
     </div>
@@ -159,7 +159,7 @@ function CategoryNode({ node, onEdit, onDelete, onAddChild, depth = 0 }) {
           {depth > 0 && <ChevronRight size={14} className="text-ink-faint shrink-0" />}
           <p className="text-sm text-ink font-medium">{node.name}</p>
           <span className="text-2xs text-ink-muted tabular-nums">/{node.slug}</span>
-          <span className="text-2xs text-ink-muted">· {node.products_count} produk</span>
+          <span className="text-2xs text-ink-muted">· {node.products_count} products</span>
         </div>
         <div className="flex items-center gap-1">
           {depth === 0 && (
@@ -170,7 +170,7 @@ function CategoryNode({ node, onEdit, onDelete, onAddChild, depth = 0 }) {
           <button
             type="button"
             onClick={() => onEdit(node)}
-            aria-label={`Edit kategori: ${node.name}`}
+            aria-label={`Edit category: ${node.name}`}
             className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
           >
             <Pencil size={14} />
@@ -178,7 +178,7 @@ function CategoryNode({ node, onEdit, onDelete, onAddChild, depth = 0 }) {
           <button
             type="button"
             onClick={() => onDelete(node)}
-            aria-label={`Hapus kategori: ${node.name}`}
+            aria-label={`Delete category: ${node.name}`}
             className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
           >
             <Trash2 size={14} />

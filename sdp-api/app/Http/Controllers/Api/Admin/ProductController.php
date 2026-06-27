@@ -76,7 +76,7 @@ class ProductController extends Controller
             return $product->fresh(['images', 'category:id,name,slug', 'vendor:id,name,slug']);
         });
 
-        return response()->json(['data' => new ProductResource($product), 'message' => 'Produk berhasil ditambahkan'], 201);
+        return response()->json(['data' => new ProductResource($product), 'message' => 'Product added successfully'], 201);
     }
 
     public function update(Request $request, Product $product): JsonResponse
@@ -110,7 +110,7 @@ class ProductController extends Controller
         });
 
         $product->load(['images', 'category:id,name,slug', 'vendor:id,name,slug']);
-        return response()->json(['data' => new ProductResource($product), 'message' => 'Produk diperbarui']);
+        return response()->json(['data' => new ProductResource($product), 'message' => 'Product updated']);
     }
 
     public function updateStatus(Request $request, Product $product): JsonResponse
@@ -119,13 +119,13 @@ class ProductController extends Controller
             'status' => 'required|in:active,draft,archived',
         ]);
         $product->update($data);
-        return response()->json(['message' => 'Status produk diperbarui', 'data' => ['id' => $product->id, 'status' => $product->status]]);
+        return response()->json(['message' => 'Product status updated', 'data' => ['id' => $product->id, 'status' => $product->status]]);
     }
 
     public function destroy(Product $product): JsonResponse
     {
         $product->delete();
-        return response()->json(['message' => 'Produk dihapus']);
+        return response()->json(['message' => 'Product deleted']);
     }
 
     private function syncImages(Product $product, array $urls): void

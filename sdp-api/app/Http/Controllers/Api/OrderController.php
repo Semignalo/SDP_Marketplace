@@ -52,7 +52,7 @@ class OrderController extends Controller
             ->firstOrFail();
 
         if ($order->status !== 'pending_payment') {
-            return response()->json(['message' => 'Pesanan tidak dapat dibatalkan'], 422);
+            return response()->json(['message' => 'This order cannot be cancelled'], 422);
         }
 
         DB::transaction(function () use ($order) {
@@ -67,6 +67,6 @@ class OrderController extends Controller
             $order->update(['status' => 'cancelled']);
         });
 
-        return response()->json(['message' => 'Pesanan berhasil dibatalkan']);
+        return response()->json(['message' => 'Order cancelled successfully']);
     }
 }

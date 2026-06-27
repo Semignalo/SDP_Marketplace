@@ -80,7 +80,7 @@ class CommissionController extends Controller
 
         $commission->update($payload);
 
-        return response()->json(['message' => 'Status komisi diperbarui', 'data' => $this->shape($commission->fresh(['reseller:id,name,email,reseller_code', 'customer:id,name', 'order:id,order_number,status']))]);
+        return response()->json(['message' => 'Commission status updated', 'data' => $this->shape($commission->fresh(['reseller:id,name,email,reseller_code', 'customer:id,name', 'order:id,order_number,status']))]);
     }
 
     public function bulkMarkPaid(Request $request): JsonResponse

@@ -54,7 +54,7 @@ export default function AdminUsersPage() {
         vendor_id: form.role === 'vendor_admin' ? Number(form.vendor_id) || null : null,
         password: form.password || undefined,
       })
-      toast.success('User diperbarui')
+      toast.success('User updated')
       setEditing(null)
     } catch (err) {
       const apiErrors = err.response?.data?.errors
@@ -71,7 +71,7 @@ export default function AdminUsersPage() {
   const handleDelete = async () => {
     try {
       await del.mutateAsync(deleting.id)
-      toast.success('User dihapus')
+      toast.success('User deleted')
       setDeleting(null)
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -82,20 +82,20 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-base font-semibold text-ink">Users</h2>
-        <p className="text-sm text-ink-muted mt-1">Kelola semua akun: customer, vendor admin, admin.</p>
+        <p className="text-sm text-ink-muted mt-1">Manage all accounts: customers, vendor admins, admins.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Cari nama atau email..."
+            placeholder="Search name or email..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             leadingIcon={<Search size={14} />}
           />
         </div>
         <Select value={role} onChange={(e) => { setRole(e.target.value); setPage(1) }} className="md:w-48">
-          <option value="">Semua role</option>
+          <option value="">All roles</option>
           <option value="customer">Customer</option>
           <option value="vendor_admin">Vendor Admin</option>
           <option value="admin">Admin</option>
@@ -107,8 +107,8 @@ export default function AdminUsersPage() {
           <span>User</span>
           <span>Role</span>
           <span>Vendor</span>
-          <span>Daftar</span>
-          <span className="text-right">Aksi</span>
+          <span>Joined</span>
+          <span className="text-right">Actions</span>
         </div>
 
         {isLoading ? (
@@ -116,7 +116,7 @@ export default function AdminUsersPage() {
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
         ) : data?.data?.length === 0 ? (
-          <div className="p-10"><EmptyState icon={<Users size={40} strokeWidth={1.2} />} title="Tidak ada user" /></div>
+          <div className="p-10"><EmptyState icon={<Users size={40} strokeWidth={1.2} />} title="No users" /></div>
         ) : (
           <ul className="divide-y divide-line">
             {data?.data?.map((u) => {
@@ -135,8 +135,8 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       onClick={() => setNetworkUser(u)}
-                      title="Lihat jaringan"
-                      aria-label={`Lihat jaringan: ${u.name}`}
+                      title="View network"
+                      aria-label={`View network: ${u.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
                     >
                       <Network size={14} />
@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       onClick={() => setDeleting(u)}
-                      aria-label={`Hapus user: ${u.name}`}
+                      aria-label={`Delete user: ${u.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-state-danger hover:bg-paper-warm rounded"
                     >
                       <Trash2 size={14} />
@@ -176,14 +176,14 @@ export default function AdminUsersPage() {
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setEditing(null)}>Batal</Button>
-            <Button onClick={handleSave} loading={update.isPending}>Simpan</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={handleSave} loading={update.isPending}>Save</Button>
           </div>
         }
       >
         <form onSubmit={handleSave} className="grid sm:grid-cols-2 gap-4">
-          <Input label="Nama" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
-          <Input label="Nomor HP" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} />
+          <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
+          <Input label="Phone Number" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} error={errors.phone} />
 
           <Select label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} error={errors.role}>
             <option value="customer">Customer</option>
@@ -193,32 +193,32 @@ export default function AdminUsersPage() {
 
           {form.role === 'vendor_admin' && (
             <Select label="Vendor" value={form.vendor_id} onChange={(e) => setForm({ ...form, vendor_id: e.target.value })} error={errors.vendor_id}>
-              <option value="">Pilih vendor</option>
+              <option value="">Select vendor</option>
               {vendors?.data?.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
             </Select>
           )}
 
           <div className={form.role === 'vendor_admin' ? 'sm:col-span-2' : 'sm:col-span-2'}>
-            <Input label="Password Baru (opsional)" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Kosongkan jika tidak diubah" error={errors.password} />
+            <Input label="New Password (optional)" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Leave blank to keep unchanged" error={errors.password} />
           </div>
         </form>
       </Modal>
       <Modal
         open={!!networkUser}
         onClose={() => setNetworkUser(null)}
-        title={`Jaringan: ${networkUser?.name || ''}`}
+        title={`Network: ${networkUser?.name || ''}`}
         size="lg"
       >
         {networkLoading ? (
           <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
         ) : !networkData?.data?.length ? (
-          <EmptyState icon={<Users size={32} strokeWidth={1.2} />} title="Belum ada referral" description="User ini belum mengajak siapapun." />
+          <EmptyState icon={<Users size={32} strokeWidth={1.2} />} title="No referrals yet" description="This user hasn't referred anyone yet." />
         ) : (
           <>
-            <p className="text-xs text-ink-muted mb-3">{networkData.data.length} member diajak oleh {networkUser?.name}</p>
+            <p className="text-xs text-ink-muted mb-3">{networkData.data.length} member(s) referred by {networkUser?.name}</p>
             <ul className="divide-y divide-line border border-line rounded-lg overflow-hidden">
               <li className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-2 bg-paper-soft eyebrow">
-                <span>Member</span><span>Bergabung</span><span className="text-right">Order</span>
+                <span>Member</span><span>Joined</span><span className="text-right">Orders</span>
               </li>
               {networkData.data.map((u) => (
                 <li key={u.id} className="grid grid-cols-[2fr_1fr_70px] gap-3 px-4 py-3 items-center">
@@ -238,20 +238,20 @@ export default function AdminUsersPage() {
       <Modal
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title="Hapus User"
+        title="Delete User"
         size="sm"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleting(null)}>Batal</Button>
-            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Hapus</Button>
+            <Button variant="outline" onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} loading={del.isPending}>Delete</Button>
           </div>
         }
       >
         <p className="text-sm text-ink-soft">
-          Yakin ingin menghapus user <strong className="text-ink">{deleting?.name}</strong>?
+          Are you sure you want to delete user <strong className="text-ink">{deleting?.name}</strong>?
         </p>
         <p className="text-xs text-ink-muted mt-1">{deleting?.email}</p>
-        <p className="text-xs text-state-danger mt-3">Tindakan ini tidak bisa dibatalkan.</p>
+        <p className="text-xs text-state-danger mt-3">This action cannot be undone.</p>
       </Modal>
     </div>
   )

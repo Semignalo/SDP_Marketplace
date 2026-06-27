@@ -37,7 +37,7 @@ class MidtransService
     public function getSnapToken(Order $order): string
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Midtrans belum dikonfigurasi. Set MIDTRANS_SERVER_KEY dan MIDTRANS_CLIENT_KEY di .env');
+            throw new RuntimeException('Midtrans is not configured. Set MIDTRANS_SERVER_KEY and MIDTRANS_CLIENT_KEY in .env');
         }
 
         $order->loadMissing(['items', 'customer']);
@@ -54,7 +54,7 @@ class MidtransService
                 'id' => 'SHIPPING',
                 'price' => (int) round($order->shipping_cost),
                 'quantity' => 1,
-                'name' => 'Ongkir ' . ($order->shipping_courier ?? 'Kurir'),
+                'name' => 'Shipping ' . ($order->shipping_courier ?? 'Courier'),
             ];
         }
 
@@ -82,14 +82,38 @@ class MidtransService
         try {
             return Snap::getSnapToken($payload);
         } catch (\Exception $e) {
-            $msg = $e->getMessage();
-            if (str_contains($msg, 'order_id') && str_contains($msg, '400')) {
-                // Order ID sudah ada di Midtrans — cancel transaksi lama lalu retry
-                try { Transaction::cancel($order->order_number); } catch (\Exception) {}
-                return Snap::getSnapToken($payload);
+            if (! $this->isOrderIdTakenError($e->getMessage())) {
+                throw $e;
             }
-            throw $e;
+
+            // Order ID already has an open transaction at Midtrans (e.g. customer closed
+            // Snap without paying) — free it up, then retry once.
+            try {
+                Transaction::cancel($order->order_number);
+            } catch (\Exception) {
+                try {
+                    Transaction::expire($order->order_number);
+                } catch (\Exception) {
+                    // Couldn't free up the order ID — let the retry below decide the final outcome.
+                }
+            }
+
+            try {
+                return Snap::getSnapToken($payload);
+            } catch (\Exception $retryException) {
+                if ($this->isOrderIdTakenError($retryException->getMessage())) {
+                    throw new RuntimeException(
+                        "We couldn't restart this payment automatically. Please refresh the page and try again in a moment."
+                    );
+                }
+                throw $retryException;
+            }
         }
+    }
+
+    private function isOrderIdTakenError(string $message): bool
+    {
+        return str_contains($message, 'order_id') && str_contains($message, '400');
     }
 
     /**
@@ -99,7 +123,7 @@ class MidtransService
     public function checkTransactionStatus(string $orderNumber): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Midtrans belum dikonfigurasi');
+            throw new RuntimeException('Midtrans is not configured');
         }
 
         $status = Transaction::status($orderNumber);
@@ -134,7 +158,7 @@ class MidtransService
     public function resolveNotification(): array
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Midtrans belum dikonfigurasi');
+            throw new RuntimeException('Midtrans is not configured');
         }
 
         $notif = new Notification();

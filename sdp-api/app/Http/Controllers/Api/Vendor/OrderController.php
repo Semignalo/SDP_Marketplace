@@ -93,7 +93,7 @@ class OrderController extends Controller
             $this->sendOrderShippedEmail($order->fresh());
         }
 
-        return response()->json(['message' => 'Tracking diperbarui', 'data' => ['status' => $order->status, 'tracking_number' => $order->tracking_number]]);
+        return response()->json(['message' => 'Tracking info updated', 'data' => ['status' => $order->status, 'tracking_number' => $order->tracking_number]]);
     }
 
     private function shape(Order $order, int $vendorId, bool $full = false): array

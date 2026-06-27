@@ -85,7 +85,7 @@ class VendorController extends Controller
             return $vendor->loadCount(['products', 'users']);
         });
 
-        return response()->json(['message' => 'Vendor & akun admin dibuat', 'data' => $this->shape($vendor)], 201);
+        return response()->json(['message' => 'Vendor and admin account created', 'data' => $this->shape($vendor)], 201);
     }
 
     public function update(Request $request, Vendor $vendor): JsonResponse
@@ -104,13 +104,13 @@ class VendorController extends Controller
         $vendor->update($data);
         $vendor->loadCount(['products', 'users']);
 
-        return response()->json(['message' => 'Vendor diperbarui', 'data' => $this->shape($vendor)]);
+        return response()->json(['message' => 'Vendor updated', 'data' => $this->shape($vendor)]);
     }
 
     public function destroy(Vendor $vendor): JsonResponse
     {
         $vendor->delete();
-        return response()->json(['message' => 'Vendor dihapus']);
+        return response()->json(['message' => 'Vendor deleted']);
     }
 
     private function shape(Vendor $v): array

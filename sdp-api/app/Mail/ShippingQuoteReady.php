@@ -33,7 +33,7 @@ class ShippingQuoteReady extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Kuotasi Ongkir Siap — ' . $this->order->order_number . ' — SDP',
+            subject: 'Shipping Quote Ready — ' . $this->order->order_number . ' — SDP',
         );
     }
 

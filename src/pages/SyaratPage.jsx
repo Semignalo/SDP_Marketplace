@@ -3,79 +3,80 @@ import { Link } from 'react-router-dom'
 export default function SyaratPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Syarat &amp; Ketentuan</h1>
-      <p className="mt-1 eyebrow">Terakhir diperbarui: Mei 2026</p>
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Terms &amp; Conditions</h1>
+      <p className="mt-1 eyebrow">Last updated: May 2026</p>
 
       <div className="mt-8 space-y-8 text-sm text-ink-muted leading-relaxed">
-        <Section title="1. Penerimaan Syarat">
-          Dengan mengakses atau menggunakan SDP Marketplace ("platform"), kamu menyetujui
-          syarat dan ketentuan ini. Jika tidak setuju, mohon hentikan penggunaan platform.
+        <Section title="1. Acceptance of Terms">
+          By accessing or using SDP Marketplace ("the platform"), you agree to these terms
+          and conditions. If you do not agree, please discontinue use of the platform.
         </Section>
 
-        <Section title="2. Akun Pengguna">
+        <Section title="2. User Accounts">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Kamu harus berusia minimal 17 tahun atau mendapat persetujuan orang tua/wali untuk menggunakan platform.</li>
-            <li>Satu orang hanya boleh memiliki satu akun aktif.</li>
-            <li>Kamu bertanggung jawab menjaga kerahasiaan password dan semua aktivitas yang terjadi di akunmu.</li>
-            <li>Kami berhak menonaktifkan akun yang melanggar ketentuan ini tanpa pemberitahuan sebelumnya.</li>
+            <li>You must be at least 17 years old, or have parental/guardian consent, to use the platform.</li>
+            <li>Each person may only hold one active account.</li>
+            <li>You are responsible for keeping your password confidential and for all activity on your account.</li>
+            <li>We reserve the right to suspend accounts that violate these terms without prior notice.</li>
           </ul>
         </Section>
 
-        <Section title="3. Pemesanan dan Pembayaran">
+        <Section title="3. Orders and Payment">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Pesanan dianggap sah setelah pembayaran berhasil dikonfirmasi oleh sistem.</li>
-            <li>Harga produk dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya.</li>
-            <li>Pembayaran diproses oleh Midtrans. Kami tidak menyimpan data pembayaranmu.</li>
-            <li>Pesanan yang sudah dibayar tidak dapat dibatalkan kecuali terdapat kerusakan atau ketidaksesuaian produk.</li>
+            <li>An order is considered valid once payment is successfully confirmed by the system.</li>
+            <li>Product prices may change at any time without prior notice.</li>
+            <li>Payments are processed by Midtrans. We do not store your payment data.</li>
+            <li>Paid orders cannot be cancelled except in cases of product damage or discrepancy.</li>
           </ul>
         </Section>
 
-        <Section title="4. Pengiriman">
+        <Section title="4. Shipping">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Estimasi waktu pengiriman bergantung pada kurir yang dipilih dan kondisi logistik.</li>
-            <li>Risiko kehilangan atau kerusakan selama pengiriman menjadi tanggung jawab kurir.</li>
-            <li>Pastikan alamat pengiriman yang kamu masukkan akurat. Kami tidak bertanggung jawab atas keterlambatan akibat kesalahan alamat.</li>
+            <li>Estimated delivery time depends on the courier chosen and logistics conditions.</li>
+            <li>Risk of loss or damage during transit is the courier's responsibility.</li>
+            <li>Please ensure your shipping address is accurate. We are not responsible for delays caused by incorrect addresses.</li>
           </ul>
         </Section>
 
-        <Section title="5. Program Referral dan Komisi">
+        <Section title="5. Referral Program and Commissions">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Setiap pengguna mendapat kode referral unik yang dapat dibagikan.</li>
-            <li>Komisi dihitung berdasarkan persentase yang berlaku saat pesanan dibuat.</li>
-            <li>Komisi hanya dapat dicairkan setelah pesanan terkait berstatus "Selesai".</li>
-            <li>Kami berhak membekukan atau membatalkan komisi yang diperoleh melalui cara tidak sah atau penyalahgunaan sistem.</li>
-            <li>Pencairan komisi diproses dalam 1–3 hari kerja setelah disetujui admin.</li>
+            <li>Every user receives a unique referral code that can be shared.</li>
+            <li>Commissions are calculated based on the rate in effect when the order was placed.</li>
+            <li>Commissions can only be withdrawn once the related order reaches "Completed" status.</li>
+            <li>We reserve the right to freeze or cancel commissions obtained through fraudulent means or system abuse.</li>
+            <li>Commission withdrawals are processed within 1–3 business days after admin approval.</li>
           </ul>
         </Section>
 
-        <Section title="6. Konten dan Produk">
+        <Section title="6. Content and Products">
           <ul className="list-disc list-outside pl-5 space-y-1.5">
-            <li>Deskripsi, foto, dan spesifikasi produk merupakan tanggung jawab vendor masing-masing.</li>
-            <li>Kami berusaha memastikan akurasi informasi, namun tidak menjamin ketiadaan kesalahan.</li>
-            <li>Produk yang melanggar hukum, berbahaya, atau menyesatkan tidak diperkenankan di platform.</li>
+            <li>Product descriptions, photos, and specifications are each vendor's own responsibility.</li>
+            <li>We strive to ensure accurate information but do not guarantee it is free of errors.</li>
+            <li>Products that are illegal, dangerous, or misleading are not permitted on the platform.</li>
           </ul>
         </Section>
 
-        <Section title="7. Batasan Tanggung Jawab">
-          Platform tidak bertanggung jawab atas kerugian tidak langsung, kehilangan keuntungan,
-          atau kerusakan data yang timbul dari penggunaan layanan ini. Tanggung jawab maksimal kami
-          terbatas pada nilai transaksi yang bersangkutan.
+        <Section title="7. Limitation of Liability">
+          The platform is not liable for indirect losses, lost profits, or data loss arising
+          from the use of this service. Our maximum liability is limited to the value of the
+          relevant transaction.
         </Section>
 
-        <Section title="8. Hukum yang Berlaku">
-          Syarat & Ketentuan ini tunduk pada hukum Republik Indonesia. Segala sengketa
-          diselesaikan melalui musyawarah mufakat, dan apabila tidak tercapai, melalui
-          Pengadilan Negeri yang berwenang.
+        <Section title="8. Governing Law">
+          These Terms & Conditions are governed by the laws of the Republic of Indonesia. Any
+          disputes will be resolved through amicable consultation, and if unresolved, through
+          the competent District Court.
         </Section>
 
-        <Section title="9. Perubahan Ketentuan">
-          Kami berhak mengubah syarat ini kapan saja. Perubahan berlaku sejak dipublikasikan
-          di platform. Penggunaan platform setelah perubahan dianggap sebagai persetujuan.
+        <Section title="9. Changes to Terms">
+          We reserve the right to change these terms at any time. Changes take effect once
+          published on the platform. Continued use of the platform after changes constitutes
+          acceptance.
         </Section>
 
-        <Section title="10. Kontak">
-          Pertanyaan terkait syarat & ketentuan dapat dikirimkan melalui{' '}
-          <Link to="/kontak" className="text-ink underline">halaman Kontak kami</Link>.
+        <Section title="10. Contact">
+          Questions about these terms & conditions can be sent via our{' '}
+          <Link to="/kontak" className="text-ink underline">Contact page</Link>.
         </Section>
       </div>
     </div>

@@ -100,7 +100,7 @@ class GuestCheckoutController extends Controller
         $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
 
         if (! $isInternational && empty($data['courier_name'])) {
-            throw ValidationException::withMessages(['courier_name' => 'Kurir wajib dipilih']);
+            throw ValidationException::withMessages(['courier_name' => 'Please select a courier']);
         }
 
         // Resolve referral code → reseller (opsional). Kalau diisi tapi invalid → error.
@@ -110,7 +110,7 @@ class GuestCheckoutController extends Controller
             $referrer = User::where('reseller_code', $referralCode)->first();
             if (! $referrer) {
                 throw ValidationException::withMessages([
-                    'referral_code' => 'Kode referral tidak ditemukan',
+                    'referral_code' => 'Referral code not found',
                 ]);
             }
         }
@@ -131,13 +131,13 @@ class GuestCheckoutController extends Controller
             foreach ($data['items'] as $line) {
                 $product = $products->get($line['product_id']);
                 if (! $product) {
-                    throw ValidationException::withMessages(['items' => 'Produk tidak ditemukan']);
+                    throw ValidationException::withMessages(['items' => 'Product not found']);
                 }
                 if ($product->status !== 'active') {
-                    throw ValidationException::withMessages(['items' => "Produk {$product->name} tidak tersedia"]);
+                    throw ValidationException::withMessages(['items' => "{$product->name} is not available"]);
                 }
                 if ($product->stock < $line['quantity']) {
-                    throw ValidationException::withMessages(['items' => "Stok {$product->name} hanya tersisa {$product->stock}"]);
+                    throw ValidationException::withMessages(['items' => "Only {$product->stock} left in stock for {$product->name}"]);
                 }
 
                 $unitPrice = (float) $product->price;
@@ -239,7 +239,7 @@ class GuestCheckoutController extends Controller
         return response()->json([
             'data'        => new OrderResource($order),
             'guest_token' => $order->guest_token,
-            'message'     => 'Pesanan berhasil dibuat',
+            'message'     => 'Order placed successfully',
         ], 201);
     }
 
@@ -251,12 +251,12 @@ class GuestCheckoutController extends Controller
         $order = $this->resolveGuestOrder($orderNumber, $request);
 
         if ($order->status !== 'pending_payment') {
-            return response()->json(['message' => 'Pesanan tidak menunggu pembayaran'], 422);
+            return response()->json(['message' => 'This order is not awaiting payment'], 422);
         }
 
         if (! $midtrans->isConfigured()) {
             return response()->json([
-                'message'    => 'Midtrans belum dikonfigurasi. Hubungi admin untuk setup payment gateway.',
+                'message'    => 'Midtrans is not configured yet. Contact the admin to set up the payment gateway.',
                 'configured' => false,
             ], 503);
         }
@@ -274,7 +274,7 @@ class GuestCheckoutController extends Controller
             return response()->json(['message' => $e->getMessage()], 503);
         } catch (Throwable $e) {
             Log::error('Guest snap token failed', ['order' => $orderNumber, 'error' => $e->getMessage()]);
-            return response()->json(['message' => 'Gagal generate token pembayaran: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to generate payment token: ' . $e->getMessage()], 500);
         }
     }
 
@@ -346,7 +346,7 @@ class GuestCheckoutController extends Controller
         }
 
         return response()->json([
-            'message' => 'Jika nomor pesanan dan email cocok, link lacak sudah dikirim ulang ke emailmu.',
+            'message' => 'If the order number and email match, a tracking link has been resent to your email.',
         ]);
     }
 
@@ -373,7 +373,7 @@ class GuestCheckoutController extends Controller
             ->firstOrFail();
 
         if (! $token || ! hash_equals((string) $order->guest_token, $token)) {
-            abort(403, 'Token tidak valid');
+            abort(403, 'Invalid token');
         }
 
         return $order;

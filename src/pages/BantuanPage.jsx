@@ -4,44 +4,44 @@ import { Link } from 'react-router-dom'
 
 const FAQS = [
   {
-    q: 'Bagaimana cara melakukan pemesanan?',
-    a: 'Pilih produk yang kamu inginkan, tambahkan ke keranjang, lalu klik "Checkout". Isi alamat pengiriman, pilih kurir, dan selesaikan pembayaran melalui Midtrans.',
+    q: 'How do I place an order?',
+    a: 'Pick the product you want, add it to your cart, then click "Checkout". Fill in your shipping address, choose a courier, and complete payment via Midtrans.',
   },
   {
-    q: 'Metode pembayaran apa saja yang tersedia?',
-    a: 'Kami mendukung berbagai metode melalui Midtrans: transfer bank virtual account (BCA, BNI, BRI, Mandiri), QRIS, GoPay, OVO, dan kartu kredit/debit.',
+    q: 'What payment methods are available?',
+    a: 'We support several methods via Midtrans: bank transfer / virtual account (BCA, BNI, BRI, Mandiri), QRIS, GoPay, OVO, and credit/debit cards.',
   },
   {
-    q: 'Berapa lama proses pengiriman?',
-    a: 'Tergantung kurir yang dipilih. JNE REG 2–3 hari, JNE YES 1 hari, J&T EZ 2–3 hari, SiCepat REG 2–3 hari. Estimasi belum termasuk hari libur nasional.',
+    q: 'How long does shipping take?',
+    a: 'It depends on the courier you choose. JNE REG 2–3 days, JNE YES 1 day, J&T EZ 2–3 days, SiCepat REG 2–3 days. Estimates don\'t include national holidays.',
   },
   {
-    q: 'Apakah ada gratis ongkir?',
-    a: 'Ya! Gratis ongkir untuk setiap pesanan dengan subtotal minimal Rp 150.000 (sebelum ongkir). Nilai ini dapat berubah sewaktu-waktu sesuai kebijakan marketplace.',
+    q: 'Is free shipping available?',
+    a: 'Yes! Free shipping applies to any order with a subtotal of at least Rp 150,000 (before shipping). This threshold may change at any time per marketplace policy.',
   },
   {
-    q: 'Bagaimana cara membatalkan pesanan?',
-    a: 'Pesanan hanya bisa dibatalkan selama status masih "Menunggu Pembayaran". Buka halaman detail pesanan di Akun → Pesanan Saya, lalu klik "Batalkan Pesanan". Setelah dibayar, pesanan tidak dapat dibatalkan.',
+    q: 'How do I cancel an order?',
+    a: 'Orders can only be cancelled while the status is still "Awaiting Payment". Open the order detail page under Account → My Orders, then click "Cancel Order". Once paid, an order can no longer be cancelled.',
   },
   {
-    q: 'Apa itu program referral?',
-    a: 'Setiap akun mendapat kode referral unik. Bagikan link referralmu ke orang lain. Setiap kali mereka berbelanja, kamu mendapat komisi sesuai persentase yang berlaku. Komisi bisa ditarik ke rekening bank setelah pesanan selesai.',
+    q: 'What is the referral program?',
+    a: "Every account gets a unique referral code. Share your referral link with others. Whenever they shop, you earn a commission based on the current rate. Commissions can be withdrawn to your bank account once the order is completed.",
   },
   {
-    q: 'Bagaimana cara menarik komisi?',
-    a: 'Masuk ke Akun → Komisi & Referral, lalu klik "Tarik Komisi". Isi jumlah dan data rekening bank kamu. Admin akan memproses dalam 1–3 hari kerja.',
+    q: 'How do I withdraw my commission?',
+    a: 'Go to Account → Commission & Referrals, then click "Withdraw Commission". Fill in the amount and your bank details. The admin will process it within 1–3 business days.',
   },
   {
-    q: 'Apa itu Tier Loyalty?',
-    a: 'Semakin banyak kamu berbelanja, semakin tinggi tier-mu dan semakin besar diskon yang kamu dapatkan. Tier dihitung dari total belanja pesanan yang sudah selesai (status Completed).',
+    q: 'What is Tier Loyalty?',
+    a: 'The more you shop, the higher your tier and the bigger the discount you get. Tiers are calculated from your total spending on completed orders.',
   },
   {
-    q: 'Produk saya tidak sesuai/rusak, bagaimana?',
-    a: 'Hubungi kami via WhatsApp atau email CS dalam 2×24 jam setelah barang diterima. Sertakan foto produk dan nomor pesanan. Kami akan menindaklanjuti bersama vendor terkait.',
+    q: 'My product is wrong or damaged, what do I do?',
+    a: 'Contact us via WhatsApp or customer service email within 48 hours of receiving the item. Include photos of the product and your order number. We\'ll follow up with the relevant vendor.',
   },
   {
-    q: 'Bagaimana cara mendaftarkan toko/brand saya?',
-    a: 'SDP menggunakan model invite-only untuk vendor. Hubungi tim kami via halaman Kontak untuk informasi lebih lanjut mengenai partnership.',
+    q: 'How do I register my shop/brand?',
+    a: 'SDP uses an invite-only model for vendors. Contact our team via the Contact page for more information about partnerships.',
   },
 ]
 
@@ -49,8 +49,8 @@ export default function BantuanPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Pusat Bantuan</h1>
-        <p className="mt-2 text-sm text-ink-muted">Pertanyaan yang sering ditanyakan.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Help Center</h1>
+        <p className="mt-2 text-sm text-ink-muted">Frequently asked questions.</p>
       </div>
 
       <div className="space-y-2">
@@ -60,9 +60,9 @@ export default function BantuanPage() {
       </div>
 
       <div className="rounded-xl border border-line bg-paper-warm p-6 text-sm text-ink-muted">
-        Tidak menemukan jawaban yang kamu cari?{' '}
+        Can't find the answer you're looking for?{' '}
         <Link to="/kontak" className="text-ink font-medium underline hover:no-underline">
-          Hubungi kami langsung
+          Contact us directly
         </Link>
         .
       </div>

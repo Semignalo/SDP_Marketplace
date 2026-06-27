@@ -9,8 +9,8 @@ export default function VendorsPage() {
   return (
     <div className="container-page py-10 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Semua Brand</h1>
-        <p className="mt-1 text-sm text-ink-muted">Temukan brand favoritmu dan jelajahi koleksi mereka.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">All Brands</h1>
+        <p className="mt-1 text-sm text-ink-muted">Discover your favorite brands and explore their collections.</p>
       </div>
 
       {isLoading ? (
@@ -20,7 +20,7 @@ export default function VendorsPage() {
           ))}
         </div>
       ) : !vendors?.length ? (
-        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="Belum ada brand" />
+        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="No brands yet" />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
           {vendors.map((vendor) => (
@@ -38,7 +38,7 @@ export default function VendorsPage() {
               <div>
                 <p className="text-sm font-semibold text-ink group-hover:underline leading-tight">{vendor.name}</p>
                 <p className="eyebrow mt-0.5">
-                  {vendor.products_count ?? 0} produk
+                  {vendor.products_count ?? 0} products
                 </p>
               </div>
             </Link>

@@ -33,7 +33,7 @@ export default function VendorPage() {
   if (!vendor) {
     return (
       <div className="max-w-screen-xl mx-auto px-4 py-20">
-        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="Toko tidak ditemukan" />
+        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="Shop not found" />
       </div>
     )
   }
@@ -54,14 +54,14 @@ export default function VendorPage() {
             <p className="text-sm text-ink-muted mt-1 max-w-xl">{vendor.description}</p>
           )}
           <p className="eyebrow mt-2">
-            {vendor.products_count} produk aktif
+            {vendor.products_count} active products
           </p>
         </div>
       </div>
 
       {/* Grid produk */}
       {products?.data?.length === 0 ? (
-        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="Belum ada produk" />
+        <EmptyState icon={<Store size={40} strokeWidth={1.2} />} title="No products yet" />
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">

@@ -35,7 +35,7 @@ class OrderShipped extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Pesanan Dikirim — ' . $this->order->order_number . ' — SDP',
+            subject: 'Order Shipped — ' . $this->order->order_number . ' — SDP',
         );
     }
 

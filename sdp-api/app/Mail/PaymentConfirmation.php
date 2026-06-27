@@ -35,7 +35,7 @@ class PaymentConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Pembayaran Dikonfirmasi — ' . $this->order->order_number . ' — SDP',
+            subject: 'Payment Confirmed — ' . $this->order->order_number . ' — SDP',
         );
     }
 

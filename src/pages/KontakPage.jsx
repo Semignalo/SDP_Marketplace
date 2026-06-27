@@ -13,9 +13,9 @@ export default function KontakPage() {
   return (
     <div className="container-page py-12 max-w-2xl mx-auto space-y-10">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Kontak Kami</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Contact Us</h1>
         <p className="mt-2 text-sm text-ink-muted leading-relaxed">
-          Ada pertanyaan, kendala pesanan, atau ingin bekerja sama? Tim kami siap membantu.
+          Have a question, an order issue, or want to partner with us? Our team is here to help.
         </p>
       </div>
 
@@ -27,7 +27,7 @@ export default function KontakPage() {
             description={`+${waNumber}`}
             action={
               <a href={waLink} target="_blank" rel="noopener noreferrer">
-                <Button size="sm">Chat Sekarang</Button>
+                <Button size="sm">Chat Now</Button>
               </a>
             }
           />
@@ -40,7 +40,7 @@ export default function KontakPage() {
             description={emailCs}
             action={
               <a href={`mailto:${emailCs}`}>
-                <Button variant="outline" size="sm">Kirim Email</Button>
+                <Button variant="outline" size="sm">Send Email</Button>
               </a>
             }
           />
@@ -48,14 +48,14 @@ export default function KontakPage() {
 
         <ContactCard
           icon={<Clock size={20} />}
-          title="Jam Operasional"
-          description="Senin – Sabtu, pukul 09.00 – 17.00 WIB"
+          title="Business Hours"
+          description="Monday – Saturday, 9:00 AM – 5:00 PM (WIB)"
         />
       </div>
 
       <p className="text-xs text-ink-muted border-t border-line pt-6">
-        Untuk pertanyaan umum tentang produk, pengiriman, atau pembayaran — silakan baca
-        {' '}<Link to="/bantuan" className="underline hover:text-ink">Pusat Bantuan</Link> kami terlebih dahulu.
+        For general questions about products, shipping, or payment — please check our
+        {' '}<Link to="/bantuan" className="underline hover:text-ink">Help Center</Link> first.
       </p>
     </div>
   )

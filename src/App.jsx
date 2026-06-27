@@ -114,7 +114,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
-      <a href="#main-content" className="skip-link">Lewati ke konten utama</a>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <ScrollToTop />
       <ReferralCapture />
       <Navbar />
@@ -232,7 +232,7 @@ function ScrollToTop() {
 
 function RouteFallback() {
   return (
-    <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-label="Memuat halaman">
+    <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-label="Loading page">
       <Spinner size={24} />
     </div>
   )

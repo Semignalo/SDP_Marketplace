@@ -13,26 +13,26 @@ export default function VendorDashboardPage() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<TrendingUp size={18} />}
-          label="Revenue Diakui"
+          label="Recognized Revenue"
           value={isLoading ? null : formatRupiah(summary?.revenue || 0)}
-          hint="Hanya pesanan processing/shipped/completed"
+          hint="Processing/shipped/completed orders only"
           accent
         />
         <StatCard
           icon={<ShoppingCart size={18} />}
-          label="Total Pesanan"
+          label="Total Orders"
           value={isLoading ? null : String(summary?.orders_count || 0)}
         />
         <StatCard
           icon={<Package size={18} />}
-          label="Produk Aktif"
+          label="Active Products"
           value={isLoading ? null : `${summary?.products_active || 0}/${summary?.products_count || 0}`}
         />
         <StatCard
           icon={<AlertTriangle size={18} />}
-          label="Stok Menipis"
+          label="Low Stock"
           value={isLoading ? null : String(summary?.products_low_stock || 0)}
-          hint="Stok < 5"
+          hint="Stock < 5"
           danger={!isLoading && summary?.products_low_stock > 0}
         />
       </div>
@@ -40,8 +40,8 @@ export default function VendorDashboardPage() {
       <section className="bg-paper border border-line rounded-lg p-5 lg:p-6">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-base font-semibold text-ink">Revenue 30 hari terakhir</h2>
-            <p className="text-xs text-ink-muted mt-0.5">Diakui saat status berubah ke processing.</p>
+            <h2 className="text-base font-semibold text-ink">Last 30 Days Revenue</h2>
+            <p className="text-xs text-ink-muted mt-0.5">Recognized once status changes to processing.</p>
           </div>
         </div>
         {chartLoading ? (
@@ -53,9 +53,9 @@ export default function VendorDashboardPage() {
 
       <section className="bg-paper border border-line rounded-lg">
         <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-          <h2 className="text-base font-semibold text-ink">Top Produk</h2>
+          <h2 className="text-base font-semibold text-ink">Top Products</h2>
           <Link to="/vendor/produk" className="text-xs text-ink-muted hover:text-ink inline-flex items-center gap-1">
-            Semua produk <ArrowRight size={12} />
+            All products <ArrowRight size={12} />
           </Link>
         </div>
         {isLoading ? (
@@ -66,8 +66,8 @@ export default function VendorDashboardPage() {
           <div className="p-8">
             <EmptyState
               icon={<Package size={36} strokeWidth={1.2} />}
-              title="Belum ada penjualan"
-              description="Top produk akan muncul setelah ada pesanan yang diproses."
+              title="No sales yet"
+              description="Your top products will show up once orders are processed."
             />
           </div>
         ) : (
@@ -77,7 +77,7 @@ export default function VendorDashboardPage() {
                 <span className="w-6 text-center text-sm font-bold text-ink-muted tabular-nums">{idx + 1}</span>
                 <div className="flex-1 min-w-0">
                   <Link to={`/products/${p.slug}`} className="text-sm text-ink hover:underline line-clamp-1">{p.name}</Link>
-                  <p className="text-xs text-ink-muted tabular-nums">{p.qty_sold} terjual</p>
+                  <p className="text-xs text-ink-muted tabular-nums">{p.qty_sold} sold</p>
                 </div>
                 <p className="text-sm font-semibold tabular-nums">{formatRupiah(p.revenue)}</p>
               </li>
@@ -118,7 +118,7 @@ function RevenueChart({ data }) {
 
   return (
     <div>
-      <p className="eyebrow">Total 30 hari</p>
+      <p className="eyebrow">30-Day Total</p>
       <p className="text-2xl font-bold tabular-nums">{formatRupiah(total30)}</p>
 
       <div className="mt-6 flex items-end gap-[3px] h-40">

@@ -17,9 +17,9 @@ export default function VerifyEmailPage() {
     try {
       await api.post('/auth/email/resend', { email })
       setSent(true)
-      toast.success('Email verifikasi dikirim ulang!')
+      toast.success('Verification email resent!')
     } catch (err) {
-      const msg = err.response?.data?.message || 'Gagal mengirim ulang email.'
+      const msg = err.response?.data?.message || "Couldn't resend the email."
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -32,19 +32,19 @@ export default function VerifyEmailPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-ink/5 mb-6">
           <Mail size={28} className="text-ink" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Cek email kamu</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Check your email</h1>
         <p className="text-sm text-ink-muted mt-3 leading-relaxed">
-          Kami mengirim link verifikasi ke{' '}
-          <strong className="text-ink">{email || 'email kamu'}</strong>.
-          Klik link tersebut untuk mengaktifkan akun.
+          We sent a verification link to{' '}
+          <strong className="text-ink">{email || 'your email'}</strong>.
+          Click the link to activate your account.
         </p>
 
         <div className="mt-8 bg-paper border border-line rounded-lg p-6 space-y-4 text-left">
-          <p className="text-xs text-ink-muted">Tidak dapat email?</p>
+          <p className="text-xs text-ink-muted">Didn't get the email?</p>
           <ul className="text-xs text-ink-soft space-y-1.5 list-disc list-inside">
-            <li>Cek folder spam atau promosi</li>
-            <li>Pastikan alamat email sudah benar</li>
-            <li>Tunggu beberapa menit</li>
+            <li>Check your spam or promotions folder</li>
+            <li>Make sure the email address is correct</li>
+            <li>Wait a few minutes</li>
           </ul>
           {!sent ? (
             <Button
@@ -55,19 +55,19 @@ export default function VerifyEmailPage() {
               disabled={!email}
               leadingIcon={<RefreshCw size={14} />}
             >
-              Kirim ulang email verifikasi
+              Resend verification email
             </Button>
           ) : (
             <p className="text-xs text-state-success font-medium text-center">
-              ✓ Email dikirim ulang! Cek inbox kamu.
+              ✓ Email resent! Check your inbox.
             </p>
           )}
         </div>
 
         <p className="mt-6 text-xs text-ink-muted">
-          Sudah verifikasi?{' '}
+          Already verified?{' '}
           <Link to="/login" className="text-ink font-semibold underline underline-offset-4">
-            Masuk sekarang
+            Sign in now
           </Link>
         </p>
       </div>

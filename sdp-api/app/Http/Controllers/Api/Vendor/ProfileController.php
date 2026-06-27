@@ -41,6 +41,6 @@ class ProfileController extends Controller
         $vendor = Vendor::findOrFail($request->user()->vendor_id);
         $vendor->update($data);
 
-        return response()->json(['message' => 'Profil vendor diperbarui', 'data' => $vendor->only(['id', 'name', 'slug', 'logo', 'description', 'email', 'phone'])]);
+        return response()->json(['message' => 'Vendor profile updated', 'data' => $vendor->only(['id', 'name', 'slug', 'logo', 'description', 'email', 'phone'])]);
     }
 }

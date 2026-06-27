@@ -65,13 +65,13 @@ class ReviewController extends Controller
 
         if (! $order) {
             throw ValidationException::withMessages([
-                'order_id' => 'Pesanan tidak ditemukan atau belum bisa direview.',
+                'order_id' => 'Order not found or not yet eligible for review.',
             ]);
         }
 
         if ($order->reviews()->where('product_id', $data['product_id'])->exists()) {
             throw ValidationException::withMessages([
-                'order_id' => 'Produk ini sudah kamu review untuk pesanan tersebut.',
+                'order_id' => 'You already reviewed this product for that order.',
             ]);
         }
 
@@ -87,7 +87,7 @@ class ReviewController extends Controller
 
         return response()->json([
             'data' => new ReviewResource($review),
-            'message' => 'Ulasan berhasil dikirim',
+            'message' => 'Review submitted successfully',
         ], 201);
     }
 }

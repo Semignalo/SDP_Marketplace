@@ -23,10 +23,10 @@ class WithdrawalStatusUpdated extends Mailable
 
     public function envelope(): Envelope
     {
-        $label = $this->withdrawal->status === 'approved' ? 'Disetujui' : 'Ditolak';
+        $label = $this->withdrawal->status === 'approved' ? 'Approved' : 'Rejected';
 
         return new Envelope(
-            subject: 'Penarikan Komisi ' . $label . ' — SDP',
+            subject: 'Commission Withdrawal ' . $label . ' — SDP',
         );
     }
 

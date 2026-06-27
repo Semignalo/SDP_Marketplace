@@ -6,7 +6,7 @@ let loadPromise = null
  */
 export function loadSnap({ clientKey, isProduction = false }) {
   if (!clientKey) {
-    return Promise.reject(new Error('Midtrans client_key kosong'))
+    return Promise.reject(new Error('Midtrans client_key is missing'))
   }
 
   if (typeof window !== 'undefined' && window.snap) {
@@ -26,9 +26,9 @@ export function loadSnap({ clientKey, isProduction = false }) {
     script.setAttribute('data-client-key', clientKey)
     script.onload = () => {
       if (window.snap) resolve(window.snap)
-      else reject(new Error('Snap.js loaded tapi window.snap tidak tersedia'))
+      else reject(new Error('Snap.js loaded but window.snap is unavailable'))
     }
-    script.onerror = () => reject(new Error('Gagal load Snap.js dari Midtrans'))
+    script.onerror = () => reject(new Error('Failed to load Snap.js from Midtrans'))
     document.head.appendChild(script)
   })
 

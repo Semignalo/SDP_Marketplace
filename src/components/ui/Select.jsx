@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 export const Select = forwardRef(function Select(
-  { label, error, hint, options = [], placeholder = '— Pilih —', className = '', id, children, ...rest },
+  { label, error, hint, options = [], placeholder = '— Select —', className = '', id, children, ...rest },
   ref,
 ) {
   const selectId = id || `select-${Math.random().toString(36).slice(2, 9)}`

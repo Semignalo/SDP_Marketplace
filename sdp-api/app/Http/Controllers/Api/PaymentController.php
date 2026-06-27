@@ -24,12 +24,12 @@ class PaymentController extends Controller
             ->firstOrFail();
 
         if ($order->status !== 'pending_payment') {
-            return response()->json(['message' => 'Pesanan tidak menunggu pembayaran'], 422);
+            return response()->json(['message' => 'This order is not awaiting payment'], 422);
         }
 
         if (! $midtrans->isConfigured()) {
             return response()->json([
-                'message' => 'Midtrans belum dikonfigurasi. Hubungi admin untuk setup payment gateway.',
+                'message' => 'Midtrans is not configured yet. Contact the admin to set up the payment gateway.',
                 'configured' => false,
             ], 503);
         }
@@ -47,7 +47,7 @@ class PaymentController extends Controller
             return response()->json(['message' => $e->getMessage()], 503);
         } catch (Throwable $e) {
             Log::error('Midtrans snap token failed', ['order' => $orderNumber, 'error' => $e->getMessage()]);
-            return response()->json(['message' => 'Gagal generate token pembayaran: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to generate payment token: ' . $e->getMessage()], 500);
         }
     }
 
@@ -58,7 +58,7 @@ class PaymentController extends Controller
             ->firstOrFail();
 
         if ($order->status !== 'pending_payment') {
-            return response()->json(['message' => 'Pesanan tidak menunggu pembayaran'], 422);
+            return response()->json(['message' => 'This order is not awaiting payment'], 422);
         }
 
         $order->update([
@@ -66,7 +66,7 @@ class PaymentController extends Controller
             'payment_verified_at' => now(),
         ]);
 
-        return response()->json(['message' => 'Pembayaran dikonfirmasi', 'data' => ['status' => 'processing']]);
+        return response()->json(['message' => 'Payment confirmed', 'data' => ['status' => 'processing']]);
     }
 
     public function checkStatus(Request $request, string $orderNumber, MidtransService $midtrans): JsonResponse

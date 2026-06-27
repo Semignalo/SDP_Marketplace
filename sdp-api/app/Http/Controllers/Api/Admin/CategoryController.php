@@ -38,7 +38,7 @@ class CategoryController extends Controller
             'sort_order' => $data['sort_order'] ?? 0,
         ]);
 
-        return response()->json(['message' => 'Kategori dibuat', 'data' => $this->shape($category->loadCount('products'))], 201);
+        return response()->json(['message' => 'Category created', 'data' => $this->shape($category->loadCount('products'))], 201);
     }
 
     public function update(Request $request, Category $category): JsonResponse
@@ -55,16 +55,16 @@ class CategoryController extends Controller
         }
 
         $category->update($data);
-        return response()->json(['message' => 'Kategori diperbarui', 'data' => $this->shape($category->loadCount('products'))]);
+        return response()->json(['message' => 'Category updated', 'data' => $this->shape($category->loadCount('products'))]);
     }
 
     public function destroy(Category $category): JsonResponse
     {
         if ($category->children()->exists()) {
-            return response()->json(['message' => 'Hapus subkategori dulu sebelum hapus parent'], 422);
+            return response()->json(['message' => 'Delete the subcategories first before deleting the parent'], 422);
         }
         $category->delete();
-        return response()->json(['message' => 'Kategori dihapus']);
+        return response()->json(['message' => 'Category deleted']);
     }
 
     private function shape(Category $c): array

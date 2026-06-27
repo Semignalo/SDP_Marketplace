@@ -30,7 +30,7 @@ class PasswordResetController extends Controller
 
         Mail::to($user->email)->send(new PasswordResetRequested($user, $token));
 
-        return response()->json(['message' => 'Link reset password telah dikirim ke email kamu.']);
+        return response()->json(['message' => 'A password reset link has been sent to your email.']);
     }
 
     public function reset(Request $request): JsonResponse
@@ -44,11 +44,11 @@ class PasswordResetController extends Controller
         $row = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
 
         if (! $row || ! Hash::check($data['token'], $row->token)) {
-            return response()->json(['message' => 'Link reset password tidak valid.'], 422);
+            return response()->json(['message' => 'This password reset link is invalid.'], 422);
         }
 
         if (now()->subMinutes(60)->greaterThan($row->created_at)) {
-            return response()->json(['message' => 'Link reset password sudah kedaluwarsa, minta yang baru.'], 422);
+            return response()->json(['message' => 'This password reset link has expired. Please request a new one.'], 422);
         }
 
         $user = User::where('email', $data['email'])->first();
@@ -56,6 +56,6 @@ class PasswordResetController extends Controller
 
         DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
 
-        return response()->json(['message' => 'Password berhasil diubah, silakan masuk.']);
+        return response()->json(['message' => 'Password changed successfully. Please sign in.']);
     }
 }

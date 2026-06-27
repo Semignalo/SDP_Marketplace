@@ -10,11 +10,12 @@ import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
 
 const STATUS_META = {
-  pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
-  processing: { label: 'Dibayar — Diproses', variant: 'success', icon: CheckCircle2 },
-  shipped: { label: 'Dikirim', variant: 'info', icon: Package },
-  completed: { label: 'Selesai', variant: 'success', icon: CheckCircle2 },
-  cancelled: { label: 'Dibatalkan', variant: 'danger', icon: AlertTriangle },
+  awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning', icon: Clock },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning', icon: Clock },
+  processing: { label: 'Paid — Processing', variant: 'success', icon: CheckCircle2 },
+  shipped: { label: 'Shipped', variant: 'info', icon: Package },
+  completed: { label: 'Completed', variant: 'success', icon: CheckCircle2 },
+  cancelled: { label: 'Cancelled', variant: 'danger', icon: AlertTriangle },
 }
 
 export default function GuestTrackPage() {
@@ -28,6 +29,7 @@ export default function GuestTrackPage() {
   const formatPrice = useFormatPrice()
 
   const isPending = order?.status === 'pending_payment'
+  const isAwaitingQuote = order?.status === 'awaiting_quote'
 
   const checkAndRefresh = async () => {
     try {
@@ -52,9 +54,9 @@ export default function GuestTrackPage() {
       const { token: snapToken, client_key, is_production } = await snapMut.mutateAsync({ orderNumber, token })
       const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
       snap.pay(snapToken, {
-        onSuccess: () => { toast.success('Pembayaran berhasil!'); checkAndRefresh() },
-        onPending: () => { toast.info('Pembayaran pending.'); refetch() },
-        onError: () => toast.error('Pembayaran gagal. Silakan coba lagi.'),
+        onSuccess: () => { toast.success('Payment successful!'); checkAndRefresh() },
+        onPending: () => { toast.info('Payment pending.'); refetch() },
+        onError: () => toast.error('Payment failed. Please try again.'),
         onClose: () => refetch(),
       })
     } catch (err) {
@@ -66,7 +68,7 @@ export default function GuestTrackPage() {
     return <ResendLinkForm orderNumber={orderNumber} />
   }
 
-  const showSuccess = paidFromCheckout || (order && order.status !== 'pending_payment' && order.status !== 'cancelled')
+  const showSuccess = paidFromCheckout || (order && !['pending_payment', 'awaiting_quote', 'cancelled'].includes(order.status))
 
   return (
     <div className="container-page py-12 lg:py-20">
@@ -80,14 +82,25 @@ export default function GuestTrackPage() {
               : <CheckCircle2 size={32} strokeWidth={1.5} />}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">
-            {paidFromCheckout ? 'Pembayaran Berhasil!' : showSuccess ? 'Pesanan Diproses' : order?.status === 'cancelled' ? 'Pesanan Dibatalkan' : 'Lacak Pesanan'}
+            {paidFromCheckout ? 'Payment Successful!' : showSuccess ? 'Order Processing' : order?.status === 'cancelled' ? 'Order Cancelled' : isAwaitingQuote ? 'Order Received' : 'Track Order'}
           </h1>
           <p className="mt-2 text-sm text-ink-muted">
-            {isPending ? 'Selesaikan pembayaran untuk memproses pesananmu.' : 'Terima kasih, pesananmu sedang diproses.'}
+            {isAwaitingQuote
+              ? "We're calculating your international shipping cost."
+              : isPending
+                ? 'Complete payment to process your order.'
+                : 'Thank you, your order is being processed.'}
           </p>
         </div>
 
         {order && <SaveTrackingBanner orderNumber={orderNumber} token={token} email={order.guest_email} />}
+
+        {isAwaitingQuote && (
+          <div className="mt-6 px-4 py-3.5 bg-paper-soft border border-line rounded-lg">
+            <p className="text-sm font-semibold text-ink">We're calculating your international shipping</p>
+            <p className="text-sm text-ink-muted mt-1">Since this order ships outside Indonesia, our team will manually calculate the shipping cost and email you a quote. You'll be able to pay right from this page once it's ready — no action needed for now.</p>
+          </div>
+        )}
 
         <div className="mt-8 border border-line rounded-lg p-6 bg-paper">
           {isLoading ? (
@@ -98,13 +111,13 @@ export default function GuestTrackPage() {
             </div>
           ) : error || !order ? (
             <p className="text-sm text-ink-muted text-center">
-              Pesanan tidak ditemukan atau token tidak valid.
+              Order not found or the token is invalid.
             </p>
           ) : (
             <>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="eyebrow">Nomor Pesanan</p>
+                  <p className="eyebrow">Order Number</p>
                   <p className="text-lg font-bold text-ink tabular-nums">{order.order_number}</p>
                 </div>
                 {(() => {
@@ -117,20 +130,20 @@ export default function GuestTrackPage() {
                 <Row label="Subtotal" value={formatPrice(order.subtotal)} />
                 {order.tier_discount > 0 && (
                   <Row
-                    label={`Diskon Tier ${order.tier_name || ''}`}
+                    label={`${order.tier_name || ''} tier discount`}
                     value={<span className="text-state-success">-{formatPrice(order.tier_discount)}</span>}
                   />
                 )}
-                <Row label="Total" value={formatPrice(order.total)} bold />
-                <Row label="Kurir" value={order.shipping_courier || '-'} />
-                <Row label="Penerima" value={order.shipping_name} />
-                {order.tracking_number && <Row label="No. Resi" value={order.tracking_number} />}
+                <Row label="Total" value={isAwaitingQuote ? formatPrice(order.subtotal) : formatPrice(order.total)} bold />
+                {!isAwaitingQuote && <Row label="Courier" value={order.shipping_courier || '-'} />}
+                <Row label="Recipient" value={order.shipping_name} />
+                {order.tracking_number && <Row label="Tracking Number" value={order.tracking_number} />}
                 {order.tracking_number && order.tracking_url && (
                   <Row
                     label=" "
                     value={
                       <a href={order.tracking_url} target="_blank" rel="noopener noreferrer" className="text-ink underline">
-                        Lacak di situs {order.shipping_courier} →
+                        Track on {order.shipping_courier} →
                       </a>
                     }
                   />
@@ -156,27 +169,27 @@ export default function GuestTrackPage() {
               {isPending && (
                 <div className="mt-6 pt-6 border-t border-line space-y-3">
                   <Button variant="accent" fullWidth size="lg" onClick={handlePay} loading={snapMut.isPending} leadingIcon={<CreditCard size={16} />}>
-                    Bayar Sekarang
+                    Pay Now
                   </Button>
                   <p className="text-2xs text-ink-muted text-center">
-                    Aman via Midtrans — VA, QRIS, GoPay, kartu kredit, dan lainnya.
+                    Secured via Midtrans — VA, QRIS, GoPay, credit card, and more.
                   </p>
                 </div>
               )}
 
               {order.status === 'processing' && (
                 <div className="mt-6 px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-state-success" /> Pembayaran diterima. Pesananmu sedang dikemas.
+                  <CheckCircle2 size={14} className="text-state-success" /> Payment received. Your order is being packed.
                 </div>
               )}
               {order.status === 'shipped' && (
                 <div className="mt-6 px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft flex items-center gap-2">
-                  <Truck size={14} /> Pesanan dalam perjalanan.
+                  <Truck size={14} /> Your order is on its way.
                 </div>
               )}
               {order.status === 'cancelled' && (
                 <div className="mt-6 px-4 py-3 bg-state-danger/5 border border-state-danger/20 rounded text-xs text-state-danger">
-                  Pesanan dibatalkan.
+                  This order has been cancelled.
                 </div>
               )}
             </>
@@ -185,7 +198,7 @@ export default function GuestTrackPage() {
 
         <div className="mt-6 flex justify-center">
           <Link to="/products">
-            <Button variant="ghost" trailingIcon={<ArrowRight size={16} />}>Lanjut Belanja</Button>
+            <Button variant="ghost" trailingIcon={<ArrowRight size={16} />}>Keep Shopping</Button>
           </Link>
         </div>
       </div>
@@ -210,10 +223,10 @@ function SaveTrackingBanner({ orderNumber, token, email }) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast.success('Link disalin')
+      toast.success('Link copied')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Gagal menyalin link')
+      toast.error("Couldn't copy the link")
     }
   }
 
@@ -221,12 +234,12 @@ function SaveTrackingBanner({ orderNumber, token, email }) {
     <div className="mt-6 px-4 py-3.5 bg-paper-soft border border-line rounded-lg flex items-start gap-3 flex-wrap">
       <Mail size={16} className="text-ink-muted mt-0.5 shrink-0" />
       <p className="text-xs text-ink-soft flex-1 min-w-[200px]">
-        Link lacak sudah dikirim ke{' '}
-        {email ? <span className="font-medium text-ink">{email}</span> : 'emailmu'}.
-        Simpan halaman ini untuk cek status pesananmu kapanpun.
+        The tracking link has been sent to{' '}
+        {email ? <span className="font-medium text-ink">{email}</span> : 'your email'}.
+        Save this page to check your order status anytime.
       </p>
       <Button variant="outline" size="sm" onClick={handleCopy} leadingIcon={copied ? <Check size={14} /> : <Copy size={14} />}>
-        {copied ? 'Tersalin' : 'Salin Link'}
+        {copied ? 'Copied' : 'Copy Link'}
       </Button>
     </div>
   )
@@ -252,19 +265,19 @@ function ResendLinkForm({ orderNumber }) {
     <div className="container-page py-20">
       <div className="max-w-md mx-auto text-center">
         <AlertTriangle size={40} className="mx-auto text-ink-faint mb-4" />
-        <h1 className="text-xl font-bold text-ink">Token tidak ditemukan</h1>
+        <h1 className="text-xl font-bold text-ink">Token not found</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Gunakan link lacak pesanan dari email konfirmasi, atau kirim ulang lewat form di bawah.
+          Use the tracking link from your confirmation email, or resend it using the form below.
         </p>
 
         {sent ? (
           <div className="mt-6 px-4 py-3.5 bg-paper-soft border border-line rounded-lg text-sm text-ink-soft text-left">
-            Jika nomor pesanan dan email cocok, link lacak sudah dikirim ulang ke emailmu. Cek inbox (atau folder spam) beberapa menit ke depan.
+            If the order number and email match, a tracking link has been resent to your email. Check your inbox (or spam folder) in the next few minutes.
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-3 text-left">
             <div>
-              <label className="text-xs font-medium text-ink-muted">Nomor Pesanan</label>
+              <label className="text-xs font-medium text-ink-muted">Order Number</label>
               <input
                 type="text"
                 required
@@ -275,24 +288,24 @@ function ResendLinkForm({ orderNumber }) {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-ink-muted">Email Checkout</label>
+              <label className="text-xs font-medium text-ink-muted">Checkout Email</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com"
+                placeholder="name@email.com"
                 className="mt-1 w-full border border-line rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
               />
             </div>
             <Button type="submit" variant="accent" fullWidth loading={resendMut.isPending}>
-              Kirim Ulang Link Lacak
+              Resend Tracking Link
             </Button>
           </form>
         )}
 
         <Link to="/products" className="inline-block mt-6">
-          <Button variant="outline">Lanjut Belanja</Button>
+          <Button variant="outline">Keep Shopping</Button>
         </Link>
       </div>
     </div>

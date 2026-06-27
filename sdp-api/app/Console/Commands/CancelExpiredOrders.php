@@ -31,7 +31,7 @@ class CancelExpiredOrders extends Command
                     ->whereIn('status', ['pending', 'earned'])
                     ->update(['status' => 'cancelled']);
 
-                $order->update(['status' => 'cancelled', 'admin_notes' => 'Dibatalkan otomatis — tidak ada pembayaran dalam 24 jam.']);
+                $order->update(['status' => 'cancelled', 'admin_notes' => 'Automatically cancelled — no payment received within 24 hours.']);
             });
         }
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Konfirmasi Pesanan</title>
+    <title>Order Confirmation</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f4f4f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#1a1a1a;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5; padding:32px 0;">
@@ -20,16 +20,29 @@
                     <!-- Body -->
                     <tr>
                         <td style="padding:32px;">
-                            <h1 style="margin:0 0 8px; font-size:22px; font-weight:700;">Terima kasih atas pesananmu!</h1>
+                            <h1 style="margin:0 0 8px; font-size:22px; font-weight:700;">Thanks for your order!</h1>
                             <p style="margin:0 0 24px; font-size:14px; color:#52525b; line-height:1.6;">
-                                Halo {{ $order->shipping_name }}, pesananmu sudah kami terima. Berikut ringkasannya.
+                                Hi {{ $order->shipping_name }}, we've received your order. Here's a summary.
                             </p>
+
+                            @if ($order->status === 'awaiting_quote')
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb; border:1px solid #fde68a; border-radius:8px; margin-bottom:24px;">
+                                <tr>
+                                    <td style="padding:16px 20px;">
+                                        <p style="margin:0; font-size:13px; font-weight:700; color:#92400e;">We're calculating your international shipping</p>
+                                        <p style="margin:6px 0 0; font-size:13px; color:#92400e; line-height:1.6;">
+                                            Since this order ships outside Indonesia, our team will manually calculate the shipping cost and email you a quote. You'll be able to pay as soon as it's ready — no action needed for now.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                            @endif
 
                             <!-- Order number -->
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fafafa; border:1px solid #e4e4e7; border-radius:8px; margin-bottom:24px;">
                                 <tr>
                                     <td style="padding:16px 20px;">
-                                        <p style="margin:0 0 4px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#a1a1aa;">Nomor Pesanan</p>
+                                        <p style="margin:0 0 4px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#a1a1aa;">Order Number</p>
                                         <p style="margin:0; font-size:18px; font-weight:700;">{{ $order->order_number }}</p>
                                     </td>
                                 </tr>
@@ -57,9 +70,17 @@
                                     <td align="right" style="padding:4px 0; font-size:13px;">Rp {{ number_format($order->subtotal, 0, ',', '.') }}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding:4px 0; font-size:13px; color:#52525b;">Ongkir ({{ $order->shipping_courier }})</td>
+                                    <td style="padding:4px 0; font-size:13px; color:#52525b;">
+                                        @if ($order->status === 'awaiting_quote') Shipping @else Shipping ({{ $order->shipping_courier }}) @endif
+                                    </td>
                                     <td align="right" style="padding:4px 0; font-size:13px;">
-                                        @if ((float) $order->shipping_cost === 0.0) GRATIS @else Rp {{ number_format($order->shipping_cost, 0, ',', '.') }} @endif
+                                        @if ($order->status === 'awaiting_quote')
+                                            To be quoted
+                                        @elseif ((float) $order->shipping_cost === 0.0)
+                                            FREE
+                                        @else
+                                            Rp {{ number_format($order->shipping_cost, 0, ',', '.') }}
+                                        @endif
                                     </td>
                                 </tr>
                                 <tr>
@@ -69,7 +90,7 @@
                             </table>
 
                             <!-- Shipping address -->
-                            <p style="margin:0 0 4px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#a1a1aa;">Dikirim ke</p>
+                            <p style="margin:0 0 4px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#a1a1aa;">Shipping to</p>
                             <p style="margin:0 0 24px; font-size:14px; color:#3f3f46; line-height:1.6;">
                                 {{ $order->shipping_name }} ({{ $order->shipping_phone }})<br>
                                 {{ $order->shipping_address }}
@@ -80,13 +101,13 @@
                                 <tr>
                                     <td align="center" style="padding:8px 0 4px;">
                                         <a href="{{ $trackingUrl }}" style="display:inline-block; background-color:#1a1a1a; color:#ffffff; text-decoration:none; font-size:14px; font-weight:600; padding:14px 32px; border-radius:8px;">
-                                            Lacak &amp; Bayar Pesanan
+                                            @if ($order->status === 'awaiting_quote') Track Order @else Track &amp; Pay for Order @endif
                                         </a>
                                     </td>
                                 </tr>
                             </table>
                             <p style="margin:16px 0 0; font-size:12px; color:#a1a1aa; line-height:1.6; text-align:center;">
-                                Atau salin link ini ke browser:<br>
+                                Or copy this link into your browser:<br>
                                 <a href="{{ $trackingUrl }}" style="color:#52525b; word-break:break-all;">{{ $trackingUrl }}</a>
                             </p>
                         </td>
@@ -96,8 +117,8 @@
                     <tr>
                         <td style="padding:24px 32px; background-color:#fafafa; border-top:1px solid #e4e4e7;">
                             <p style="margin:0; font-size:12px; color:#a1a1aa; line-height:1.6;">
-                                Email ini dikirim karena ada pesanan atas nama emailmu di SDP Marketplace.
-                                Simpan link tracking di atas untuk memantau status pesanan tanpa perlu login.
+                                This email was sent because an order was placed under your email address at SDP Marketplace.
+                                Keep the tracking link above to check your order status without logging in.
                             </p>
                         </td>
                     </tr>

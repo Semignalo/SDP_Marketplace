@@ -55,7 +55,7 @@ class UserController extends Controller
 
         // Cek vendor_admin harus punya vendor_id
         if (($data['role'] ?? $user->role) === 'vendor_admin' && empty($data['vendor_id'] ?? $user->vendor_id)) {
-            return response()->json(['message' => 'Vendor wajib dipilih untuk role vendor_admin', 'errors' => ['vendor_id' => ['Wajib pilih vendor']]], 422);
+            return response()->json(['message' => 'A vendor must be selected for the vendor_admin role', 'errors' => ['vendor_id' => ['Please select a vendor']]], 422);
         }
 
         if (! empty($data['password'])) {
@@ -67,7 +67,7 @@ class UserController extends Controller
         $user->update($data);
         $user->load('vendor:id,name,slug');
 
-        return response()->json(['message' => 'User diperbarui', 'data' => $this->shape($user)]);
+        return response()->json(['message' => 'User updated', 'data' => $this->shape($user)]);
     }
 
     public function network(User $user): JsonResponse
@@ -96,7 +96,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Tidak bisa hapus akun sendiri'], 422);
         }
         $user->delete();
-        return response()->json(['message' => 'User dihapus']);
+        return response()->json(['message' => 'User deleted']);
     }
 
     private function shape(User $u): array

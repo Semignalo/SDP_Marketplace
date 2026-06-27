@@ -48,7 +48,7 @@ class ResellerWithdrawalController extends Controller
 
             if ($data['amount'] > $available) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'amount' => ["Saldo tersedia: Rp " . number_format($available, 0, ',', '.')],
+                    'amount' => ["Available balance: Rp " . number_format($available, 0, ',', '.')],
                 ]);
             }
 
@@ -60,7 +60,7 @@ class ResellerWithdrawalController extends Controller
 
             if ($hasPending) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'amount' => ['Masih ada permintaan penarikan yang sedang diproses.'],
+                    'amount' => ['You already have a withdrawal request being processed.'],
                 ]);
             }
 
@@ -70,7 +70,7 @@ class ResellerWithdrawalController extends Controller
             ]);
         });
 
-        return response()->json(['message' => 'Permintaan penarikan berhasil dikirim.', 'data' => $this->shape($withdrawal)], 201);
+        return response()->json(['message' => 'Withdrawal request submitted successfully.', 'data' => $this->shape($withdrawal)], 201);
     }
 
     private function shape(CommissionWithdrawal $w): array

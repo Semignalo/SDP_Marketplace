@@ -12,18 +12,18 @@ import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
 const STATUS_LABELS = {
-  pending: { label: 'Menunggu', variant: 'warning' },
-  earned: { label: 'Dikonfirmasi', variant: 'neutral' },
-  paid: { label: 'Dibayar', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  pending: { label: 'Pending', variant: 'warning' },
+  earned: { label: 'Confirmed', variant: 'neutral' },
+  paid: { label: 'Paid', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
 const FILTERS = [
-  { value: '', label: 'Semua' },
-  { value: 'pending', label: 'Menunggu' },
-  { value: 'earned', label: 'Dikonfirmasi' },
-  { value: 'paid', label: 'Dibayar' },
-  { value: 'cancelled', label: 'Dibatalkan' },
+  { value: '', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'earned', label: 'Confirmed' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'cancelled', label: 'Cancelled' },
 ]
 
 export default function AdminCommissionsPage() {
@@ -67,7 +67,7 @@ export default function AdminCommissionsPage() {
   const handleStatusChange = async (c, newStatus) => {
     try {
       await updateStatus.mutateAsync({ id: c.id, status: newStatus })
-      toast.success(`Status diubah ke ${newStatus}`)
+      toast.success(`Status changed to ${newStatus}`)
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
@@ -77,7 +77,7 @@ export default function AdminCommissionsPage() {
     if (selected.size === 0) return
     try {
       await bulkPaid.mutateAsync(Array.from(selected))
-      toast.success(`${selected.size} komisi ditandai paid`)
+      toast.success(`${selected.size} commission(s) marked as paid`)
       setSelected(new Set())
     } catch (err) {
       toast.error(extractErrorMessage(err))
@@ -91,15 +91,15 @@ export default function AdminCommissionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold text-ink">Komisi Reseller</h2>
-        <p className="text-sm text-ink-muted mt-1">Kelola pembayaran komisi reseller.</p>
+        <h2 className="text-base font-semibold text-ink">Reseller Commissions</h2>
+        <p className="text-sm text-ink-muted mt-1">Manage reseller commission payouts.</p>
       </div>
 
       <div className="grid sm:grid-cols-4 gap-3">
         <SummaryCard label="Total" value={summary ? formatRupiah(summary.total) : null} accent />
-        <SummaryCard label="Menunggu" value={summary ? formatRupiah(summary.pending) : null} />
-        <SummaryCard label="Dikonfirmasi" value={summary ? formatRupiah(summary.earned) : null} />
-        <SummaryCard label="Sudah Dibayar" value={summary ? formatRupiah(summary.paid) : null} />
+        <SummaryCard label="Pending" value={summary ? formatRupiah(summary.pending) : null} />
+        <SummaryCard label="Confirmed" value={summary ? formatRupiah(summary.earned) : null} />
+        <SummaryCard label="Already Paid" value={summary ? formatRupiah(summary.paid) : null} />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -121,7 +121,7 @@ export default function AdminCommissionsPage() {
           </div>
           {selected.size > 0 && (
             <Button leadingIcon={<Check size={16} />} onClick={() => setBulkConfirmOpen(true)}>
-              Tandai {selected.size} sebagai Paid
+              Mark {selected.size} as Paid
             </Button>
           )}
         </div>
@@ -131,7 +131,7 @@ export default function AdminCommissionsPage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Cari nama reseller / customer..."
+            placeholder="Search reseller / customer name..."
             className="w-full pl-8 pr-3 h-9 text-sm border border-line rounded focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink bg-paper"
           />
         </div>
@@ -142,10 +142,10 @@ export default function AdminCommissionsPage() {
           <label className="inline-flex items-center">
             <input type="checkbox" checked={allSelected} onChange={toggleAll} disabled={selectableIds.length === 0} className="h-4 w-4 accent-ink" />
           </label>
-          <span>Pesanan</span>
+          <span>Order</span>
           <span>Reseller</span>
           <span>Customer</span>
-          <span className="text-right">Komisi</span>
+          <span className="text-right">Commission</span>
           <span>Status</span>
           <span></span>
         </div>
@@ -155,7 +155,7 @@ export default function AdminCommissionsPage() {
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
         ) : data?.data?.length === 0 ? (
-          <div className="p-10"><EmptyState icon={<Wallet size={40} strokeWidth={1.2} />} title="Tidak ada komisi" /></div>
+          <div className="p-10"><EmptyState icon={<Wallet size={40} strokeWidth={1.2} />} title="No commissions" /></div>
         ) : (
           <ul className="divide-y divide-line">
             {data?.data?.map((c) => {
@@ -189,10 +189,10 @@ export default function AdminCommissionsPage() {
                   </div>
                   <div className="mt-2 md:mt-0">
                     <Select value={c.status} onChange={(e) => handleStatusChange(c, e.target.value)} className="h-8 text-xs">
-                      <option value="pending">Menunggu</option>
-                      <option value="earned">Dikonfirmasi</option>
-                      <option value="paid">Dibayar</option>
-                      <option value="cancelled">Dibatalkan</option>
+                      <option value="pending">Pending</option>
+                      <option value="earned">Confirmed</option>
+                      <option value="paid">Paid</option>
+                      <option value="cancelled">Cancelled</option>
                     </Select>
                   </div>
                   <div className="md:text-right mt-2 md:mt-0">
@@ -212,16 +212,16 @@ export default function AdminCommissionsPage() {
       <Modal
         open={bulkConfirmOpen}
         onClose={() => setBulkConfirmOpen(false)}
-        title="Tandai komisi sebagai paid?"
+        title="Mark commissions as paid?"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setBulkConfirmOpen(false)}>Batal</Button>
-            <Button onClick={handleBulkPaid} loading={bulkPaid.isPending}>Ya, tandai paid</Button>
+            <Button variant="outline" onClick={() => setBulkConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulkPaid} loading={bulkPaid.isPending}>Yes, mark as paid</Button>
           </div>
         }
       >
         <p className="text-sm text-ink-soft">
-          <span className="font-semibold text-ink">{selected.size} komisi</span> akan ditandai sebagai sudah dibayar.
+          <span className="font-semibold text-ink">{selected.size} commission(s)</span> will be marked as paid.
         </p>
       </Modal>
     </div>

@@ -19,7 +19,7 @@ class ReferralController extends Controller
 
         if ($code === '') {
             return response()->json([
-                'data' => ['valid' => false, 'message' => 'Kode referral kosong'],
+                'data' => ['valid' => false, 'message' => 'Referral code is empty'],
             ]);
         }
 
@@ -27,7 +27,7 @@ class ReferralController extends Controller
 
         if (! $referrer) {
             return response()->json([
-                'data' => ['valid' => false, 'message' => 'Kode referral tidak ditemukan'],
+                'data' => ['valid' => false, 'message' => 'Referral code not found'],
             ]);
         }
 

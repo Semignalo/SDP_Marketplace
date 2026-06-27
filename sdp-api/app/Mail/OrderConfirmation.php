@@ -33,7 +33,7 @@ class OrderConfirmation extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Konfirmasi Pesanan ' . $this->order->order_number . ' — SDP',
+            subject: 'Order Confirmation ' . $this->order->order_number . ' — SDP',
         );
     }
 

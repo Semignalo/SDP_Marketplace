@@ -8,12 +8,12 @@ import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
-  awaiting_quote: { label: 'Menunggu Kuotasi Ongkir', variant: 'warning' },
-  pending_payment: { label: 'Menunggu Bayar', variant: 'warning' },
-  processing: { label: 'Diproses', variant: 'neutral' },
-  shipped: { label: 'Dikirim', variant: 'info' },
-  completed: { label: 'Selesai', variant: 'success' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning' },
+  processing: { label: 'Processing', variant: 'neutral' },
+  shipped: { label: 'Shipped', variant: 'info' },
+  completed: { label: 'Completed', variant: 'success' },
+  cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
 export default function AdminOrderDetailPage() {
@@ -32,7 +32,7 @@ export default function AdminOrderDetailPage() {
   }
 
   if (error || !order) {
-    return <EmptyState title="Pesanan tidak ditemukan" action={<Link to="/admin/pesanan"><Button variant="outline">Kembali</Button></Link>} />
+    return <EmptyState title="Order not found" action={<Link to="/admin/pesanan"><Button variant="outline">Back</Button></Link>} />
   }
 
   const currentStatus = status || order.status
@@ -45,7 +45,7 @@ export default function AdminOrderDetailPage() {
         status: currentStatus,
         admin_notes: notes || order.admin_notes || '',
       })
-      toast.success('Status pesanan diperbarui')
+      toast.success('Order status updated')
       setStatus('')
       setNotes('')
     } catch (err) {
@@ -55,7 +55,7 @@ export default function AdminOrderDetailPage() {
 
   const handleSendQuote = async () => {
     if (!quoteCost || Number(quoteCost) < 0) {
-      toast.error('Isi ongkir dulu')
+      toast.error('Enter the shipping cost first')
       return
     }
     try {
@@ -64,7 +64,7 @@ export default function AdminOrderDetailPage() {
         shipping_cost: Number(quoteCost),
         shipping_courier: quoteCourier || undefined,
       })
-      toast.success('Kuotasi ongkir terkirim, pesanan siap dibayar')
+      toast.success('Shipping quote sent, order is ready for payment')
       setQuoteCost('')
       setQuoteCourier('')
     } catch (err) {
@@ -75,20 +75,20 @@ export default function AdminOrderDetailPage() {
   return (
     <div className="space-y-6">
       <Link to="/admin/pesanan" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
-        <ArrowLeft size={14} /> Kembali ke daftar pesanan
+        <ArrowLeft size={14} /> Back to order list
       </Link>
 
       <div className="bg-paper border border-line rounded-lg p-5">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="eyebrow">Nomor Pesanan</p>
+            <p className="eyebrow">Order Number</p>
             <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
             <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant={badge.variant}>{badge.label}</Badge>
             <Link to={`/admin/pesanan/${orderNumber}/invoice`} target="_blank">
-              <Button variant="outline" leadingIcon={<FileText size={14} />}>Cetak Invoice</Button>
+              <Button variant="outline" leadingIcon={<FileText size={14} />}>Print Invoice</Button>
             </Link>
           </div>
         </div>
@@ -98,30 +98,30 @@ export default function AdminOrderDetailPage() {
       <section className="bg-paper border border-line rounded-lg p-5">
         <h3 className="eyebrow mb-4">Update Status</h3>
         <div className="grid sm:grid-cols-[1fr_2fr_auto] gap-3 items-end">
-          <Select label="Status Baru" value={currentStatus} onChange={(e) => setStatus(e.target.value)}>
-            <option value="awaiting_quote">Menunggu Kuotasi Ongkir</option>
-            <option value="pending_payment">Menunggu Bayar</option>
-            <option value="processing">Diproses (verify payment)</option>
-            <option value="shipped">Dikirim</option>
-            <option value="completed">Selesai</option>
-            <option value="cancelled">Dibatalkan</option>
+          <Select label="New Status" value={currentStatus} onChange={(e) => setStatus(e.target.value)}>
+            <option value="awaiting_quote">Awaiting Shipping Quote</option>
+            <option value="pending_payment">Awaiting Payment</option>
+            <option value="processing">Processing (verify payment)</option>
+            <option value="shipped">Shipped</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
           </Select>
-          <Textarea label="Catatan Admin (opsional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={order.admin_notes || 'Misal: verifikasi manual transfer BCA'} />
-          <Button onClick={handleSave} loading={update.isPending}>Simpan</Button>
+          <Textarea label="Admin Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={order.admin_notes || 'E.g.: manually verified BCA transfer'} />
+          <Button onClick={handleSave} loading={update.isPending}>Save</Button>
         </div>
         {order.payment_verified_at && (
-          <p className="mt-3 text-xs text-state-success">✓ Payment diverifikasi: {formatDateTime(order.payment_verified_at)}</p>
+          <p className="mt-3 text-xs text-state-success">✓ Payment verified: {formatDateTime(order.payment_verified_at)}</p>
         )}
       </section>
 
       {order.status === 'awaiting_quote' && (
         <section className="bg-paper border border-line rounded-lg p-5">
-          <h3 className="eyebrow mb-1">Kirim Kuotasi Ongkir Internasional</h3>
-          <p className="text-xs text-ink-muted mb-4">Pesanan ini dikirim ke {order.shipping_country || 'luar negeri'} — input ongkir manual untuk membuka pembayaran.</p>
+          <h3 className="eyebrow mb-1">Send International Shipping Quote</h3>
+          <p className="text-xs text-ink-muted mb-4">This order ships to {order.shipping_country || 'abroad'} — enter the shipping cost manually to unlock payment.</p>
           <div className="grid sm:grid-cols-[1fr_2fr_auto] gap-3 items-end">
-            <Input label="Ongkir (Rp)" type="number" min="0" value={quoteCost} onChange={(e) => setQuoteCost(e.target.value)} placeholder="150000" />
-            <Input label="Kurir (opsional)" value={quoteCourier} onChange={(e) => setQuoteCourier(e.target.value)} placeholder="DHL Express / FedEx" />
-            <Button onClick={handleSendQuote} loading={setQuote.isPending}>Kirim Quote & Minta Bayar</Button>
+            <Input label="Shipping Cost (Rp)" type="number" min="0" value={quoteCost} onChange={(e) => setQuoteCost(e.target.value)} placeholder="150000" />
+            <Input label="Courier (optional)" value={quoteCourier} onChange={(e) => setQuoteCourier(e.target.value)} placeholder="DHL Express / FedEx" />
+            <Button onClick={handleSendQuote} loading={setQuote.isPending}>Send Quote & Request Payment</Button>
           </div>
         </section>
       )}
@@ -132,7 +132,7 @@ export default function AdminOrderDetailPage() {
           <p className="text-xs text-ink-muted">{order.customer?.email}</p>
           <p className="text-xs text-ink-muted">{order.customer?.phone}</p>
         </InfoCard>
-        <InfoCard icon={<MapPin size={16} />} title="Alamat Pengiriman">
+        <InfoCard icon={<MapPin size={16} />} title="Shipping Address">
           <div className="flex items-center gap-2 mb-1">
             <p className="text-sm font-semibold">{order.shipping_name}</p>
             {order.shipping_country && order.shipping_country !== 'Indonesia' && <Badge variant="warning">International</Badge>}
@@ -140,9 +140,9 @@ export default function AdminOrderDetailPage() {
           <p className="text-xs text-ink-muted mt-0.5">{order.shipping_phone}</p>
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">{order.shipping_address}</p>
         </InfoCard>
-        <InfoCard icon={<Truck size={16} />} title="Pengiriman">
-          <p className="text-sm">{order.shipping_courier || 'Belum dipilih'}</p>
-          {order.tracking_number && <p className="text-xs text-ink-muted mt-1">Resi: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>}
+        <InfoCard icon={<Truck size={16} />} title="Shipping">
+          <p className="text-sm">{order.shipping_courier || 'Not selected yet'}</p>
+          {order.tracking_number && <p className="text-xs text-ink-muted mt-1">Tracking: <span className="text-ink tabular-nums">{order.tracking_number}</span></p>}
           {order.tracking_number && order.tracking_url && (
             <a
               href={order.tracking_url}
@@ -150,14 +150,14 @@ export default function AdminOrderDetailPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs font-semibold text-ink underline mt-2"
             >
-              Lacak di situs {order.shipping_courier} →
+              Track on {order.shipping_courier} →
             </a>
           )}
         </InfoCard>
       </div>
 
       {order.reseller && (
-        <InfoCard icon={<Wallet size={16} />} title="Reseller & Komisi">
+        <InfoCard icon={<Wallet size={16} />} title="Reseller & Commission">
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <p className="text-sm font-semibold">{order.reseller.name}</p>
@@ -166,12 +166,12 @@ export default function AdminOrderDetailPage() {
             {order.commission && (
               <>
                 <div>
-                  <p className="eyebrow">Komisi</p>
+                  <p className="eyebrow">Commission</p>
                   <p className="text-sm font-semibold tabular-nums">{formatRupiah(order.commission.amount)}</p>
                   <p className="text-2xs text-ink-muted tabular-nums">rate {order.commission.rate}%</p>
                 </div>
                 <div>
-                  <p className="eyebrow">Status Komisi</p>
+                  <p className="eyebrow">Commission Status</p>
                   <Badge variant={order.commission.status === 'paid' ? 'success' : order.commission.status === 'cancelled' ? 'danger' : 'neutral'}>
                     {order.commission.status}
                   </Badge>
@@ -183,7 +183,7 @@ export default function AdminOrderDetailPage() {
       )}
 
       <section className="bg-paper border border-line rounded-lg overflow-hidden">
-        <h3 className="eyebrow px-5 py-3 border-b border-line bg-paper-soft">Item Pesanan</h3>
+        <h3 className="eyebrow px-5 py-3 border-b border-line bg-paper-soft">Order Items</h3>
         <ul className="divide-y divide-line">
           {(order.items || []).map((item) => (
             <li key={item.id} className="p-5 flex items-center justify-between gap-4">
@@ -201,9 +201,9 @@ export default function AdminOrderDetailPage() {
         <div className="px-5 py-4 border-t border-line space-y-2 text-sm">
           <Row label="Subtotal" value={formatRupiah(Number(order.subtotal) + Number(order.tier_discount || 0))} />
           {order.tier_discount > 0 && (
-            <Row label={`Diskon Tier ${order.tier_name || ''}`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
+            <Row label={`${order.tier_name || ''} Tier Discount`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
           )}
-          <Row label="Ongkir" value={formatRupiah(order.shipping_cost)} />
+          <Row label="Shipping" value={formatRupiah(order.shipping_cost)} />
           <div className="pt-2 mt-2 border-t border-line">
             <Row label="Total" value={formatRupiah(order.total)} bold />
           </div>
@@ -212,7 +212,7 @@ export default function AdminOrderDetailPage() {
 
       {order.admin_notes && (
         <div className="bg-paper-soft border border-line rounded-lg p-4">
-          <p className="eyebrow mb-1">Catatan Admin</p>
+          <p className="eyebrow mb-1">Admin Notes</p>
           <p className="text-sm text-ink-soft">{order.admin_notes}</p>
         </div>
       )}

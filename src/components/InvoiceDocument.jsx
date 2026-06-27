@@ -2,14 +2,14 @@ import { Link } from 'react-router-dom'
 import { formatRupiah, formatDateTime } from '../lib/utils'
 
 const STATUS_LABEL = {
-  pending_payment: 'Menunggu Pembayaran',
-  processing: 'Lunas',
-  shipped: 'Lunas',
-  completed: 'Lunas',
-  cancelled: 'Dibatalkan',
+  pending_payment: 'Awaiting Payment',
+  processing: 'Paid',
+  shipped: 'Paid',
+  completed: 'Paid',
+  cancelled: 'Cancelled',
 }
 
-export default function InvoiceDocument({ order, settings, backHref, backLabel = '← Kembali' }) {
+export default function InvoiceDocument({ order, settings, backHref, backLabel = '← Back' }) {
   const siteName = settings?.site_name || 'SDP Marketplace'
   const bankName = settings?.bank_name || ''
   const bankNumber = settings?.bank_account_number || ''
@@ -27,7 +27,7 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
           onClick={() => window.print()}
           className="bg-ink text-white text-sm px-4 py-2 rounded shadow-card hover:bg-ink-soft transition"
         >
-          Unduh / Cetak PDF
+          Download / Print PDF
         </button>
         {backHref && (
           <Link
@@ -45,12 +45,12 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
         <div className="invoice-header">
           <div>
             <div className="brand-name">{siteName}</div>
-            <div className="brand-tagline">{settings?.site_tagline || 'Marketplace Multi-Brand'}</div>
+            <div className="brand-tagline">{settings?.site_tagline || 'Multi-Brand Marketplace'}</div>
           </div>
           <div className="invoice-title-block">
             <div className="invoice-label">INVOICE</div>
             <div className="invoice-number">#{order.order_number}</div>
-            <div className="invoice-meta">Tanggal: {formatDateTime(order.created_at)}</div>
+            <div className="invoice-meta">Date: {formatDateTime(order.created_at)}</div>
           </div>
         </div>
 
@@ -59,20 +59,20 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
         {/* Bill to + Status */}
         <div className="info-row">
           <div className="info-block">
-            <div className="info-label">TAGIHAN KEPADA</div>
+            <div className="info-label">BILL TO</div>
             <div className="info-value-lg">{order.shipping_name}</div>
             <div className="info-value">{order.shipping_phone}</div>
             <div className="info-value" style={{ marginTop: 4 }}>{order.shipping_address}</div>
           </div>
           <div className="info-block text-right">
-            <div className="info-label">STATUS PEMBAYARAN</div>
+            <div className="info-label">PAYMENT STATUS</div>
             <div className={`status-badge ${isPaid ? 'paid' : 'unpaid'}`}>
               {STATUS_LABEL[order.status] || order.status}
             </div>
-            <div className="info-label" style={{ marginTop: 16 }}>KURIR</div>
+            <div className="info-label" style={{ marginTop: 16 }}>COURIER</div>
             <div className="info-value">{order.shipping_courier || '—'}</div>
             {order.tracking_number && (
-              <div className="info-value text-muted">Resi: {order.tracking_number}</div>
+              <div className="info-value text-muted">Tracking: {order.tracking_number}</div>
             )}
           </div>
         </div>
@@ -83,9 +83,9 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
         <table className="items-table">
           <thead>
             <tr>
-              <th className="text-left">Produk</th>
+              <th className="text-left">Product</th>
               <th className="text-left">Brand</th>
-              <th className="text-right">Harga Satuan</th>
+              <th className="text-right">Unit Price</th>
               <th className="text-right">Qty</th>
               <th className="text-right">Subtotal</th>
             </tr>
@@ -112,12 +112,12 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
             </div>
             {order.tier_discount > 0 && (
               <div className="total-row discount">
-                <span>Diskon Tier {order.tier_name || ''}</span>
+                <span>{order.tier_name || ''} Tier Discount</span>
                 <span className="tabular">−{formatRupiah(order.tier_discount)}</span>
               </div>
             )}
             <div className="total-row">
-              <span>Ongkos Kirim</span>
+              <span>Shipping</span>
               <span className="tabular">{formatRupiah(order.shipping_cost)}</span>
             </div>
             <div className="total-row grand-total">
@@ -132,14 +132,14 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
           <>
             <div className="divider" />
             <div className="payment-info">
-              <div className="info-label">INSTRUKSI PEMBAYARAN</div>
+              <div className="info-label">PAYMENT INSTRUCTIONS</div>
               <div style={{ marginTop: 8 }}>
-                Transfer ke rekening berikut:
+                Transfer to the following account:
                 <span className="bank-detail"> {bankName} {bankNumber}</span>
-                {bankHolder && <span className="text-muted"> a.n. {bankHolder}</span>}
+                {bankHolder && <span className="text-muted"> a/n {bankHolder}</span>}
               </div>
               <div className="text-muted" style={{ marginTop: 4, fontSize: 11 }}>
-                Pastikan nominal transfer sesuai dengan total tagihan di atas.
+                Please make sure the transfer amount matches the total above.
               </div>
             </div>
           </>
@@ -147,9 +147,9 @@ export default function InvoiceDocument({ order, settings, backHref, backLabel =
 
         {/* Footer */}
         <div className="invoice-footer">
-          <div className="footer-thankyou">Terima kasih telah berbelanja di {siteName}!</div>
+          <div className="footer-thankyou">Thank you for shopping at {siteName}!</div>
           <div className="footer-note">
-            Dokumen ini digenerate otomatis pada {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}.
+            This document was generated automatically on {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}.
           </div>
         </div>
       </div>

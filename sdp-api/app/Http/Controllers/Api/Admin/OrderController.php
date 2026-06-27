@@ -98,7 +98,7 @@ class OrderController extends Controller
         $allowed = self::ALLOWED_TRANSITIONS[$order->status] ?? [];
         if (! in_array($data['status'], $allowed)) {
             return response()->json([
-                'message' => "Tidak bisa ubah status dari '{$order->status}' ke '{$data['status']}'.",
+                'message' => "Can't change status from '{$order->status}' to '{$data['status']}'.",
             ], 422);
         }
 
@@ -128,7 +128,7 @@ class OrderController extends Controller
             $this->sendOrderShippedEmail($order->fresh());
         }
 
-        return response()->json(['message' => 'Status pesanan diperbarui', 'data' => ['status' => $order->fresh()->status]]);
+        return response()->json(['message' => 'Order status updated', 'data' => ['status' => $order->fresh()->status]]);
     }
 
     /**
@@ -144,7 +144,7 @@ class OrderController extends Controller
         $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
         if ($order->status !== 'awaiting_quote') {
-            return response()->json(['message' => 'Pesanan tidak menunggu kuotasi ongkir'], 422);
+            return response()->json(['message' => 'This order is not awaiting a shipping quote'], 422);
         }
 
         DB::transaction(function () use ($data, $order) {
@@ -158,7 +158,7 @@ class OrderController extends Controller
 
         $this->sendShippingQuoteReadyEmail($order->fresh());
 
-        return response()->json(['message' => 'Kuotasi ongkir terkirim', 'data' => $this->shape($order->fresh())]);
+        return response()->json(['message' => 'Shipping quote sent', 'data' => $this->shape($order->fresh())]);
     }
 
     private function shape(Order $o, bool $full = false): array

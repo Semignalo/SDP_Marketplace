@@ -10,11 +10,11 @@ import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
 
 const STATUS_META = {
-  pending_payment: { label: 'Menunggu Pembayaran', variant: 'warning', icon: Clock },
-  processing:      { label: 'Dibayar — Diproses',  variant: 'success', icon: CheckCircle2 },
-  shipped:         { label: 'Dikirim',              variant: 'info',    icon: Package },
-  completed:       { label: 'Selesai',              variant: 'success', icon: CheckCircle2 },
-  cancelled:       { label: 'Dibatalkan',           variant: 'danger',  icon: AlertTriangle },
+  pending_payment: { label: 'Awaiting Payment', variant: 'warning', icon: Clock },
+  processing:      { label: 'Paid — Processing', variant: 'success', icon: CheckCircle2 },
+  shipped:         { label: 'Shipped',           variant: 'info',    icon: Package },
+  completed:       { label: 'Completed',         variant: 'success', icon: CheckCircle2 },
+  cancelled:       { label: 'Cancelled',         variant: 'danger',  icon: AlertTriangle },
 }
 
 export default function OrderSuccessPage() {
@@ -35,12 +35,12 @@ export default function OrderSuccessPage() {
     refetch()
   }
 
-  // Setelah bayar via Snap, langsung sync status dari Midtrans sekali
+  // After paying via Snap, sync the status from Midtrans once.
   useEffect(() => {
     if (paidFromCheckout && orderNumber) checkAndRefresh()
   }, [paidFromCheckout, orderNumber])
 
-  // Polling saat masih pending (hanya jika akses manual, bukan dari checkout)
+  // Poll while still pending (only on manual access, not right after checkout).
   useEffect(() => {
     if (!isPending || paidFromCheckout) return
     const id = setInterval(() => refetch(), 4000)
@@ -52,9 +52,9 @@ export default function OrderSuccessPage() {
       const { token, client_key, is_production } = await snapMut.mutateAsync(orderNumber)
       const snap = await loadSnap({ clientKey: client_key, isProduction: is_production })
       snap.pay(token, {
-        onSuccess: () => { toast.success('Pembayaran berhasil!'); checkAndRefresh() },
-        onPending: () => { toast.info('Pembayaran pending.'); refetch() },
-        onError: () => toast.error('Pembayaran gagal. Silakan coba lagi.'),
+        onSuccess: () => { toast.success('Payment successful!'); checkAndRefresh() },
+        onPending: () => { toast.info('Payment pending.'); refetch() },
+        onError: () => toast.error('Payment failed. Please try again.'),
         onClose: () => refetch(),
       })
     } catch (err) {
@@ -62,7 +62,7 @@ export default function OrderSuccessPage() {
     }
   }
 
-  // Kalau dari checkout dengan ?paid=1, langsung tampil success state
+  // If arriving from checkout with ?paid=1, show the success state immediately.
   const showSuccess = paidFromCheckout || (order && order.status !== 'pending_payment' && order.status !== 'cancelled')
 
   return (
@@ -73,8 +73,8 @@ export default function OrderSuccessPage() {
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-state-success text-white mb-6">
               <CheckCircle2 size={32} strokeWidth={1.5} />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Pembayaran Berhasil!</h1>
-            <p className="mt-2 text-sm text-ink-muted">Terima kasih, pesananmu sedang diproses oleh vendor.</p>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Payment Successful!</h1>
+            <p className="mt-2 text-sm text-ink-muted">Thank you, your order is being processed by the vendor.</p>
           </div>
         ) : (
           <Header order={order} />
@@ -88,12 +88,12 @@ export default function OrderSuccessPage() {
               <Skeleton className="h-4 w-1/2" />
             </div>
           ) : error || !order ? (
-            <p className="text-sm text-ink-muted text-center">Detail pesanan tidak ditemukan.</p>
+            <p className="text-sm text-ink-muted text-center">Order details not found.</p>
           ) : (
             <>
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                  <p className="eyebrow">Nomor Pesanan</p>
+                  <p className="eyebrow">Order Number</p>
                   <p className="text-lg font-bold text-ink tabular-nums">{order.order_number}</p>
                 </div>
                 {(() => {
@@ -104,11 +104,11 @@ export default function OrderSuccessPage() {
 
               <dl className="mt-6 space-y-2.5 text-sm">
                 <Row label="Total" value={formatPrice(order.total)} bold />
-                <Row label="Kurir" value={order.shipping_courier || '-'} />
-                <Row label="Penerima" value={order.shipping_name} />
+                <Row label="Courier" value={order.shipping_courier || '-'} />
+                <Row label="Recipient" value={order.shipping_name} />
               </dl>
 
-              {/* Tombol bayar hanya muncul jika akses manual (bukan dari checkout) dan masih pending */}
+              {/* Pay button only shows on manual access (not right after checkout) while still pending */}
               {isPending && !paidFromCheckout && (
                 <div className="mt-6 pt-6 border-t border-line space-y-3">
                   <Button
@@ -118,22 +118,22 @@ export default function OrderSuccessPage() {
                     loading={snapMut.isPending}
                     leadingIcon={<CreditCard size={16} />}
                   >
-                    Bayar Sekarang
+                    Pay Now
                   </Button>
                   <p className="text-2xs text-ink-muted text-center">
-                    Aman via Midtrans — VA, QRIS, GoPay, kartu kredit, dan lainnya.
+                    Secured via Midtrans — VA, QRIS, GoPay, credit card, and more.
                   </p>
                 </div>
               )}
 
               {order.status === 'processing' && !paidFromCheckout && (
                 <div className="mt-6 px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft">
-                  ✓ Pembayaran diterima. Pesananmu sedang dikemas oleh vendor.
+                  ✓ Payment received. Your order is being packed by the vendor.
                 </div>
               )}
               {order.status === 'cancelled' && (
                 <div className="mt-6 px-4 py-3 bg-state-danger/5 border border-state-danger/20 rounded text-xs text-state-danger">
-                  Pesanan dibatalkan. Stok produk sudah dikembalikan.
+                  This order has been cancelled. Product stock has been restored.
                 </div>
               )}
             </>
@@ -142,10 +142,10 @@ export default function OrderSuccessPage() {
 
         <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
           <Link to={`/akun/pesanan/${orderNumber}`}>
-            <Button variant="outline" leadingIcon={<Package size={16} />}>Detail Pesanan</Button>
+            <Button variant="outline" leadingIcon={<Package size={16} />}>Order Details</Button>
           </Link>
           <Link to="/products">
-            <Button variant="ghost" trailingIcon={<ArrowRight size={16} />}>Lanjut Belanja</Button>
+            <Button variant="ghost" trailingIcon={<ArrowRight size={16} />}>Keep Shopping</Button>
           </Link>
         </div>
       </div>
@@ -161,8 +161,8 @@ function Header({ order }) {
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-state-success text-white mb-6">
           <CheckCircle2 size={32} strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Pembayaran Berhasil</h1>
-        <p className="mt-2 text-sm text-ink-muted">Terima kasih, pesananmu sedang diproses.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Payment Successful</h1>
+        <p className="mt-2 text-sm text-ink-muted">Thank you, your order is being processed.</p>
       </div>
     )
   }
@@ -172,8 +172,8 @@ function Header({ order }) {
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-state-danger text-white mb-6">
           <AlertTriangle size={32} strokeWidth={1.5} />
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Pesanan Dibatalkan</h1>
-        <p className="mt-2 text-sm text-ink-muted">Pesanan ini tidak diteruskan.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Order Cancelled</h1>
+        <p className="mt-2 text-sm text-ink-muted">This order was not carried through.</p>
       </div>
     )
   }
@@ -182,8 +182,8 @@ function Header({ order }) {
       <div className="inline-flex items-center justify-center h-16 w-16 rounded-pill bg-ink text-white mb-6">
         <CheckCircle2 size={32} strokeWidth={1.5} />
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Pesanan Diterima</h1>
-      <p className="mt-2 text-sm text-ink-muted">Selesaikan pembayaran untuk memproses pesananmu.</p>
+      <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink">Order Received</h1>
+      <p className="mt-2 text-sm text-ink-muted">Complete payment to process your order.</p>
     </div>
   )
 }

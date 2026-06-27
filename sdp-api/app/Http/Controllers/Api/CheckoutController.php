@@ -58,12 +58,12 @@ class CheckoutController extends Controller
         $address = Address::where('user_id', $user->id)->find($data['address_id']);
 
         if (! $address) {
-            return response()->json(['message' => 'Alamat tidak ditemukan'], 404);
+            return response()->json(['message' => 'Address not found'], 404);
         }
 
         if (! $address->city_id) {
             return response()->json([
-                'message' => 'Alamat belum punya city ID RajaOngkir. Perbarui alamat.',
+                'message' => 'This address is missing a RajaOngkir city ID. Please update the address.',
                 'data'    => [
                     'rates'             => RajaOngkirService::fallbackRates(),
                     'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
@@ -151,7 +151,7 @@ class CheckoutController extends Controller
         $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
 
         if (! $isInternational && empty($data['courier_name'])) {
-            throw ValidationException::withMessages(['courier_name' => 'Kurir wajib dipilih']);
+            throw ValidationException::withMessages(['courier_name' => 'Please select a courier']);
         }
 
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
@@ -175,17 +175,17 @@ class CheckoutController extends Controller
                 $product = $products->get($line['product_id']);
                 if (! $product) {
                     throw ValidationException::withMessages([
-                        'items' => "Produk tidak ditemukan",
+                        'items' => "Product not found",
                     ]);
                 }
                 if ($product->status !== 'active') {
                     throw ValidationException::withMessages([
-                        'items' => "Produk {$product->name} tidak tersedia",
+                        'items' => "{$product->name} is not available",
                     ]);
                 }
                 if ($product->stock < $line['quantity']) {
                     throw ValidationException::withMessages([
-                        'items' => "Stok {$product->name} hanya tersisa {$product->stock}",
+                        'items' => "Only {$product->stock} left in stock for {$product->name}",
                     ]);
                 }
 
@@ -284,7 +284,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'data' => new OrderResource($order),
-            'message' => 'Pesanan berhasil dibuat',
+            'message' => 'Order placed successfully',
         ], 201);
     }
 
