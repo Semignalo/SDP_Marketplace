@@ -196,12 +196,12 @@ class PaymentController extends Controller
 
             // Logged-in user — kirim ke email akun
             if ($order->user_id) {
-                $order->loadMissing('user');
-                if ($order->user?->email) {
-                    Mail::to($order->user->email)->send(new PaymentConfirmation($order));
+                $order->loadMissing('customer');
+                if ($order->customer?->email) {
+                    Mail::to($order->customer->email)->send(new PaymentConfirmation($order));
                     Log::info('Payment confirmation email sent to user', [
                         'order' => $order->order_number,
-                        'email' => $order->user->email,
+                        'email' => $order->customer->email,
                     ]);
                 }
             }
