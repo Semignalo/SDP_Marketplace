@@ -6,6 +6,7 @@ import CartDrawer from './components/CartDrawer'
 import ReferralCapture from './components/ReferralCapture'
 import ProtectedRoute from './components/ProtectedRoute'
 import MobileBottomNav from './components/MobileBottomNav'
+import SupportFab from './components/SupportFab'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Spinner } from './components/ui'
 import { useAuthStore } from './stores/useAuthStore'
@@ -210,6 +211,7 @@ function AppShell() {
       <MobileMenuDrawer />
       <CartDrawer />
       <MobileBottomNav />
+      <SupportFab />
     </div>
   )
 }

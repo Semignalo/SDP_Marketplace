@@ -138,6 +138,51 @@ class RajaOngkirService
     }
 
     /**
+     * Cari destination_id terbaik untuk teks kota legacy (tanpa kecamatan) + postal code opsional.
+     * Dipakai untuk backfill data lama yang cuma punya nama kota, bukan hasil pilihan user via search box.
+     *
+     * Strategi: cari kandidat kecamatan dalam kota yang cocok, lalu kalau ada yang zip-nya sama
+     * dengan $postalCode itu match 'exact'. Kalau tidak, ambil kandidat pertama sebagai 'approximate'.
+     *
+     * @return array{id:int, confidence:string}|null
+     */
+    public function findDestinationId(string $cityText, ?string $postalCode = null): ?array
+    {
+        $needle = $this->normalizeCityName($cityText);
+        if ($needle === '') {
+            return null;
+        }
+
+        $results = $this->rawSearch($cityText, 100);
+
+        $candidates = collect($results)->filter(
+            fn ($d) => $this->normalizeCityName($d['city']) === $needle
+        )->values();
+
+        if ($candidates->isEmpty()) {
+            return null;
+        }
+
+        if ($postalCode) {
+            $exact = $candidates->first(fn ($d) => str_ends_with(trim($d['name']), $postalCode));
+            if ($exact) {
+                return ['id' => $exact['id'], 'confidence' => 'exact'];
+            }
+        }
+
+        return ['id' => $candidates->first()['id'], 'confidence' => 'approximate'];
+    }
+
+    private function normalizeCityName(string $city): string
+    {
+        $city = strtoupper(trim($city));
+        $city = preg_replace('/^KOTA\s+ADM\.?\s+/', '', $city);
+        $city = preg_replace('/^(KOTA|KABUPATEN|KAB\.)\s+/', '', $city);
+
+        return trim($city);
+    }
+
+    /**
      * Hitung ongkos kirim via Komerce/RajaOngkir API.
      * Otomatis loop semua kurir yang didukung.
      *

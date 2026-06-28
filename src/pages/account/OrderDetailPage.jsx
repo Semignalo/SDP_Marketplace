@@ -97,35 +97,8 @@ export default function OrderDetailPage() {
         <ArrowLeft size={14} /> Back
       </Link>
 
-      <Card padding="md">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
-            <p className="eyebrow">Order Number</p>
-            <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
-            <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-            <Link
-              to={`/akun/pesanan/${orderNumber}/invoice`}
-              target="_blank"
-              className="inline-flex items-center gap-1.5 text-xs border border-line rounded px-3 py-1.5 text-ink-muted hover:text-ink hover:bg-paper-soft transition-colors"
-            >
-              <FileText size={12} /> Invoice
-            </Link>
-          </div>
-        </div>
-      </Card>
-
-      {isAwaitingQuote && (
-        <Card padding="md" className="bg-paper-soft">
-          <p className="text-sm font-semibold text-ink">We're calculating your international shipping</p>
-          <p className="text-sm text-ink-muted mt-1">Our team is preparing a shipping quote for this order. You'll get an email once it's ready, and you can pay right from this page.</p>
-        </Card>
-      )}
-
       {isPending && (
-        <Card padding="none" className="overflow-hidden">
+        <Card padding="none" className="overflow-hidden sticky top-16 z-20 shadow-md">
           <div className="bg-paper-soft px-5 py-4 border-b border-line flex items-center justify-between flex-wrap gap-2">
             <div>
               <p className="eyebrow">Amount Due</p>
@@ -165,6 +138,33 @@ export default function OrderDetailPage() {
               </button>
             </div>
           </div>
+        </Card>
+      )}
+
+      <Card padding="md">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <p className="eyebrow">Order Number</p>
+            <p className="text-base font-semibold text-ink tabular-nums">{order.order_number}</p>
+            <p className="text-xs text-ink-muted mt-1">{formatDateTime(order.created_at)}</p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+            <Link
+              to={`/akun/pesanan/${orderNumber}/invoice`}
+              target="_blank"
+              className="inline-flex items-center gap-1.5 text-xs border border-line rounded px-3 py-1.5 text-ink-muted hover:text-ink hover:bg-paper-soft transition-colors"
+            >
+              <FileText size={12} /> Invoice
+            </Link>
+          </div>
+        </div>
+      </Card>
+
+      {isAwaitingQuote && (
+        <Card padding="md" className="bg-paper-soft">
+          <p className="text-sm font-semibold text-ink">We're calculating your international shipping</p>
+          <p className="text-sm text-ink-muted mt-1">Our team is preparing a shipping quote for this order. You'll get an email once it's ready, and you can pay right from this page.</p>
         </Card>
       )}
 

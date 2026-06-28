@@ -52,6 +52,13 @@ class OrderController extends Controller
         ]);
     }
 
+    public function pendingCount(): JsonResponse
+    {
+        $count = Order::whereIn('status', ['awaiting_quote', 'processing'])->count();
+
+        return response()->json(['data' => ['count' => $count]]);
+    }
+
     public function show(string $orderNumber): JsonResponse
     {
         $order = Order::where('order_number', $orderNumber)
@@ -91,15 +98,19 @@ class OrderController extends Controller
         $data = $request->validate([
             'status' => 'required|in:pending_payment,awaiting_quote,processing,shipped,completed,cancelled',
             'admin_notes' => 'nullable|string|max:500',
+            'shipping_courier' => 'nullable|string|max:100',
+            'tracking_number' => 'nullable|string|max:100',
         ]);
 
         $order = Order::where('order_number', $orderNumber)->firstOrFail();
 
-        $allowed = self::ALLOWED_TRANSITIONS[$order->status] ?? [];
-        if (! in_array($data['status'], $allowed)) {
-            return response()->json([
-                'message' => "Can't change status from '{$order->status}' to '{$data['status']}'.",
-            ], 422);
+        if ($data['status'] !== $order->status) {
+            $allowed = self::ALLOWED_TRANSITIONS[$order->status] ?? [];
+            if (! in_array($data['status'], $allowed)) {
+                return response()->json([
+                    'message' => "Can't change status from '{$order->status}' to '{$data['status']}'.",
+                ], 422);
+            }
         }
 
         $wasShipped = $order->status === 'shipped';
@@ -108,6 +119,12 @@ class OrderController extends Controller
             $payload = ['status' => $data['status']];
             if (array_key_exists('admin_notes', $data)) {
                 $payload['admin_notes'] = $data['admin_notes'];
+            }
+            if (array_key_exists('shipping_courier', $data)) {
+                $payload['shipping_courier'] = $data['shipping_courier'];
+            }
+            if (array_key_exists('tracking_number', $data)) {
+                $payload['tracking_number'] = $data['tracking_number'];
             }
             if (in_array($data['status'], ['processing', 'shipped', 'completed']) && ! $order->payment_verified_at) {
                 $payload['payment_verified_at'] = now();

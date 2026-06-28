@@ -161,6 +161,14 @@ export function useAdminOrders(params = {}) {
   })
 }
 
+export function useAdminPendingOrdersCount() {
+  return useQuery({
+    queryKey: ['admin', 'orders', 'pending-count'],
+    queryFn: async () => (await api.get('/admin/orders/pending-count')).data.data,
+    refetchInterval: 20000,
+  })
+}
+
 export function useAdminOrder(orderNumber) {
   return useQuery({
     queryKey: ['admin', 'order', orderNumber],

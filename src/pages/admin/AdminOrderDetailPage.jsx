@@ -24,6 +24,8 @@ export default function AdminOrderDetailPage() {
 
   const [status, setStatus] = useState('')
   const [notes, setNotes] = useState('')
+  const [courier, setCourier] = useState('')
+  const [trackingNumber, setTrackingNumber] = useState('')
   const [quoteCost, setQuoteCost] = useState('')
   const [quoteCourier, setQuoteCourier] = useState('')
 
@@ -44,10 +46,14 @@ export default function AdminOrderDetailPage() {
         orderNumber,
         status: currentStatus,
         admin_notes: notes || order.admin_notes || '',
+        shipping_courier: courier || order.shipping_courier || '',
+        tracking_number: trackingNumber || order.tracking_number || '',
       })
       toast.success('Order status updated')
       setStatus('')
       setNotes('')
+      setCourier('')
+      setTrackingNumber('')
     } catch (err) {
       toast.error(extractErrorMessage(err))
     }
@@ -109,6 +115,11 @@ export default function AdminOrderDetailPage() {
           <Textarea label="Admin Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={order.admin_notes || 'E.g.: manually verified BCA transfer'} />
           <Button onClick={handleSave} loading={update.isPending}>Save</Button>
         </div>
+        <div className="grid sm:grid-cols-2 gap-3 mt-3">
+          <Input label="Courier" value={courier} onChange={(e) => setCourier(e.target.value)} placeholder={order.shipping_courier || 'E.g.: JNE, J&T, SiCepat'} />
+          <Input label="Tracking Number" value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} placeholder={order.tracking_number || 'Resi number'} />
+        </div>
+        <p className="text-2xs text-ink-muted mt-2">Courier & tracking number are visible to the customer on their order page. Click Save above to apply.</p>
         {order.payment_verified_at && (
           <p className="mt-3 text-xs text-state-success">✓ Payment verified: {formatDateTime(order.payment_verified_at)}</p>
         )}

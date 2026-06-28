@@ -4,12 +4,15 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
+import { useAdminPendingOrdersCount } from '../hooks/useAdmin'
 import { cn } from '../lib/utils'
 
 export default function AdminLayout() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
+  const { data: pendingOrders } = useAdminPendingOrdersCount()
+  const pendingCount = pendingOrders?.count || 0
 
   const items = [
     { to: '/admin', icon: <LayoutDashboard size={16} />, label: 'Dashboard', end: true },
@@ -17,7 +20,7 @@ export default function AdminLayout() {
     { to: '/admin/vendors', icon: <Store size={16} />, label: 'Vendors' },
     { to: '/admin/categories', icon: <FolderTree size={16} />, label: 'Categories' },
     { to: '/admin/products', icon: <Package size={16} />, label: 'Products' },
-    { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Orders' },
+    { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Orders', badge: pendingCount },
     { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Commissions' },
     { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Withdrawals' },
     { to: '/admin/settings', icon: <SettingsIcon size={16} />, label: 'Settings' },
@@ -59,7 +62,12 @@ export default function AdminLayout() {
                   }
                 >
                   <span className="shrink-0">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {!!item.badge && (
+                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-state-danger text-white text-[10px] font-bold leading-none">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
                 </NavLink>
               ))}
               <button
