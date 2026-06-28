@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Mail\OrderConfirmation;
+use App\Mail\PaymentConfirmation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -313,9 +314,37 @@ class GuestCheckoutController extends Controller
                     $commission->update(['status' => 'cancelled']);
                 }
             });
+
+            if ($next === 'processing') {
+                $this->sendPaymentConfirmationEmail($order->fresh());
+            }
         }
 
         return response()->json(['data' => ['status' => $order->fresh()->status]]);
+    }
+
+    /**
+     * Kirim email PaymentConfirmation (invoice PDF) ke guest setelah pembayaran terverifikasi.
+     * Best-effort: error di-log tapi tidak throw.
+     */
+    private function sendPaymentConfirmationEmail(Order $order): void
+    {
+        if (! $order->guest_email) {
+            return;
+        }
+
+        try {
+            Mail::to($order->guest_email)->send(new PaymentConfirmation($order));
+            Log::info('Payment confirmation email sent to guest', [
+                'order' => $order->order_number,
+                'email' => $order->guest_email,
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Payment confirmation email failed', [
+                'order' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
