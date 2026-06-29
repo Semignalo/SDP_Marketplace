@@ -18,6 +18,7 @@ class Address extends Model
         'address',
         'city',
         'city_id',
+        'province',
         'country',
         'postal_code',
         'is_default',

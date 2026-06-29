@@ -30,6 +30,7 @@ class Order extends Model
         'shipping_name',
         'shipping_address',
         'shipping_country',
+        'shipping_province',
         'shipping_phone',
         'shipping_courier',
         'tracking_number',

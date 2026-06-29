@@ -14,7 +14,7 @@ import {
 import { saveGuestToken } from '../lib/guestOrders'
 import { loadSnap } from '../lib/snap'
 import { Button, Card, Input, Textarea, Spinner } from '../components/ui'
-import { Stepper, StepCard, CourierOption, Row, FALLBACK_COURIER_RATES } from '../components/checkout/shared'
+import { Stepper, StepCard, Row } from '../components/checkout/shared'
 import CitySearchInput from '../components/CitySearchInput'
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
@@ -34,6 +34,7 @@ const EMPTY_FORM = {
   address: '',
   city: '',
   city_id: null,
+  province: '',
   country: 'Indonesia',
   postal_code: '',
 }
@@ -59,9 +60,8 @@ export default function GuestCheckoutPage() {
   const [step, setStep] = useState(1)
   const [form, setForm] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
-  const [selectedCourier, setSelectedCourier] = useState(null)
   const [notes, setNotes] = useState('')
-  const [shippingRates, setShippingRates] = useState(null)
+  const [shippingQuote, setShippingQuote] = useState(null)
   const formatPrice = useFormatPrice()
 
   // Referral
@@ -89,11 +89,12 @@ export default function GuestCheckoutPage() {
   const tierDiscount = calcTierDiscount(subtotal, guestTier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
   const isFreeShipping = subtotalAfterTier >= freeShippingMin
-  const courierCost = Number(selectedCourier?.cost || 0)
-  const shippingCost = calcShippingCost(courierCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
+  const requiresManual = !!shippingQuote?.requires_manual
+  const flatCost = Number(shippingQuote?.cost || 0)
+  const shippingCost = requiresManual ? 0 : calcShippingCost(flatCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
   const isIntl = isInternational(form)
-  const finalTotal = isIntl ? subtotalAfterTier : total
+  const finalTotal = (isIntl || requiresManual) ? subtotalAfterTier : total
 
   const checkReferral = async (code) => {
     const c = (code || '').trim()
@@ -139,22 +140,16 @@ export default function GuestCheckoutPage() {
     return Object.keys(e).length === 0
   }
 
-  const fetchShippingRates = () => {
-    setShippingRates(null)
-    setSelectedCourier(null)
+  const fetchShippingQuote = () => {
+    setShippingQuote(null)
     shippingRatesMut.mutate(
       {
-        city_id: form.city_id,
+        province: form.province,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       },
       {
-        onSuccess: (data) => setShippingRates(data),
-        onError: () => {
-          setShippingRates({
-            rates: FALLBACK_COURIER_RATES,
-            is_fallback: true,
-          })
-        },
+        onSuccess: (data) => setShippingQuote(data),
+        onError: () => toast.error('Could not calculate shipping. Try again.'),
       },
     )
   }
@@ -173,13 +168,13 @@ export default function GuestCheckoutPage() {
         setStep(3)
         return
       }
-      fetchShippingRates()
+      fetchShippingQuote()
       setStep(2)
       return
     }
     if (step === 2) {
-      if (!selectedCourier) {
-        toast.error('Choose a courier first')
+      if (!shippingQuote) {
+        toast.error('Please wait for the shipping fee to load')
         return
       }
       setStep(3)
@@ -190,8 +185,8 @@ export default function GuestCheckoutPage() {
     [form.address, `${form.city}`, form.postal_code].filter(Boolean).join(', ').trim()
 
   const handleSubmit = async () => {
-    if (!isIntl && !selectedCourier) {
-      toast.error('Choose a courier first')
+    if (!isIntl && !shippingQuote) {
+      toast.error('Please wait for the shipping fee to load')
       return
     }
     // Don't send an invalid referral code
@@ -204,12 +199,7 @@ export default function GuestCheckoutPage() {
         shipping_phone: form.phone.trim(),
         shipping_address: fullAddress(),
         shipping_country: form.country,
-        ...(isIntl
-          ? {}
-          : {
-              courier_name: `${selectedCourier.name} ${selectedCourier.service}`,
-              shipping_cost: selectedCourier.cost || 0,
-            }),
+        province: isIntl ? null : form.province,
         referral_code: refToSend,
         notes,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
@@ -223,7 +213,7 @@ export default function GuestCheckoutPage() {
 
       const trackUrl = `/lacak/${order.order_number}?token=${encodeURIComponent(token)}`
 
-      if (isIntl) {
+      if (order.status === 'awaiting_quote') {
         toast.success("Order placed! We'll email your shipping quote soon.")
         navigate(trackUrl, { replace: true })
         return
@@ -286,7 +276,7 @@ export default function GuestCheckoutPage() {
                   {isInternational(form) ? (
                     <Input label="City / State *" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} error={errors.city} />
                   ) : (
-                    <CitySearchInput value={form.city} cityId={form.city_id} onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })} error={errors.city} />
+                    <CitySearchInput value={form.city} cityId={form.city_id} onChange={({ name, id, province }) => setForm({ ...form, city: name, city_id: id, province })} error={errors.city} />
                   )}
                   <div className="sm:col-span-2">
                     <Input label="Address details *" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Street, RT/RW, district, sub-district" error={errors.address} />
@@ -338,35 +328,36 @@ export default function GuestCheckoutPage() {
           )}
 
           {step === 2 && (
-            <StepCard title="Choose a Courier">
+            <StepCard title="Shipping Fee">
               {shippingRatesMut.isPending ? (
                 <div className="py-8 flex flex-col items-center gap-3">
                   <Spinner />
                   <p className="text-sm text-ink-muted">Calculating shipping...</p>
                 </div>
+              ) : requiresManual ? (
+                <div className="px-4 py-3 bg-state-warning/10 rounded text-xs text-state-warning">
+                  Your area needs manual shipping coordination. We'll contact you and email a quote before payment is required.
+                </div>
               ) : (
                 <>
-                  {shippingRates?.is_fallback && (
-                    <div className="mb-4 px-4 py-3 bg-state-warning/10 rounded text-xs text-state-warning">
-                      Estimated shipping rates (live rate check is temporarily unavailable).
-                    </div>
-                  )}
                   {isFreeShipping && (
                     <div className="mb-4 px-4 py-3 bg-paper-soft rounded text-xs text-ink-soft shadow-card">
-                      Free shipping is active — still pick a courier to ship your order.
+                      Free shipping is active for this order.
                     </div>
                   )}
-                  <div className="space-y-2">
-                    {(shippingRates?.rates || []).map((c) => (
-                      <CourierOption
-                        key={c.code}
-                        courier={c}
-                        selected={selectedCourier?.code === c.code}
-                        freeShipping={isFreeShipping}
-                        freeMax={freeShippingMax}
-                        onSelect={() => setSelectedCourier(c)}
-                      />
-                    ))}
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-line bg-paper-soft">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{shippingQuote?.zone_label || 'Flat shipping rate'}</p>
+                      <p className="text-xs text-ink-muted mt-0.5">Courier assigned by our team after checkout</p>
+                    </div>
+                    <div className="text-right">
+                      {shippingCost === 0
+                        ? <span className="text-sm font-semibold text-state-success">FREE</span>
+                        : <span className="text-sm font-semibold tabular-nums">{formatPrice(shippingCost)}</span>}
+                      {isFreeShipping && shippingCost > 0 && (
+                        <p className="text-2xs text-ink-faint line-through">{formatPrice(flatCost)}</p>
+                      )}
+                    </div>
                   </div>
                 </>
               )}
@@ -381,14 +372,14 @@ export default function GuestCheckoutPage() {
                 <p className="text-sm text-ink-soft mt-2">{fullAddress()}</p>
               </StepCard>
 
-              <StepCard title="Courier" action={!isIntl && <button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
-                {isIntl ? (
-                  <p className="text-sm text-ink-muted">International shipping — to be quoted by our team after checkout.</p>
-                ) : selectedCourier && (
+              <StepCard title="Shipping Fee" action={!isIntl && <button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+                {isIntl || requiresManual ? (
+                  <p className="text-sm text-ink-muted">To be quoted by our team after checkout.</p>
+                ) : (
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">{selectedCourier.name} — {selectedCourier.service}</p>
-                      <p className="text-xs text-ink-muted mt-0.5">Estimated {selectedCourier.eta}</p>
+                      <p className="text-sm font-semibold">{shippingQuote?.zone_label}</p>
+                      <p className="text-xs text-ink-muted mt-0.5">Courier assigned by our team</p>
                     </div>
                     <p className="text-sm font-semibold tabular-nums">
                       {shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatPrice(shippingCost)}
@@ -456,11 +447,11 @@ export default function GuestCheckoutPage() {
               )}
               <Row
                 label="Shipping"
-                value={isIntl
+                value={isIntl || requiresManual
                   ? <span className="text-ink-muted text-xs">To be quoted</span>
-                  : selectedCourier
+                  : shippingQuote
                     ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatPrice(shippingCost))
-                    : <span className="text-ink-muted text-xs">Pick a courier</span>}
+                    : <span className="text-ink-muted text-xs">Calculating...</span>}
               />
               {referralStatus === 'valid' && (
                 <Row label="Referral" value={<span className="text-state-success text-xs">{referralCode}</span>} />

@@ -25,6 +25,7 @@ class OrderResource extends JsonResource
             'shipping_address' => $this->shipping_address,
             'shipping_phone' => $this->shipping_phone,
             'shipping_country' => $this->shipping_country,
+            'shipping_province' => $this->shipping_province,
             'shipping_courier' => $this->shipping_courier,
             'tracking_number' => $this->tracking_number,
             'tracking_url' => CourierTracking::url($this->shipping_courier),

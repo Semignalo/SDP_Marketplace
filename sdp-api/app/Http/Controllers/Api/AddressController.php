@@ -73,6 +73,7 @@ class AddressController extends Controller
             'address' => 'required|string|max:500',
             'city' => 'required|string|max:255',
             'city_id' => 'nullable|integer',
+            'province' => 'nullable|string|max:120',
             'country' => 'nullable|string|max:60',
             'postal_code' => 'nullable|string|max:10',
             'is_default' => 'nullable|boolean',

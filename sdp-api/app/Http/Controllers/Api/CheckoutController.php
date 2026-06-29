@@ -12,7 +12,7 @@ use App\Models\Product;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
-use App\Services\RajaOngkirService;
+use App\Services\ShippingZoneService;
 use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,9 +43,9 @@ class CheckoutController extends Controller
     }
 
     /**
-     * POST /api/checkout/shipping-rates — hitung ongkos kirim via RajaOngkir.
+     * POST /api/checkout/shipping-rates — hitung ongkir flat berdasarkan zona provinsi tujuan.
      */
-    public function shippingRates(Request $request, RajaOngkirService $rajaOngkir): JsonResponse
+    public function shippingRates(Request $request, ShippingZoneService $zoneService): JsonResponse
     {
         $data = $request->validate([
             'address_id' => 'required|integer|exists:addresses,id',
@@ -61,18 +61,6 @@ class CheckoutController extends Controller
             return response()->json(['message' => 'Address not found'], 404);
         }
 
-        if (! $address->city_id) {
-            return response()->json([
-                'message' => 'This address is missing a RajaOngkir city ID. Please update the address.',
-                'data'    => [
-                    'rates'             => RajaOngkirService::fallbackRates(),
-                    'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
-                    'total_weight'      => 300,
-                    'is_fallback'       => true,
-                ],
-            ], 422);
-        }
-
         // Hitung total berat
         $productIds = collect($data['items'])->pluck('product_id')->all();
         $products   = Product::whereIn('id', $productIds)->get()->keyBy('id');
@@ -86,28 +74,16 @@ class CheckoutController extends Controller
         }
         $totalWeight = max(1, $totalWeight);
 
-        $originCityId = (int) Setting::get('rajaongkir_origin_city_id', 23);
-        $destCityId   = (int) $address->city_id;
-
-        $rates   = [];
-        $hasLive = false;
-
-        if ($rajaOngkir->isConfigured()) {
-            $rates   = $rajaOngkir->getCost($originCityId, $destCityId, $totalWeight);
-            $hasLive = count($rates) > 0;
-        }
-
-        if (! $hasLive) {
-            $rates = RajaOngkirService::fallbackRates();
-        }
+        $quote = $zoneService->quote($address->province, $totalWeight);
 
         return response()->json([
             'data' => [
-                'rates'             => $rates,
+                'cost'              => $quote['cost'],
+                'requires_manual'   => $quote['requires_manual'],
+                'zone_label'        => $quote['label'],
                 'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
                 'free_shipping_max' => (float) Setting::get('shipping_max_free', 20000),
                 'total_weight'      => $totalWeight,
-                'is_fallback'       => ! $hasLive,
             ],
         ]);
     }
@@ -115,7 +91,7 @@ class CheckoutController extends Controller
     /**
      * POST /api/orders — create order from cart.
      */
-    public function store(Request $request, TierService $tierService): JsonResponse
+    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService): JsonResponse
     {
         $data = $request->validate([
             'address_id' => 'nullable|integer|exists:addresses,id',
@@ -123,9 +99,6 @@ class CheckoutController extends Controller
             'shipping_phone' => 'required_without:address_id|string|max:30',
             'shipping_address' => 'required_without:address_id|string|max:500',
             'shipping_country' => 'nullable|string|max:60',
-            'courier' => 'nullable|string',
-            'courier_name' => 'nullable|string|max:100',
-            'shipping_cost' => 'nullable|integer|min:0',
             'notes' => 'nullable|string|max:500',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
@@ -141,26 +114,21 @@ class CheckoutController extends Controller
             $shippingPhone = $address->phone;
             $shippingAddress = trim("{$address->address}, {$address->city} {$address->postal_code}");
             $shippingCountry = $address->country ?: 'Indonesia';
+            $shippingProvince = $address->province;
         } else {
             $shippingName = $data['shipping_name'];
             $shippingPhone = $data['shipping_phone'];
             $shippingAddress = $data['shipping_address'];
             $shippingCountry = $data['shipping_country'] ?? 'Indonesia';
+            $shippingProvince = null;
         }
 
         $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
 
-        if (! $isInternational && empty($data['courier_name'])) {
-            throw ValidationException::withMessages(['courier_name' => 'Please select a courier']);
-        }
-
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
         $resellerId = $user->referrer_id ?: null;
 
-        $requestedShippingCost = (int) ($data['shipping_cost'] ?? 0);
-        $courierName = $isInternational ? null : $data['courier_name'];
-
-        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $isInternational, $courierName, $requestedShippingCost, $resellerId, $tierService) {
+        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $shippingProvince, $isInternational, $resellerId, $tierService, $zoneService) {
             // Lock & verify products.
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
@@ -169,6 +137,7 @@ class CheckoutController extends Controller
                 ->keyBy('id');
 
             $subtotalBeforeDiscount = 0;
+            $totalWeight = 0;
             $orderItemsData = [];
 
             foreach ($data['items'] as $line) {
@@ -192,6 +161,7 @@ class CheckoutController extends Controller
                 $unitPrice = (float) $product->price;
                 $lineSubtotal = $unitPrice * $line['quantity'];
                 $subtotalBeforeDiscount += $lineSubtotal;
+                $totalWeight += ($product->weight_gram ?? 300) * $line['quantity'];
 
                 $orderItemsData[] = [
                     'product' => $product,
@@ -207,8 +177,12 @@ class CheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            if ($isInternational) {
-                // Ongkir internasional belum bisa dihitung otomatis (luar jangkauan RajaOngkir) —
+            // Ongkir dihitung server-side dari zona provinsi tujuan (flat rate), bukan input client.
+            $zoneQuote = $isInternational ? null : $zoneService->quote($shippingProvince, max(1, $totalWeight));
+            $needsManualQuote = $isInternational || ($zoneQuote['requires_manual'] ?? false);
+
+            if ($needsManualQuote) {
+                // Ongkir belum bisa dihitung otomatis (internasional, atau zona Maluku/Papua) —
                 // order ditahan di awaiting_quote sampai admin input ongkir manual.
                 $shippingCost = 0;
                 $total = $subtotal;
@@ -216,9 +190,10 @@ class CheckoutController extends Controller
                 // Shipping cost — subsidi max Rp shipping_max_free jika subtotal >= threshold.
                 $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
                 $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
+                $flatCost = (int) $zoneQuote['cost'];
                 $shippingCost = $subtotal >= $shippingMinFree
-                    ? max(0, $requestedShippingCost - $shippingMaxFree)
-                    : $requestedShippingCost;
+                    ? max(0, $flatCost - $shippingMaxFree)
+                    : $flatCost;
                 $total = $subtotal + $shippingCost;
             }
 
@@ -226,7 +201,7 @@ class CheckoutController extends Controller
                 'user_id' => $user->id,
                 'reseller_id' => $resellerId,
                 'order_number' => $this->generateOrderNumber(),
-                'status' => $isInternational ? 'awaiting_quote' : 'pending_payment',
+                'status' => $needsManualQuote ? 'awaiting_quote' : 'pending_payment',
                 'subtotal' => $subtotal,
                 'shipping_cost' => $shippingCost,
                 'tier_discount' => $tierDiscount,
@@ -236,7 +211,8 @@ class CheckoutController extends Controller
                 'shipping_phone' => $shippingPhone,
                 'shipping_address' => $shippingAddress,
                 'shipping_country' => $shippingCountry,
-                'shipping_courier' => $courierName,
+                'shipping_province' => $shippingProvince,
+                'shipping_courier' => null,
             ]);
 
             foreach ($orderItemsData as $line) {

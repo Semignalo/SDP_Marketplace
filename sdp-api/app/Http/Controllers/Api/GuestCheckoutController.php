@@ -13,7 +13,7 @@ use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\MidtransService;
-use App\Services\RajaOngkirService;
+use App\Services\ShippingZoneService;
 use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,12 +28,12 @@ use Throwable;
 class GuestCheckoutController extends Controller
 {
     /**
-     * POST /api/guest/shipping-rates — ongkir guest berdasarkan city_id langsung.
+     * POST /api/guest/shipping-rates — ongkir flat berdasarkan provinsi tujuan.
      */
-    public function shippingRates(Request $request, RajaOngkirService $rajaOngkir): JsonResponse
+    public function shippingRates(Request $request, ShippingZoneService $zoneService): JsonResponse
     {
         $data = $request->validate([
-            'city_id'            => 'required|integer',
+            'province'           => 'nullable|string|max:120',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1',
@@ -51,28 +51,16 @@ class GuestCheckoutController extends Controller
         }
         $totalWeight = max(1, $totalWeight);
 
-        $originCityId = (int) Setting::get('rajaongkir_origin_city_id', 23);
-        $destCityId   = (int) $data['city_id'];
-
-        $rates   = [];
-        $hasLive = false;
-
-        if ($rajaOngkir->isConfigured()) {
-            $rates   = $rajaOngkir->getCost($originCityId, $destCityId, $totalWeight);
-            $hasLive = count($rates) > 0;
-        }
-
-        if (! $hasLive) {
-            $rates = RajaOngkirService::fallbackRates();
-        }
+        $quote = $zoneService->quote($data['province'] ?? null, $totalWeight);
 
         return response()->json([
             'data' => [
-                'rates'             => $rates,
+                'cost'              => $quote['cost'],
+                'requires_manual'   => $quote['requires_manual'],
+                'zone_label'        => $quote['label'],
                 'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
                 'free_shipping_max' => (float) Setting::get('shipping_max_free', 20000),
                 'total_weight'      => $totalWeight,
-                'is_fallback'       => ! $hasLive,
             ],
         ]);
     }
@@ -80,7 +68,7 @@ class GuestCheckoutController extends Controller
     /**
      * POST /api/guest/orders — buat order guest (tanpa login).
      */
-    public function store(Request $request, TierService $tierService): JsonResponse
+    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService): JsonResponse
     {
         $data = $request->validate([
             'guest_email'      => 'required|email|max:160',
@@ -88,8 +76,7 @@ class GuestCheckoutController extends Controller
             'shipping_phone'   => 'required|string|max:30',
             'shipping_address' => 'required|string|max:500',
             'shipping_country' => 'nullable|string|max:60',
-            'courier_name'     => 'nullable|string|max:100',
-            'shipping_cost'    => 'nullable|integer|min:0',
+            'province'         => 'nullable|string|max:120',
             'referral_code'    => 'nullable|string|max:40',
             'notes'            => 'nullable|string|max:500',
             'items'              => 'required|array|min:1',
@@ -99,10 +86,7 @@ class GuestCheckoutController extends Controller
 
         $shippingCountry = $data['shipping_country'] ?? 'Indonesia';
         $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
-
-        if (! $isInternational && empty($data['courier_name'])) {
-            throw ValidationException::withMessages(['courier_name' => 'Please select a courier']);
-        }
+        $shippingProvince = $isInternational ? null : ($data['province'] ?? null);
 
         // Resolve referral code → reseller (opsional). Kalau diisi tapi invalid → error.
         $referrer = null;
@@ -116,10 +100,7 @@ class GuestCheckoutController extends Controller
             }
         }
 
-        $requestedShippingCost = (int) ($data['shipping_cost'] ?? 0);
-        $courierName = $isInternational ? null : $data['courier_name'];
-
-        $order = DB::transaction(function () use ($data, $shippingCountry, $isInternational, $courierName, $referrer, $referralCode, $requestedShippingCost, $tierService) {
+        $order = DB::transaction(function () use ($data, $shippingCountry, $shippingProvince, $isInternational, $referrer, $referralCode, $tierService, $zoneService) {
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
                 ->lockForUpdate()
@@ -127,6 +108,7 @@ class GuestCheckoutController extends Controller
                 ->keyBy('id');
 
             $subtotalBeforeDiscount = 0;
+            $totalWeight = 0;
             $orderItemsData = [];
 
             foreach ($data['items'] as $line) {
@@ -144,6 +126,7 @@ class GuestCheckoutController extends Controller
                 $unitPrice = (float) $product->price;
                 $lineSubtotal = $unitPrice * $line['quantity'];
                 $subtotalBeforeDiscount += $lineSubtotal;
+                $totalWeight += ($product->weight_gram ?? 300) * $line['quantity'];
 
                 $orderItemsData[] = [
                     'product'  => $product,
@@ -159,15 +142,19 @@ class GuestCheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            if ($isInternational) {
+            $zoneQuote = $isInternational ? null : $zoneService->quote($shippingProvince, max(1, $totalWeight));
+            $needsManualQuote = $isInternational || ($zoneQuote['requires_manual'] ?? false);
+
+            if ($needsManualQuote) {
                 $shippingCost = 0;
                 $total = $subtotal;
             } else {
                 $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
                 $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
+                $flatCost = (int) $zoneQuote['cost'];
                 $shippingCost = $subtotal >= $shippingMinFree
-                    ? max(0, $requestedShippingCost - $shippingMaxFree)
-                    : $requestedShippingCost;
+                    ? max(0, $flatCost - $shippingMaxFree)
+                    : $flatCost;
                 $total = $subtotal + $shippingCost;
             }
 
@@ -178,7 +165,7 @@ class GuestCheckoutController extends Controller
                 'reseller_id'      => $referrer?->id,
                 'referral_code'    => $referrer ? $referralCode : null,
                 'order_number'     => $this->generateOrderNumber(),
-                'status'           => $isInternational ? 'awaiting_quote' : 'pending_payment',
+                'status'           => $needsManualQuote ? 'awaiting_quote' : 'pending_payment',
                 'subtotal'         => $subtotal,
                 'shipping_cost'    => $shippingCost,
                 'tier_discount'    => $tierDiscount,
@@ -188,7 +175,8 @@ class GuestCheckoutController extends Controller
                 'shipping_phone'   => $data['shipping_phone'],
                 'shipping_address' => $data['shipping_address'],
                 'shipping_country' => $shippingCountry,
-                'shipping_courier' => $courierName,
+                'shipping_province' => $shippingProvince,
+                'shipping_courier' => null,
             ]);
 
             foreach ($orderItemsData as $line) {

@@ -53,7 +53,7 @@ export default function CitySearchInput({ value, cityId, onChange, error }) {
     setDistrictSearch(district.name)
     setDebouncedDistrictSearch(district.name)
     setOpen(false)
-    onChange({ name: fullName, id: district.id })
+    onChange({ name: fullName, id: district.id, province: district.province || selectedCity.province || '' })
   }
 
   const handleChangeCity = () => {
@@ -61,13 +61,13 @@ export default function CitySearchInput({ value, cityId, onChange, error }) {
     setSelectedCity(null)
     setCitySearch('')
     setDebouncedCitySearch('')
-    onChange({ name: '', id: null })
+    onChange({ name: '', id: null, province: '' })
   }
 
   const handleCityInput = (e) => {
     setCitySearch(e.target.value)
     setOpen(true)
-    if (!e.target.value) onChange({ name: '', id: null })
+    if (!e.target.value) onChange({ name: '', id: null, province: '' })
   }
 
   return (

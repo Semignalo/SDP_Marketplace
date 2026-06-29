@@ -127,8 +127,12 @@ export default function AdminOrderDetailPage() {
 
       {order.status === 'awaiting_quote' && (
         <section className="bg-paper border border-line rounded-lg p-5">
-          <h3 className="eyebrow mb-1">Send International Shipping Quote</h3>
-          <p className="text-xs text-ink-muted mb-4">This order ships to {order.shipping_country || 'abroad'} — enter the shipping cost manually to unlock payment.</p>
+          <h3 className="eyebrow mb-1">Send Shipping Quote</h3>
+          <p className="text-xs text-ink-muted mb-4">
+            {order.shipping_country && order.shipping_country !== 'Indonesia'
+              ? `This order ships to ${order.shipping_country} — enter the shipping cost manually to unlock payment.`
+              : 'This order needs manual shipping coordination — enter the shipping cost manually to unlock payment.'}
+          </p>
           <div className="grid sm:grid-cols-[1fr_2fr_auto] gap-3 items-end">
             <Input label="Shipping Cost (Rp)" type="number" min="0" value={quoteCost} onChange={(e) => setQuoteCost(e.target.value)} placeholder="150000" />
             <Input label="Courier (optional)" value={quoteCourier} onChange={(e) => setQuoteCourier(e.target.value)} placeholder="DHL Express / FedEx" />
@@ -150,6 +154,7 @@ export default function AdminOrderDetailPage() {
           </div>
           <p className="text-xs text-ink-muted mt-0.5">{order.shipping_phone}</p>
           <p className="text-sm text-ink-soft mt-2 leading-relaxed">{order.shipping_address}</p>
+          {order.shipping_province && <p className="text-2xs text-ink-faint mt-1">{order.shipping_province}</p>}
         </InfoCard>
         <InfoCard icon={<Truck size={16} />} title="Shipping">
           <p className="text-sm">{order.shipping_courier || 'Not selected yet'}</p>

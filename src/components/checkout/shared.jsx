@@ -1,15 +1,6 @@
 import { Check } from 'lucide-react'
 import { Card } from '../ui'
 import { cn } from '../../lib/utils'
-import { useFormatPrice } from '../../hooks/useCurrency'
-
-// Unified fallback courier rates — used when the live shipping-rate check is unavailable.
-export const FALLBACK_COURIER_RATES = [
-  { code: 'jne_reg', name: 'JNE', service: 'REG', cost: 18000, eta: '2-3 days' },
-  { code: 'jne_yes', name: 'JNE', service: 'YES', cost: 28000, eta: '1 day' },
-  { code: 'tiki_reg', name: 'TIKI', service: 'REG', cost: 16000, eta: '2-3 days' },
-  { code: 'pos_kilat', name: 'POS', service: 'Kilat', cost: 12000, eta: '3-5 days' },
-]
 
 export function Stepper({ steps, current, onJump }) {
   return (
@@ -56,37 +47,6 @@ export function StepCard({ title, action, children }) {
       </div>
       {children}
     </Card>
-  )
-}
-
-export function CourierOption({ courier, selected, freeShipping, freeMax, onSelect }) {
-  const formatPrice = useFormatPrice()
-  const afterSubsidy = freeShipping ? Math.max(0, courier.cost - freeMax) : courier.cost
-  const isFullyFree = freeShipping && afterSubsidy === 0
-
-  return (
-    <label
-      className={cn(
-        'flex items-center gap-3 p-4 rounded-lg cursor-pointer border transition',
-        selected ? 'border-ink bg-paper-soft shadow-card' : 'border-transparent shadow-card hover:shadow-hover',
-      )}
-    >
-      <input type="radio" name="courier" checked={selected} onChange={onSelect} className="h-4 w-4 accent-ink" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-semibold text-ink">{courier.name} — {courier.service}</p>
-          <div className="text-right">
-            {isFullyFree
-              ? <span className="text-sm font-semibold text-state-success">FREE</span>
-              : <span className="text-sm font-semibold tabular-nums">{formatPrice(afterSubsidy)}</span>}
-            {freeShipping && !isFullyFree && (
-              <p className="text-2xs text-ink-faint line-through">{formatPrice(courier.cost)}</p>
-            )}
-          </div>
-        </div>
-        <p className="text-xs text-ink-muted mt-0.5">Estimated {courier.eta}</p>
-      </div>
-    </label>
   )
 }
 

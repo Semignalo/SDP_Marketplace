@@ -21,6 +21,12 @@ class SettingController extends Controller
         'shipping_max_free' => ['Maximum Shipping Subsidy (Rp)', 'number', 'Shipping'],
         'shipping_flat_default' => ['Default Flat Shipping Rate (Rp)', 'number', 'Shipping'],
         'rajaongkir_origin_city_id' => ['Origin City (RajaOngkir ID)', 'number', 'Shipping'],
+        'shipping_zone1_rate_1kg' => ['Jawa & Bali — 0-1kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone1_rate_3kg' => ['Jawa & Bali — 1-3kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone1_rate_max' => ['Jawa & Bali — >3kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone2_rate_1kg' => ['Luar Jawa — 0-1kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone2_rate_3kg' => ['Luar Jawa — 1-3kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone2_rate_max' => ['Luar Jawa — >3kg (Rp)', 'number', 'Shipping'],
         'announce_bar_1' => ['Announce Bar 1', 'text', 'Appearance'],
         'announce_bar_2' => ['Announce Bar 2', 'text', 'Appearance'],
         'whatsapp_cs' => ['WhatsApp CS', 'text', 'Contact'],
@@ -51,6 +57,16 @@ class SettingController extends Controller
         'tier_max_discount_rupiah' => ['Max Tier Discount per Order (Rp, 0 = no limit)', 'number', 'Tier Loyalty'],
     ];
 
+    // Default value yang dipakai backend kalau setting belum diisi admin (lihat ShippingZoneService).
+    private const DEFAULTS = [
+        'shipping_zone1_rate_1kg' => '20000',
+        'shipping_zone1_rate_3kg' => '27000',
+        'shipping_zone1_rate_max' => '35000',
+        'shipping_zone2_rate_1kg' => '35000',
+        'shipping_zone2_rate_3kg' => '45000',
+        'shipping_zone2_rate_max' => '60000',
+    ];
+
     public function index(): JsonResponse
     {
         $stored = Setting::pluck('value', 'key');
@@ -59,7 +75,7 @@ class SettingController extends Controller
         foreach (self::KNOWN_KEYS as $key => [$label, $type, $group]) {
             $data[] = [
                 'key' => $key,
-                'value' => $stored[$key] ?? '',
+                'value' => $stored[$key] ?? self::DEFAULTS[$key] ?? '',
                 'label' => $label,
                 'type' => $type,
                 'group' => $group,

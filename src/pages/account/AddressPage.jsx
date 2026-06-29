@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   address: '',
   city: '',
   city_id: null,
+  province: '',
   country: 'Indonesia',
   postal_code: '',
   is_default: false,
@@ -50,6 +51,7 @@ export default function AddressPage() {
       address: addr.address,
       city: addr.city,
       city_id: addr.city_id || null,
+      province: addr.province || '',
       country: addr.country || 'Indonesia',
       postal_code: addr.postal_code || '',
       is_default: addr.is_default,
@@ -175,7 +177,7 @@ export default function AddressPage() {
             <CitySearchInput
               value={form.city}
               cityId={form.city_id}
-              onChange={({ name, id }) => setForm({ ...form, city: name, city_id: id })}
+              onChange={({ name, id, province }) => setForm({ ...form, city: name, city_id: id, province })}
               error={errors.city}
             />
           )}
