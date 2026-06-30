@@ -5,31 +5,34 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class EmailVerificationController extends Controller
 {
-    public function verify(Request $request, int $id, string $hash): RedirectResponse
+    /**
+     * Dipanggil oleh frontend via AJAX (bukan navigasi langsung dari link email) —
+     * lihat App\Notifications\VerifyEmail. Mengembalikan JSON status, bukan redirect,
+     * supaya browser tidak pernah lompat antar-domain saat user klik link verifikasi.
+     */
+    public function verify(Request $request, int $id, string $hash): JsonResponse
     {
-        $frontend = rtrim(config('app.frontend_url'), '/');
         $user = User::find($id);
 
         if (!$user || !hash_equals($hash, sha1($user->getEmailForVerification()))) {
-            return redirect($frontend . '/email-verified?status=invalid');
+            return response()->json(['status' => 'invalid']);
         }
 
         if (!$request->hasValidSignature()) {
-            return redirect($frontend . '/email-verified?status=expired');
+            return response()->json(['status' => 'expired']);
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect($frontend . '/email-verified?status=already');
+            return response()->json(['status' => 'already']);
         }
 
         $user->markEmailAsVerified();
 
-        return redirect($frontend . '/email-verified?status=success');
+        return response()->json(['status' => 'success']);
     }
 
     public function resend(Request $request): JsonResponse

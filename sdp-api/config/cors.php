@@ -23,6 +23,7 @@ return [
         'http://127.0.0.1:5174',
         'http://localhost:5174',
         'http://192.168.1.51:5174',
+        'https://marketplace.starincofficial.id',
     ],
 
     'allowed_origins_patterns' => [],

@@ -28,6 +28,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
+const VerifyEmailLinkPage = lazy(() => import('./pages/VerifyEmailLinkPage'))
 const EmailVerifiedPage = lazy(() => import('./pages/EmailVerifiedPage'))
 const StyleGuidePage = lazy(() => import('./pages/StyleGuidePage'))
 const ReferralRedirectPage = lazy(() => import('./pages/ReferralRedirectPage'))
@@ -140,6 +141,7 @@ function AppShell() {
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/email-verify" element={<VerifyEmailLinkPage />} />
               <Route path="/email-verified" element={<EmailVerifiedPage />} />
               {import.meta.env.DEV && <Route path="/style-guide" element={<StyleGuidePage />} />}
               <Route path="/r/:code" element={<ReferralRedirectPage />} />
