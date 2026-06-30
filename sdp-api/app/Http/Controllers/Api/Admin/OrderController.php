@@ -8,9 +8,12 @@ use App\Mail\OrderShipped;
 use App\Mail\ShippingQuoteReady;
 use App\Models\Order;
 use App\Models\ResellerCommission;
+use App\Models\Setting;
 use App\Support\CourierTracking;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -81,6 +84,26 @@ class OrderController extends Controller
             ->firstOrFail();
 
         return response()->json(['data' => new OrderResource($order)]);
+    }
+
+    /**
+     * GET /api/admin/orders/{orderNumber}/delivery-note — download PDF surat jalan (admin only, on-demand).
+     */
+    public function deliveryNote(string $orderNumber): Response
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['items.vendor'])
+            ->firstOrFail();
+
+        $settings = Setting::whereIn('key', ['site_name', 'site_tagline'])->pluck('value', 'key');
+
+        $pdf = Pdf::loadView('pdf.delivery-note', [
+            'order' => $order,
+            'siteName' => $settings['site_name'] ?? 'SDP Marketplace',
+            'siteTagline' => $settings['site_tagline'] ?? 'Multi-Brand Marketplace',
+        ]);
+
+        return $pdf->download("Surat-Jalan-{$order->order_number}.pdf");
     }
 
     // Transisi status yang diizinkan. Status terminal (completed, cancelled) tidak bisa diubah lagi.

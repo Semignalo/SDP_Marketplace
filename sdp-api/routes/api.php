@@ -154,6 +154,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/orders/pending-count', [\App\Http\Controllers\Api\Admin\OrderController::class, 'pendingCount']);
     Route::get('/orders/{orderNumber}', [\App\Http\Controllers\Api\Admin\OrderController::class, 'show']);
     Route::get('/orders/{orderNumber}/invoice', [\App\Http\Controllers\Api\Admin\OrderController::class, 'invoice']);
+    Route::get('/orders/{orderNumber}/delivery-note', [\App\Http\Controllers\Api\Admin\OrderController::class, 'deliveryNote']);
     Route::put('/orders/{orderNumber}/status', [\App\Http\Controllers\Api\Admin\OrderController::class, 'updateStatus']);
     Route::post('/orders/{orderNumber}/shipping-quote', [\App\Http\Controllers\Api\Admin\OrderController::class, 'setShippingQuote']);
 

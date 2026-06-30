@@ -4,7 +4,7 @@ import { ArrowLeft, FileText, MapPin, Truck, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote } from '../../hooks/useAdmin'
 import { Badge, Button, Input, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
-import { extractErrorMessage } from '../../lib/api'
+import { api, extractErrorMessage } from '../../lib/api'
 import { formatRupiah, formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
@@ -28,6 +28,7 @@ export default function AdminOrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState('')
   const [quoteCost, setQuoteCost] = useState('')
   const [quoteCourier, setQuoteCourier] = useState('')
+  const [downloadingNote, setDownloadingNote] = useState(false)
 
   if (isLoading) {
     return <div className="space-y-4"><Skeleton className="h-6 w-1/3" /><Skeleton className="h-40 w-full" /></div>
@@ -56,6 +57,25 @@ export default function AdminOrderDetailPage() {
       setTrackingNumber('')
     } catch (err) {
       toast.error(extractErrorMessage(err))
+    }
+  }
+
+  const handleDownloadDeliveryNote = async () => {
+    setDownloadingNote(true)
+    try {
+      const res = await api.get(`/admin/orders/${orderNumber}/delivery-note`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `Surat-Jalan-${orderNumber}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    } finally {
+      setDownloadingNote(false)
     }
   }
 
@@ -96,6 +116,9 @@ export default function AdminOrderDetailPage() {
             <Link to={`/admin/pesanan/${orderNumber}/invoice`} target="_blank">
               <Button variant="outline" leadingIcon={<FileText size={14} />}>Print Invoice</Button>
             </Link>
+            <Button variant="outline" leadingIcon={<Truck size={14} />} onClick={handleDownloadDeliveryNote} loading={downloadingNote}>
+              Download Surat Jalan
+            </Button>
           </div>
         </div>
       </div>
