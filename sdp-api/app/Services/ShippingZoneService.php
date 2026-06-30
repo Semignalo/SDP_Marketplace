@@ -85,7 +85,9 @@ class ShippingZoneService
         $cost = match (true) {
             $weightGram <= 1000 => $tiers['1kg'],
             $weightGram <= 3000 => $tiers['3kg'],
-            default => $tiers['max'],
+            // Di atas 3kg: rate max + kelipatan per kg untuk sisa berat, biar order
+            // berat banget (mis. bulk order) gak disubsidi flat rate yang sama dengan 3.1kg.
+            default => $tiers['max'] + ((int) ceil(($weightGram - 3000) / 1000)) * $tiers['per_kg'],
         };
 
         return [
@@ -125,6 +127,7 @@ class ShippingZoneService
                 '1kg' => (int) Setting::get('shipping_zone1_rate_1kg', 20000),
                 '3kg' => (int) Setting::get('shipping_zone1_rate_3kg', 27000),
                 'max' => (int) Setting::get('shipping_zone1_rate_max', 35000),
+                'per_kg' => (int) Setting::get('shipping_zone1_rate_per_kg', 5000),
             ];
         }
 
@@ -132,6 +135,7 @@ class ShippingZoneService
             '1kg' => (int) Setting::get('shipping_zone2_rate_1kg', 35000),
             '3kg' => (int) Setting::get('shipping_zone2_rate_3kg', 45000),
             'max' => (int) Setting::get('shipping_zone2_rate_max', 60000),
+            'per_kg' => (int) Setting::get('shipping_zone2_rate_per_kg', 8000),
         ];
     }
 }

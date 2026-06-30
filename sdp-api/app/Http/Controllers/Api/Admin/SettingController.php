@@ -23,10 +23,12 @@ class SettingController extends Controller
         'rajaongkir_origin_city_id' => ['Origin City (RajaOngkir ID)', 'number', 'Shipping'],
         'shipping_zone1_rate_1kg' => ['Jawa & Bali — 0-1kg (Rp)', 'number', 'Shipping'],
         'shipping_zone1_rate_3kg' => ['Jawa & Bali — 1-3kg (Rp)', 'number', 'Shipping'],
-        'shipping_zone1_rate_max' => ['Jawa & Bali — >3kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone1_rate_max' => ['Jawa & Bali — >3kg (Rp, base)', 'number', 'Shipping'],
+        'shipping_zone1_rate_per_kg' => ['Jawa & Bali — Tambahan per kg di atas 3kg (Rp)', 'number', 'Shipping'],
         'shipping_zone2_rate_1kg' => ['Luar Jawa — 0-1kg (Rp)', 'number', 'Shipping'],
         'shipping_zone2_rate_3kg' => ['Luar Jawa — 1-3kg (Rp)', 'number', 'Shipping'],
-        'shipping_zone2_rate_max' => ['Luar Jawa — >3kg (Rp)', 'number', 'Shipping'],
+        'shipping_zone2_rate_max' => ['Luar Jawa — >3kg (Rp, base)', 'number', 'Shipping'],
+        'shipping_zone2_rate_per_kg' => ['Luar Jawa — Tambahan per kg di atas 3kg (Rp)', 'number', 'Shipping'],
         'announce_bar_1' => ['Announce Bar 1', 'text', 'Appearance'],
         'announce_bar_2' => ['Announce Bar 2', 'text', 'Appearance'],
         'whatsapp_cs' => ['WhatsApp CS', 'text', 'Contact'],
@@ -62,9 +64,11 @@ class SettingController extends Controller
         'shipping_zone1_rate_1kg' => '20000',
         'shipping_zone1_rate_3kg' => '27000',
         'shipping_zone1_rate_max' => '35000',
+        'shipping_zone1_rate_per_kg' => '5000',
         'shipping_zone2_rate_1kg' => '35000',
         'shipping_zone2_rate_3kg' => '45000',
         'shipping_zone2_rate_max' => '60000',
+        'shipping_zone2_rate_per_kg' => '8000',
     ];
 
     public function index(): JsonResponse
