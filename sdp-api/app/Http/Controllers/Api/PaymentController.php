@@ -137,14 +137,14 @@ class PaymentController extends Controller
             return response()->json(['message' => 'OK', 'order_status' => $order->status]);
         }
 
-        $wasAlreadyProcessing = $order->status !== 'pending_payment';
+        $wasAlreadyProcessing = in_array($order->status, ['processing', 'shipped', 'completed']);
 
         DB::transaction(function () use ($order, $next, $result) {
-            // Idempotent: skip kalau status sudah lebih maju dari pending_payment
-            if ($next === 'processing' && $order->status !== 'pending_payment') {
+            // Idempotent: processing hanya di-skip kalau sudah shipped/completed (bayar sukses tetap menang atas cancelled)
+            if ($next === 'processing' && in_array($order->status, ['processing', 'shipped', 'completed'])) {
                 return;
             }
-            if ($next === 'cancelled' && in_array($order->status, ['completed', 'shipped'])) {
+            if ($next === 'cancelled' && in_array($order->status, ['completed', 'shipped', 'processing'])) {
                 return;
             }
 

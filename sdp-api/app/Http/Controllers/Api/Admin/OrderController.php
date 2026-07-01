@@ -113,7 +113,7 @@ class OrderController extends Controller
         'processing'      => ['shipped', 'cancelled'],
         'shipped'         => ['completed', 'cancelled'],
         'completed'       => [],
-        'cancelled'       => [],
+        'cancelled'       => ['processing'],
     ];
 
     public function updateStatus(Request $request, string $orderNumber): JsonResponse
