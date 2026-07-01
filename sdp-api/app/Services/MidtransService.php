@@ -58,8 +58,19 @@ class MidtransService
             ];
         }
 
-        // Sanity check: gross_amount harus sama dengan SUM(item.price * qty)
+        // Midtrans requires gross_amount == SUM(item_details). If there's a tier
+        // discount, we add a negative line item so the totals reconcile.
         $grossAmount = (int) round($order->total);
+        $itemSum = array_sum(array_map(fn ($i) => $i['price'] * $i['quantity'], $itemDetails));
+        $discountDiff = $itemSum - $grossAmount;
+        if ($discountDiff > 0) {
+            $itemDetails[] = [
+                'id' => 'DISCOUNT',
+                'price' => -$discountDiff,
+                'quantity' => 1,
+                'name' => 'Loyalty Discount',
+            ];
+        }
 
         $buildPayload = fn (string $midtransOrderId) => [
             'transaction_details' => [
