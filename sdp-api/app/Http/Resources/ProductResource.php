@@ -16,6 +16,9 @@ class ProductResource extends JsonResource
             'description' => $this->when($this->shouldShowDescription($request), $this->description),
             'price' => (float) $this->price,
             'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
+            'member_price' => $this->calculateMemberPrice($request),
+            'tier_discount_percent' => (float) $request->attributes->get('tier_discount_percent', 0),
+            'tier_name' => $request->attributes->get('tier_name'),
             'stock' => $this->stock,
             'sku' => $this->sku,
             'status' => $this->status,
@@ -33,5 +36,21 @@ class ProductResource extends JsonResource
     protected function shouldShowDescription(Request $request): bool
     {
         return $request->routeIs('products.show');
+    }
+
+    /**
+     * Harga akhir setelah diskon tier (Silver minimum untuk guest, lihat TierService::resolveTierForUser()).
+     * Cap tier_max_discount_rupiah TIDAK disimulasikan di sini — itu berlaku per-order saat checkout,
+     * bukan per-produk saat browsing, jadi total belanja besar bisa sedikit lebih tinggi dari SUM harga
+     * member per-item yang ditampilkan di listing.
+     */
+    protected function calculateMemberPrice(Request $request): float
+    {
+        $percent = (float) $request->attributes->get('tier_discount_percent', 0);
+        if ($percent <= 0) {
+            return (float) $this->price;
+        }
+
+        return round(((float) $this->price) * (1 - $percent / 100), 2);
     }
 }

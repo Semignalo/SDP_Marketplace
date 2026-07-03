@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,7 @@ class CheckoutController extends Controller
      */
     public function options(TierService $tierService): JsonResponse
     {
-        $guestTier = $tierService->tierByLevel(2);
+        $guestTier = $tierService->tierByLevel(3);
 
         return response()->json([
             'data' => [
@@ -234,7 +235,7 @@ class CheckoutController extends Controller
 
             // Reseller commission (status pending sampai order completed).
             if ($resellerId) {
-                $rate = (float) Setting::get('reseller_commission_rate', 10);
+                $rate = (float) Setting::get('reseller_commission_rate', 5);
                 ResellerCommission::create([
                     'reseller_id' => $resellerId,
                     'order_id' => $order->id,
@@ -248,6 +249,14 @@ class CheckoutController extends Controller
 
             return $order->load(['items.product.images', 'items.vendor']);
         });
+
+        ActivityLogger::log(
+            'checkout',
+            "Order {$order->order_number} dibuat oleh {$user->name}, total Rp " . number_format($order->total, 0, ',', '.'),
+            $user,
+            $order,
+            ['total' => $order->total, 'status' => $order->status]
+        );
 
         try {
             Mail::to($user->email)->send(new OrderConfirmation($order));

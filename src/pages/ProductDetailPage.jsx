@@ -111,7 +111,13 @@ export default function ProductDetailPage() {
           )}
 
           <div className="mt-4">
-            <PriceLabel price={price} oldPrice={product.compare_at_price} size="lg" />
+            <PriceLabel
+              price={price}
+              oldPrice={product.compare_at_price}
+              memberPrice={product.member_price}
+              tierName={product.tier_name}
+              size="lg"
+            />
           </div>
 
           <div className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
@@ -204,7 +210,13 @@ export default function ProductDetailPage() {
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-paper border-t border-line shadow-hover">
         <div className="container-page py-3 flex items-center gap-3">
           <div className="min-w-0">
-            <PriceLabel price={price} oldPrice={product.compare_at_price} size="md" />
+            <PriceLabel
+              price={price}
+              oldPrice={product.compare_at_price}
+              memberPrice={product.member_price}
+              tierName={product.tier_name}
+              size="md"
+            />
           </div>
           <div className="ml-auto flex items-center gap-2 shrink-0">
             <Button

@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, ArrowDownToLine, Settings as SettingsIcon, LogOut, ExternalLink,
+  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, ArrowDownToLine, Settings as SettingsIcon, LogOut, ExternalLink, ScrollText,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -24,6 +24,7 @@ export default function AdminLayout() {
     { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Commissions' },
     { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Withdrawals' },
     { to: '/admin/settings', icon: <SettingsIcon size={16} />, label: 'Settings' },
+    { to: '/admin/activity-logs', icon: <ScrollText size={16} />, label: 'Activity Logs' },
   ]
 
   const handleLogout = async () => {

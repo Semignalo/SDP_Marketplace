@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,8 @@ class ProductController extends Controller
             return $product->fresh(['images', 'category:id,name,slug', 'vendor:id,name,slug']);
         });
 
+        ActivityLogger::log('admin.product', "Admin {$request->user()->name} menambah produk \"{$product->name}\"", $request->user(), $product);
+
         return response()->json(['data' => new ProductResource($product), 'message' => 'Product added successfully'], 201);
     }
 
@@ -96,6 +99,8 @@ class ProductController extends Controller
             'images.*'    => 'url|max:500',
         ]);
 
+        $before = $product->only(['price', 'stock', 'status']);
+
         DB::transaction(function () use ($data, $product) {
             $payload = collect($data)->except('images')->toArray();
             if (! empty($data['slug']) && $data['slug'] !== $product->slug) {
@@ -110,6 +115,15 @@ class ProductController extends Controller
         });
 
         $product->load(['images', 'category:id,name,slug', 'vendor:id,name,slug']);
+
+        ActivityLogger::log(
+            'admin.product',
+            "Admin {$request->user()->name} mengubah produk \"{$product->name}\"",
+            $request->user(),
+            $product,
+            ['before' => $before, 'after' => $product->only(['price', 'stock', 'status'])]
+        );
+
         return response()->json(['data' => new ProductResource($product), 'message' => 'Product updated']);
     }
 
@@ -118,13 +132,26 @@ class ProductController extends Controller
         $data = $request->validate([
             'status' => 'required|in:active,draft,archived',
         ]);
+        $before = $product->status;
         $product->update($data);
+
+        ActivityLogger::log(
+            'admin.product',
+            "Admin {$request->user()->name} mengubah status produk \"{$product->name}\" dari {$before} ke {$product->status}",
+            $request->user(),
+            $product
+        );
+
         return response()->json(['message' => 'Product status updated', 'data' => ['id' => $product->id, 'status' => $product->status]]);
     }
 
-    public function destroy(Product $product): JsonResponse
+    public function destroy(Request $request, Product $product): JsonResponse
     {
+        $name = $product->name;
         $product->delete();
+
+        ActivityLogger::log('admin.product', "Admin {$request->user()->name} menghapus produk \"{$name}\"", $request->user());
+
         return response()->json(['message' => 'Product deleted']);
     }
 

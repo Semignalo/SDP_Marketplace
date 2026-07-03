@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Search, Pencil, Trash2, Users, Network } from 'lucide-react'
+import { Search, Pencil, Trash2, Users, Network, Crown } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, useAdminVendors, useAdminUserNetwork } from '../../hooks/useAdmin'
+import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, useAdminVendors, useAdminUserNetwork, useSetTierOverride, useAdminSettings } from '../../hooks/useAdmin'
 import { Input, Select, Badge, Modal, Button, Pagination, Skeleton, EmptyState } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
 import { formatDate } from '../../lib/utils'
@@ -22,8 +22,15 @@ export default function AdminUsersPage() {
 
   const { data, isLoading } = useAdminUsers(params)
   const { data: vendors } = useAdminVendors({ per_page: 100 })
+  const { data: settings } = useAdminSettings()
   const update = useUpdateAdminUser()
   const del = useDeleteAdminUser()
+  const setTierOverride = useSetTierOverride()
+
+  const tierOptions = useMemo(() => {
+    const byKey = Object.fromEntries((settings || []).map((s) => [s.key, s.value]))
+    return [1, 2, 3, 4, 5].map((level) => ({ level, name: byKey[`tier_${level}_name`] || `Tier ${level}` }))
+  }, [settings])
 
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY_EDIT)
@@ -31,6 +38,52 @@ export default function AdminUsersPage() {
   const [deleting, setDeleting] = useState(null)
   const [networkUser, setNetworkUser] = useState(null)
   const { data: networkData, isLoading: networkLoading } = useAdminUserNetwork(networkUser?.id)
+
+  const [tierUser, setTierUser] = useState(null)
+  const [tierForm, setTierForm] = useState({ tier_override: '', tier_override_expires_at: '' })
+  const [tierErrors, setTierErrors] = useState({})
+
+  const openTierOverride = (u) => {
+    setTierUser(u)
+    setTierForm({
+      tier_override: u.tier_override != null ? String(u.tier_override) : '',
+      tier_override_expires_at: u.tier_override_expires_at ? u.tier_override_expires_at.slice(0, 10) : '',
+    })
+    setTierErrors({})
+  }
+
+  const handleSaveTierOverride = async (e) => {
+    e?.preventDefault?.()
+    setTierErrors({})
+    try {
+      await setTierOverride.mutateAsync({
+        id: tierUser.id,
+        tier_override: tierForm.tier_override ? Number(tierForm.tier_override) : null,
+        tier_override_expires_at: tierForm.tier_override_expires_at || null,
+      })
+      toast.success('Tier override updated')
+      setTierUser(null)
+    } catch (err) {
+      const apiErrors = err.response?.data?.errors
+      if (apiErrors) {
+        const map = {}
+        Object.entries(apiErrors).forEach(([k, v]) => (map[k] = Array.isArray(v) ? v[0] : v))
+        setTierErrors(map)
+      } else {
+        toast.error(extractErrorMessage(err))
+      }
+    }
+  }
+
+  const handleClearTierOverride = async () => {
+    try {
+      await setTierOverride.mutateAsync({ id: tierUser.id, tier_override: null, tier_override_expires_at: null })
+      toast.success('Tier override cleared')
+      setTierUser(null)
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
 
   const openEdit = (u) => {
     setEditing(u)
@@ -128,10 +181,26 @@ export default function AdminUsersPage() {
                     <p className="text-xs text-ink-muted">{u.email}</p>
                     {u.reseller_code && <p className="text-2xs text-ink-muted tabular-nums mt-0.5">Code: {u.reseller_code}</p>}
                   </div>
-                  <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
+                  <div className="mt-2 md:mt-0 flex items-center gap-1.5 flex-wrap">
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    {u.effective_tier?.name && (
+                      <Badge variant={u.tier_override != null ? 'warning' : 'neutral'} title={u.tier_override != null ? 'Tier di-override admin' : 'Tier hasil kalkulasi spending'}>
+                        {u.effective_tier.name}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0">{u.vendor?.name || '—'}</p>
                   <p className="text-xs text-ink-muted mt-1 md:mt-0 tabular-nums">{formatDate(u.created_at)}</p>
                   <div className="flex items-center gap-1 mt-3 md:mt-0 md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => openTierOverride(u)}
+                      title="Set tier override"
+                      aria-label={`Set tier override: ${u.name}`}
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
+                      <Crown size={14} />
+                    </button>
                     <button
                       type="button"
                       onClick={() => setNetworkUser(u)}
@@ -233,6 +302,51 @@ export default function AdminUsersPage() {
             </ul>
           </>
         )}
+      </Modal>
+
+      <Modal
+        open={!!tierUser}
+        onClose={() => setTierUser(null)}
+        title={`Tier Override: ${tierUser?.name || ''}`}
+        size="sm"
+        footer={
+          <div className="flex justify-between gap-2">
+            <Button variant="outline" onClick={handleClearTierOverride} loading={setTierOverride.isPending} disabled={tierUser?.tier_override == null}>
+              Clear Override
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setTierUser(null)}>Cancel</Button>
+              <Button onClick={handleSaveTierOverride} loading={setTierOverride.isPending}>Save</Button>
+            </div>
+          </div>
+        }
+      >
+        <form onSubmit={handleSaveTierOverride} className="space-y-4">
+          <p className="text-xs text-ink-muted">
+            Kalau di-set, tier user ini dikunci ke level yang dipilih — mengabaikan kalkulasi otomatis dari
+            riwayat belanja. Kosongkan tanggal berakhir untuk override permanen.
+          </p>
+          <Select
+            label="Force Tier"
+            value={tierForm.tier_override}
+            onChange={(e) => setTierForm({ ...tierForm, tier_override: e.target.value })}
+            error={tierErrors.tier_override}
+          >
+            <option value="">Tidak ada override (kalkulasi otomatis)</option>
+            {tierOptions.map((t) => (
+              <option key={t.level} value={t.level}>{t.name}</option>
+            ))}
+          </Select>
+          {tierForm.tier_override && (
+            <Input
+              label="Berakhir pada (opsional)"
+              type="date"
+              value={tierForm.tier_override_expires_at}
+              onChange={(e) => setTierForm({ ...tierForm, tier_override_expires_at: e.target.value })}
+              error={tierErrors.tier_override_expires_at}
+            />
+          )}
+        </form>
       </Modal>
 
       <Modal

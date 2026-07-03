@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\CommissionWithdrawal;
 use App\Models\ResellerCommission;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,13 @@ class ResellerWithdrawalController extends Controller
                 ...$data,
             ]);
         });
+
+        ActivityLogger::log(
+            'withdrawal',
+            "{$request->user()->name} mengajukan penarikan komisi Rp " . number_format($withdrawal->amount, 0, ',', '.'),
+            $request->user(),
+            $withdrawal
+        );
 
         return response()->json(['message' => 'Withdrawal request submitted successfully.', 'data' => $this->shape($withdrawal)], 201);
     }

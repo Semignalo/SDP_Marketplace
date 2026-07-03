@@ -15,7 +15,7 @@ class MigrateLegacyCommissions extends Command
 
     public function handle(): int
     {
-        $rate = (float) Setting::get('reseller_commission_rate', 10);
+        $rate = (float) Setting::get('reseller_commission_rate', 5);
 
         $orders = Order::whereNotNull('reseller_id')->get();
 

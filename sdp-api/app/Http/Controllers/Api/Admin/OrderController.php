@@ -9,6 +9,7 @@ use App\Mail\ShippingQuoteReady;
 use App\Models\Order;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
+use App\Services\ActivityLogger;
 use App\Support\CourierTracking;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -168,6 +169,14 @@ class OrderController extends Controller
             $this->sendOrderShippedEmail($order->fresh());
         }
 
+        ActivityLogger::log(
+            'admin.order',
+            "Admin {$request->user()->name} mengubah status order {$order->order_number} jadi {$data['status']}",
+            $request->user(),
+            $order,
+            ['status' => $data['status']]
+        );
+
         return response()->json(['message' => 'Order status updated', 'data' => ['status' => $order->fresh()->status]]);
     }
 
@@ -197,6 +206,14 @@ class OrderController extends Controller
         });
 
         $this->sendShippingQuoteReadyEmail($order->fresh());
+
+        ActivityLogger::log(
+            'admin.order',
+            "Admin {$request->user()->name} set ongkir manual order {$order->order_number}: Rp " . number_format($data['shipping_cost'], 0, ',', '.'),
+            $request->user(),
+            $order,
+            $data
+        );
 
         return response()->json(['message' => 'Shipping quote sent', 'data' => $this->shape($order->fresh())]);
     }

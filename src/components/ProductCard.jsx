@@ -52,7 +52,13 @@ export default function ProductCard({ product }) {
       {product.rating_avg && (
         <StarRating value={product.rating_avg} count={product.reviews_count} className="mb-1" />
       )}
-      <PriceLabel price={price} oldPrice={product.compare_at_price} size="sm" />
+      <PriceLabel
+        price={price}
+        oldPrice={product.compare_at_price}
+        memberPrice={product.member_price}
+        tierName={product.tier_name}
+        size="sm"
+      />
     </Link>
   )
 }

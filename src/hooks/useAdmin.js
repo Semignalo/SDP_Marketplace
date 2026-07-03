@@ -16,6 +16,26 @@ export function useAdminRevenueChart(days = 30) {
   })
 }
 
+/* ───────── Activity Logs ───────── */
+export function useAdminActivityLogs(params = {}) {
+  return useQuery({
+    queryKey: ['admin', 'activity-logs', params],
+    queryFn: async () => (await api.get('/admin/activity-logs', { params })).data,
+  })
+}
+
+export async function exportAdminActivityLogs(params = {}) {
+  const res = await api.get('/admin/activity-logs/export', { params, responseType: 'blob' })
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `activity-logs-${Date.now()}.csv`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
 /* ───────── Users ───────── */
 export function useAdminUsers(params = {}) {
   return useQuery({
@@ -36,6 +56,14 @@ export function useDeleteAdminUser() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id) => { await api.delete(`/admin/users/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  })
+}
+
+export function useSetTierOverride() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => (await api.post(`/admin/users/${id}/tier-override`, payload)).data.data,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
 }

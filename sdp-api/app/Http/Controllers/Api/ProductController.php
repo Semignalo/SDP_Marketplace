@@ -6,12 +6,30 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\TierService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    public function __construct(private TierService $tierService)
+    {
+    }
+
+    /**
+     * Hitung tier efektif user (atau guest = Silver) SEKALI per-request dan simpan di request
+     * attributes, supaya ProductResource tidak perlu query ulang per-produk untuk harga member.
+     */
+    private function attachTierContext(Request $request): void
+    {
+        $tier = $this->tierService->resolveTierForUser($request->user('sanctum'));
+        $request->attributes->set('tier_discount_percent', (float) ($tier['discount'] ?? 0));
+        $request->attributes->set('tier_name', $tier['name'] ?? null);
+    }
+
     public function index(Request $request)
     {
+        $this->attachTierContext($request);
+
         $validated = $request->validate([
             'category' => 'nullable|string',
             'vendor' => 'nullable|string',
@@ -74,8 +92,10 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function show(string $slug)
+    public function show(string $slug, Request $request)
     {
+        $this->attachTierContext($request);
+
         $product = Product::query()
             ->active()
             ->with(['vendor', 'category', 'images'])

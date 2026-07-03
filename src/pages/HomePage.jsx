@@ -216,7 +216,9 @@ function PromoSection({ products }) {
   if (products.length < 3) return null
   const [big, ...rest] = products
   const small = rest.slice(0, 4)
-  const bigDiscount = calcDiscount(big.price, big.compare_at_price)
+  const bigFinalPrice = big.member_price ?? big.price
+  const bigReference = big.compare_at_price && Number(big.compare_at_price) > Number(big.price) ? big.compare_at_price : big.price
+  const bigDiscount = calcDiscount(bigFinalPrice, bigReference)
 
   return (
     <section className="section-md container-page">
@@ -252,12 +254,14 @@ function PromoSection({ products }) {
               <h3 className="text-white text-base md:text-lg font-semibold leading-snug mb-1.5 line-clamp-2">
                 {big.name}
               </h3>
-              <p className="text-white font-bold tabular-nums">{formatPrice(big.price)}</p>
+              <p className="text-white font-bold tabular-nums">{formatPrice(bigFinalPrice)}</p>
             </div>
           </Link>
 
           {small.map((p) => {
-            const pct = calcDiscount(p.price, p.compare_at_price)
+            const finalPrice = p.member_price ?? p.price
+            const reference = p.compare_at_price && Number(p.compare_at_price) > Number(p.price) ? p.compare_at_price : p.price
+            const pct = calcDiscount(finalPrice, reference)
             return (
               <Link
                 key={p.id}
@@ -277,7 +281,7 @@ function PromoSection({ products }) {
                 </div>
                 <div className="absolute inset-x-0 bottom-0 p-2.5">
                   <p className="text-white text-xs font-semibold leading-snug line-clamp-1">{p.name}</p>
-                  <p className="text-white text-xs font-bold tabular-nums">{formatPrice(p.price)}</p>
+                  <p className="text-white text-xs font-bold tabular-nums">{formatPrice(finalPrice)}</p>
                 </div>
               </Link>
             )

@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -36,6 +37,8 @@ class AuthController extends Controller
         ]);
 
         $user->sendEmailVerificationNotification();
+
+        ActivityLogger::log('auth', "User baru mendaftar: {$user->name} ({$user->email})", $user, $user);
 
         return response()->json([
             'message' => 'Account created. Check your email to verify it.',

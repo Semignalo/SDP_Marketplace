@@ -68,6 +68,7 @@ const AdminOrderDetailPage = lazy(() => import('./pages/admin/AdminOrderDetailPa
 const AdminCommissionsPage = lazy(() => import('./pages/admin/AdminCommissionsPage'))
 const AdminWithdrawalsPage = lazy(() => import('./pages/admin/AdminWithdrawalsPage'))
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
+const AdminActivityLogsPage = lazy(() => import('./pages/admin/AdminActivityLogsPage'))
 
 export default function App() {
   const fetchMe = useAuthStore((s) => s.fetchMe)
@@ -201,6 +202,7 @@ function AppShell() {
                 <Route path="commissions" element={<AdminCommissionsPage />} />
                 <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
+                <Route path="activity-logs" element={<AdminActivityLogsPage />} />
               </Route>
 
               <Route path="*" element={<NotFoundPage />} />

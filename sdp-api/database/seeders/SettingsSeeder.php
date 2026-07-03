@@ -10,7 +10,7 @@ class SettingsSeeder extends Seeder
     public function run(): void
     {
         $defaults = [
-            'reseller_commission_rate' => '10',
+            'reseller_commission_rate' => '5',
             'shipping_min_free' => '150000',
             'shipping_max_free' => '20000',
             'shipping_flat_default' => '15000',

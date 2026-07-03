@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ActivityLogger;
 use App\Services\MidtransService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
@@ -136,7 +137,7 @@ class GuestCheckoutController extends Controller
                 ];
             }
 
-            // Guest dapat diskon tier Silver (level 2) — sama dengan tier minimum user terdaftar.
+            // Guest dapat diskon tier Gold (level 3) — sama dengan tier minimum user terdaftar.
             $tierResult = $tierService->applyDiscount($subtotalBeforeDiscount, null);
             $subtotal = $tierResult['subtotal_after'];
             $tierDiscount = $tierResult['discount'];
@@ -198,7 +199,7 @@ class GuestCheckoutController extends Controller
 
             // Komisi reseller (pending sampai order completed).
             if ($referrer) {
-                $rate = (float) Setting::get('reseller_commission_rate', 10);
+                $rate = (float) Setting::get('reseller_commission_rate', 5);
                 ResellerCommission::create([
                     'reseller_id' => $referrer->id,
                     'order_id'    => $order->id,
@@ -214,6 +215,14 @@ class GuestCheckoutController extends Controller
 
             return $order->load(['items.product.images', 'items.vendor']);
         });
+
+        ActivityLogger::log(
+            'checkout',
+            "Order {$order->order_number} dibuat oleh guest ({$order->guest_email}), total Rp " . number_format($order->total, 0, ',', '.'),
+            null,
+            $order,
+            ['total' => $order->total, 'status' => $order->status, 'guest_email' => $order->guest_email]
+        );
 
         // Kirim email konfirmasi + link tracking (best-effort).
         try {

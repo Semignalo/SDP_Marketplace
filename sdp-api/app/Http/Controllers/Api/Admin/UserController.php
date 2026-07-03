@@ -4,12 +4,18 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\TierService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    public function __construct(private TierService $tierService)
+    {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $request->validate([
@@ -58,6 +64,8 @@ class UserController extends Controller
             return response()->json(['message' => 'A vendor must be selected for the vendor_admin role', 'errors' => ['vendor_id' => ['Please select a vendor']]], 422);
         }
 
+        $beforeRole = $user->role;
+
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         } else {
@@ -67,7 +75,44 @@ class UserController extends Controller
         $user->update($data);
         $user->load('vendor:id,name,slug');
 
+        if (isset($data['role']) && $data['role'] !== $beforeRole) {
+            ActivityLogger::log(
+                'admin.user',
+                "Admin {$request->user()->name} mengubah role {$user->name} dari {$beforeRole} ke {$user->role}",
+                $request->user(),
+                $user,
+                ['before_role' => $beforeRole, 'after_role' => $user->role]
+            );
+        }
+
         return response()->json(['message' => 'User updated', 'data' => $this->shape($user)]);
+    }
+
+    public function setTierOverride(Request $request, User $user): JsonResponse
+    {
+        $data = $request->validate([
+            'tier_override' => 'nullable|integer|min:1|max:5',
+            'tier_override_expires_at' => 'nullable|date|after:now',
+        ]);
+
+        $user->update([
+            'tier_override' => $data['tier_override'] ?? null,
+            'tier_override_expires_at' => ($data['tier_override'] ?? null) !== null
+                ? ($data['tier_override_expires_at'] ?? null)
+                : null,
+        ]);
+
+        ActivityLogger::log(
+            'admin.user',
+            ($data['tier_override'] ?? null) !== null
+                ? "Admin {$request->user()->name} meng-override tier {$user->name} ke level {$data['tier_override']}"
+                : "Admin {$request->user()->name} menghapus tier override {$user->name}",
+            $request->user(),
+            $user,
+            $data
+        );
+
+        return response()->json(['message' => 'Tier override updated', 'data' => $this->shape($user)]);
     }
 
     public function network(User $user): JsonResponse
@@ -95,7 +140,11 @@ class UserController extends Controller
         if ($user->id === $request->user()->id) {
             return response()->json(['message' => 'Tidak bisa hapus akun sendiri'], 422);
         }
+        $name = $user->name;
         $user->delete();
+
+        ActivityLogger::log('admin.user', "Admin {$request->user()->name} menghapus user \"{$name}\"", $request->user());
+
         return response()->json(['message' => 'User deleted']);
     }
 
@@ -110,6 +159,9 @@ class UserController extends Controller
             'reseller_code' => $u->reseller_code,
             'vendor_id' => $u->vendor_id,
             'vendor' => $u->vendor ? ['id' => $u->vendor->id, 'name' => $u->vendor->name, 'slug' => $u->vendor->slug] : null,
+            'tier_override' => $u->tier_override,
+            'tier_override_expires_at' => $u->tier_override_expires_at?->toIso8601String(),
+            'effective_tier' => $this->tierService->userTier($u),
             'created_at' => $u->created_at?->toIso8601String(),
         ];
     }

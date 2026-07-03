@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ResellerCommission;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -80,6 +81,14 @@ class CommissionController extends Controller
 
         $commission->update($payload);
 
+        ActivityLogger::log(
+            'admin.commission',
+            "Admin {$request->user()->name} mengubah status komisi #{$commission->id} jadi {$data['status']}",
+            $request->user(),
+            $commission,
+            $data
+        );
+
         return response()->json(['message' => 'Commission status updated', 'data' => $this->shape($commission->fresh(['reseller:id,name,email,reseller_code', 'customer:id,name', 'order:id,order_number,status']))]);
     }
 
@@ -93,6 +102,14 @@ class CommissionController extends Controller
         $count = ResellerCommission::whereIn('id', $data['commission_ids'])
             ->whereIn('status', ['pending', 'earned'])
             ->update(['status' => 'paid', 'paid_at' => now()]);
+
+        ActivityLogger::log(
+            'admin.commission',
+            "Admin {$request->user()->name} menandai {$count} komisi sebagai paid",
+            $request->user(),
+            null,
+            ['commission_ids' => $data['commission_ids'], 'count' => $count]
+        );
 
         return response()->json(['message' => "{$count} komisi ditandai paid"]);
     }

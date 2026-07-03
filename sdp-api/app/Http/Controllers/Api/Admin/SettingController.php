@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -97,11 +98,29 @@ class SettingController extends Controller
             'settings.*.value' => 'nullable|string|max:2000',
         ]);
 
+        $stored = Setting::pluck('value', 'key');
+        $changed = [];
+
         foreach ($data['settings'] as $row) {
             if (! array_key_exists($row['key'], self::KNOWN_KEYS)) {
                 continue;
             }
-            Setting::set($row['key'], (string) ($row['value'] ?? ''));
+            $newValue = (string) ($row['value'] ?? '');
+            $oldValue = $stored[$row['key']] ?? null;
+            if ($oldValue !== $newValue) {
+                $changed[$row['key']] = ['before' => $oldValue, 'after' => $newValue];
+            }
+            Setting::set($row['key'], $newValue);
+        }
+
+        if (! empty($changed)) {
+            ActivityLogger::log(
+                'admin.setting',
+                "Admin {$request->user()->name} mengubah pengaturan: " . implode(', ', array_keys($changed)),
+                $request->user(),
+                null,
+                $changed
+            );
         }
 
         return response()->json(['message' => 'Pengaturan disimpan']);

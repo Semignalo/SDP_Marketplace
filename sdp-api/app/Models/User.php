@@ -25,6 +25,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'address',
         'vendor_id',
+        'tier_override',
+        'tier_override_expires_at',
     ];
 
     protected $hidden = [
@@ -37,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'tier_override_expires_at' => 'datetime',
         ];
     }
 

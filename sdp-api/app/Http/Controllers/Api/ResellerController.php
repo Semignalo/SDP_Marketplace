@@ -25,7 +25,7 @@ class ResellerController extends Controller
                 'orders_count' => (clone $base)->count(),
                 'customers_count' => (clone $base)->distinct('customer_id')->count('customer_id'),
                 'reseller_code' => $user->reseller_code,
-                'rate' => (float) \App\Models\Setting::get('reseller_commission_rate', 10),
+                'rate' => (float) \App\Models\Setting::get('reseller_commission_rate', 5),
             ],
         ]);
     }

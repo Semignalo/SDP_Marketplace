@@ -7,6 +7,7 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ResellerCommission;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +67,13 @@ class OrderController extends Controller
 
             $order->update(['status' => 'cancelled']);
         });
+
+        ActivityLogger::log(
+            'order',
+            "Order {$order->order_number} dibatalkan oleh {$request->user()->name}",
+            $request->user(),
+            $order
+        );
 
         return response()->json(['message' => 'Order cancelled successfully']);
     }

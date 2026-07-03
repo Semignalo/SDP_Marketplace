@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\WithdrawalStatusUpdated;
 use App\Models\CommissionWithdrawal;
 use App\Models\ResellerCommission;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -89,6 +90,14 @@ class WithdrawalController extends Controller
 
         $withdrawal = $withdrawal->fresh('user');
         $this->sendWithdrawalStatusEmail($withdrawal);
+
+        ActivityLogger::log(
+            'admin.withdrawal',
+            "Admin {$request->user()->name} " . ($data['status'] === 'approved' ? 'menyetujui' : 'menolak') . " penarikan komisi #{$withdrawal->id} ({$withdrawal->user?->name})",
+            $request->user(),
+            $withdrawal,
+            $data
+        );
 
         return response()->json(['message' => 'Withdrawal status updated.', 'data' => $this->shape($withdrawal)]);
     }

@@ -129,9 +129,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/summary', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'summary']);
     Route::get('/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);
 
+    Route::get('/activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/export', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'export']);
+
     Route::get('/users', [\App\Http\Controllers\Api\Admin\UserController::class, 'index']);
     Route::get('/users/{user}/network', [\App\Http\Controllers\Api\Admin\UserController::class, 'network']);
     Route::put('/users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'update']);
+    Route::post('/users/{user}/tier-override', [\App\Http\Controllers\Api\Admin\UserController::class, 'setTierOverride']);
     Route::delete('/users/{user}', [\App\Http\Controllers\Api\Admin\UserController::class, 'destroy']);
 
     Route::get('/vendors', [\App\Http\Controllers\Api\Admin\VendorController::class, 'index']);
