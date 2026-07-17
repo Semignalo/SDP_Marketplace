@@ -230,6 +230,8 @@ class OrderController extends Controller
             'total' => (float) $o->total,
             'created_at' => $o->created_at?->toIso8601String(),
             'customer' => $o->customer ? ['id' => $o->customer->id, 'name' => $o->customer->name, 'email' => $o->customer->email] : null,
+            'guest_email' => $o->guest_email,
+            'shipping_name' => $o->shipping_name,
             'reseller' => $o->reseller ? ['id' => $o->reseller->id, 'name' => $o->reseller->name, 'reseller_code' => $o->reseller->reseller_code] : null,
             'shipping_courier' => $o->shipping_courier,
             'tracking_number' => $o->tracking_number,
@@ -238,7 +240,6 @@ class OrderController extends Controller
         ];
 
         if ($full) {
-            $base['shipping_name'] = $o->shipping_name;
             $base['shipping_phone'] = $o->shipping_phone;
             $base['shipping_address'] = $o->shipping_address;
             $base['payment_verified_at'] = $o->payment_verified_at?->toIso8601String();

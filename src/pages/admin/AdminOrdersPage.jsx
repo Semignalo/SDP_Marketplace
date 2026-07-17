@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { Search, ShoppingCart } from 'lucide-react'
 import { useAdminOrders } from '../../hooks/useAdmin'
 import { Input, Select, Badge, Pagination, Skeleton, EmptyState } from '../../components/ui'
-import { formatRupiah, formatDateTime } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
+import { formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
   awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
@@ -21,6 +22,7 @@ export default function AdminOrdersPage() {
   const params = useMemo(() => ({ page, ...(search && { search }), ...(status && { status }) }), [page, search, status])
 
   const { data, isLoading } = useAdminOrders(params)
+  const formatPrice = useFormatPrice()
 
   return (
     <div className="space-y-6">
@@ -78,8 +80,11 @@ export default function AdminOrdersPage() {
                     <p className="text-xs text-ink-muted tabular-nums mt-0.5">{formatDateTime(o.created_at)}</p>
                   </div>
                   <div className="mt-2 md:mt-0">
-                    <p className="text-sm text-ink-soft">{o.customer?.name || '—'}</p>
-                    <p className="text-xs text-ink-muted">{o.customer?.email}</p>
+                    <p className="text-sm text-ink-soft">{o.customer?.name || o.shipping_name || '—'}</p>
+                    <p className="text-xs text-ink-muted">{o.customer?.email || o.guest_email}</p>
+                    {!o.customer && (o.shipping_name || o.guest_email) && (
+                      <p className="text-2xs text-ink-muted uppercase tracking-eyebrow mt-0.5">Guest</p>
+                    )}
                   </div>
                   <div className="mt-1 md:mt-0">
                     {o.reseller ? (
@@ -91,7 +96,7 @@ export default function AdminOrdersPage() {
                       <span className="text-xs text-ink-muted">—</span>
                     )}
                   </div>
-                  <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatRupiah(o.total)}</p>
+                  <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatPrice(o.total)}</p>
                   <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
                   <div className="mt-2 md:mt-0 md:text-right">
                     <Link to={`/admin/pesanan/${o.order_number}`} className="text-xs text-ink-muted hover:text-ink hover:underline">

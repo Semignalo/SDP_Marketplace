@@ -2,18 +2,20 @@ import { Link } from 'react-router-dom'
 import { Wallet, ShoppingCart, Users, Store, Package, TrendingUp, ArrowRight, Clock } from 'lucide-react'
 import { useAdminSummary, useAdminRevenueChart } from '../../hooks/useAdmin'
 import { Skeleton, EmptyState } from '../../components/ui'
-import { formatRupiah, formatRupiahShort, cn } from '../../lib/utils'
+import { useFormatPrice, useFormatPriceShort } from '../../hooks/useCurrency'
+import { cn } from '../../lib/utils'
 
 export default function AdminDashboardPage() {
   const { data: s, isLoading } = useAdminSummary()
   const { data: chart = [], isLoading: chartLoading } = useAdminRevenueChart(30)
+  const formatPrice = useFormatPrice()
 
   return (
     <div className="space-y-8">
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<TrendingUp size={18} />} label="Recognized Revenue" value={isLoading ? null : formatRupiah(s?.revenue || 0)} accent />
+        <StatCard icon={<TrendingUp size={18} />} label="Recognized Revenue" value={isLoading ? null : formatPrice(s?.revenue || 0)} accent />
         <StatCard icon={<ShoppingCart size={18} />} label="Total Orders" value={isLoading ? null : String(s?.orders_count || 0)} hint={`${s?.orders_pending || 0} awaiting payment`} />
-        <StatCard icon={<Wallet size={18} />} label="AOV" value={isLoading ? null : formatRupiah(s?.aov || 0)} hint="Average Order Value" />
+        <StatCard icon={<Wallet size={18} />} label="AOV" value={isLoading ? null : formatPrice(s?.aov || 0)} hint="Average Order Value" />
         <StatCard icon={<Clock size={18} />} label="Awaiting Payment" value={isLoading ? null : String(s?.orders_pending || 0)} danger={!isLoading && s?.orders_pending > 0} />
       </div>
 
@@ -83,6 +85,8 @@ function StatCard({ icon, label, value, hint, accent, danger, compact }) {
 }
 
 function RankList({ loading, items, type }) {
+  const formatPrice = useFormatPrice()
+
   if (loading) {
     return (
       <div className="p-5 space-y-3">
@@ -112,7 +116,7 @@ function RankList({ loading, items, type }) {
             </Link>
             <p className="text-xs text-ink-muted tabular-nums">{type === 'vendor' ? `${item.qty} items sold` : `${item.qty} sold`}</p>
           </div>
-          <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.revenue)}</p>
+          <p className="text-sm font-semibold tabular-nums">{formatPrice(item.revenue)}</p>
         </li>
       ))}
     </ul>
@@ -120,6 +124,9 @@ function RankList({ loading, items, type }) {
 }
 
 function RevenueChart({ data }) {
+  const formatPrice = useFormatPrice()
+  const formatPriceShort = useFormatPriceShort()
+
   if (!data?.length) return null
   const max = Math.max(1, ...data.map((d) => d.total))
   const total30 = data.reduce((s, d) => s + d.total, 0)
@@ -130,7 +137,7 @@ function RevenueChart({ data }) {
       <div className="flex items-baseline gap-6 flex-wrap">
         <div>
           <p className="eyebrow">30-Day Total</p>
-          <p className="text-2xl font-bold tabular-nums">{formatRupiah(total30)}</p>
+          <p className="text-2xl font-bold tabular-nums">{formatPrice(total30)}</p>
         </div>
         <div>
           <p className="eyebrow">Orders</p>
@@ -148,7 +155,7 @@ function RevenueChart({ data }) {
                 style={{ height: `${Math.max(h, 2)}%` }}
               />
               <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 -translate-x-1/2 z-10 bg-ink text-white text-2xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
-                <p className="tabular-nums font-semibold">{formatRupiahShort(d.total)}</p>
+                <p className="tabular-nums font-semibold">{formatPriceShort(d.total)}</p>
                 <p className="opacity-60">{d.orders} orders · {d.date}</p>
               </div>
             </div>

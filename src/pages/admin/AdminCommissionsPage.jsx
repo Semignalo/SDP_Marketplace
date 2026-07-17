@@ -9,7 +9,8 @@ import {
 } from '../../hooks/useAdmin'
 import { Badge, Select, Button, Pagination, Skeleton, EmptyState, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
-import { formatRupiah, formatDate, cn } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
+import { formatDate, cn } from '../../lib/utils'
 
 const STATUS_LABELS = {
   pending: { label: 'Pending', variant: 'warning' },
@@ -47,6 +48,7 @@ export default function AdminCommissionsPage() {
   const { data, isLoading } = useAdminCommissions(params)
   const updateStatus = useUpdateAdminCommissionStatus()
   const bulkPaid = useBulkMarkCommissionsPaid()
+  const formatPrice = useFormatPrice()
 
   const [selected, setSelected] = useState(new Set())
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
@@ -96,10 +98,10 @@ export default function AdminCommissionsPage() {
       </div>
 
       <div className="grid sm:grid-cols-4 gap-3">
-        <SummaryCard label="Total" value={summary ? formatRupiah(summary.total) : null} accent />
-        <SummaryCard label="Pending" value={summary ? formatRupiah(summary.pending) : null} />
-        <SummaryCard label="Confirmed" value={summary ? formatRupiah(summary.earned) : null} />
-        <SummaryCard label="Already Paid" value={summary ? formatRupiah(summary.paid) : null} />
+        <SummaryCard label="Total" value={summary ? formatPrice(summary.total) : null} accent />
+        <SummaryCard label="Pending" value={summary ? formatPrice(summary.pending) : null} />
+        <SummaryCard label="Confirmed" value={summary ? formatPrice(summary.earned) : null} />
+        <SummaryCard label="Already Paid" value={summary ? formatPrice(summary.paid) : null} />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -176,7 +178,7 @@ export default function AdminCommissionsPage() {
                     <Link to={`/admin/pesanan/${c.order?.order_number}`} className="text-sm font-semibold tabular-nums text-ink hover:underline">
                       {c.order?.order_number || '—'}
                     </Link>
-                    <p className="text-xs text-ink-muted tabular-nums mt-0.5">{formatDate(c.created_at)} · order total {formatRupiah(c.order_total)}</p>
+                    <p className="text-xs text-ink-muted tabular-nums mt-0.5">{formatDate(c.created_at)} · order total {formatPrice(c.order_total)}</p>
                   </div>
                   <div className="mt-1 md:mt-0">
                     <p className="text-sm text-ink-soft">{c.reseller?.name}</p>
@@ -184,7 +186,7 @@ export default function AdminCommissionsPage() {
                   </div>
                   <p className="text-sm text-ink-soft mt-1 md:mt-0">{c.customer?.name || '—'}</p>
                   <div className="mt-2 md:mt-0 md:text-right">
-                    <p className="text-sm font-bold tabular-nums">{formatRupiah(c.amount)}</p>
+                    <p className="text-sm font-bold tabular-nums">{formatPrice(c.amount)}</p>
                     <p className="text-2xs text-ink-muted tabular-nums">rate {c.rate}%</p>
                   </div>
                   <div className="mt-2 md:mt-0">

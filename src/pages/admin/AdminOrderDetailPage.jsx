@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote } from '../../hooks/useAdmin'
 import { Badge, Button, Input, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
 import { api, extractErrorMessage } from '../../lib/api'
-import { formatRupiah, formatDateTime } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
+import { formatDateTime } from '../../lib/utils'
 
 const STATUS_BADGE = {
   awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning' },
@@ -21,6 +22,7 @@ export default function AdminOrderDetailPage() {
   const { data: order, isLoading, error } = useAdminOrder(orderNumber)
   const update = useUpdateAdminOrderStatus()
   const setQuote = useSetShippingQuote()
+  const formatPrice = useFormatPrice()
 
   const [status, setStatus] = useState('')
   const [notes, setNotes] = useState('')
@@ -166,9 +168,12 @@ export default function AdminOrderDetailPage() {
 
       <div className="grid lg:grid-cols-3 gap-4">
         <InfoCard icon={<User size={16} />} title="Customer">
-          <p className="text-sm font-semibold">{order.customer?.name}</p>
-          <p className="text-xs text-ink-muted">{order.customer?.email}</p>
-          <p className="text-xs text-ink-muted">{order.customer?.phone}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold">{order.customer?.name || order.shipping_name || '—'}</p>
+            {!order.customer && <Badge variant="neutral">Guest</Badge>}
+          </div>
+          <p className="text-xs text-ink-muted">{order.customer?.email || order.guest_email}</p>
+          <p className="text-xs text-ink-muted">{order.customer?.phone || order.shipping_phone}</p>
         </InfoCard>
         <InfoCard icon={<MapPin size={16} />} title="Shipping Address">
           <div className="flex items-center gap-2 mb-1">
@@ -206,7 +211,7 @@ export default function AdminOrderDetailPage() {
               <>
                 <div>
                   <p className="eyebrow">Commission</p>
-                  <p className="text-sm font-semibold tabular-nums">{formatRupiah(order.commission.amount)}</p>
+                  <p className="text-sm font-semibold tabular-nums">{formatPrice(order.commission.amount)}</p>
                   <p className="text-2xs text-ink-muted tabular-nums">rate {order.commission.rate}%</p>
                 </div>
                 <div>
@@ -231,20 +236,20 @@ export default function AdminOrderDetailPage() {
                   {item.product_name}
                 </Link>
                 <p className="text-2xs text-ink-muted mt-0.5">{item.vendor?.name}</p>
-                <p className="text-xs text-ink-muted mt-1 tabular-nums">{formatRupiah(item.price)} × {item.quantity}</p>
+                <p className="text-xs text-ink-muted mt-1 tabular-nums">{formatPrice(item.price)} × {item.quantity}</p>
               </div>
-              <p className="text-sm font-semibold tabular-nums">{formatRupiah(item.subtotal)}</p>
+              <p className="text-sm font-semibold tabular-nums">{formatPrice(item.subtotal)}</p>
             </li>
           ))}
         </ul>
         <div className="px-5 py-4 border-t border-line space-y-2 text-sm">
-          <Row label="Subtotal" value={formatRupiah(Number(order.subtotal) + Number(order.tier_discount || 0))} />
+          <Row label="Subtotal" value={formatPrice(Number(order.subtotal) + Number(order.tier_discount || 0))} />
           {order.tier_discount > 0 && (
-            <Row label={`${order.tier_name || ''} Tier Discount`} value={<span className="text-state-success">−{formatRupiah(order.tier_discount)}</span>} />
+            <Row label={`${order.tier_name || ''} Tier Discount`} value={<span className="text-state-success">−{formatPrice(order.tier_discount)}</span>} />
           )}
-          <Row label="Shipping" value={formatRupiah(order.shipping_cost)} />
+          <Row label="Shipping" value={formatPrice(order.shipping_cost)} />
           <div className="pt-2 mt-2 border-t border-line">
-            <Row label="Total" value={formatRupiah(order.total)} bold />
+            <Row label="Total" value={formatPrice(order.total)} bold />
           </div>
         </div>
       </section>

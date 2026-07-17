@@ -9,7 +9,8 @@ import {
 import { useCategories } from '../../hooks/useProducts'
 import { Input, Select, Pagination, Skeleton, EmptyState, Button, Textarea, Modal } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
-import { formatRupiah, cn } from '../../lib/utils'
+import { useFormatPrice } from '../../hooks/useCurrency'
+import { cn } from '../../lib/utils'
 import ImagesEditor from '../../components/ImagesEditor'
 
 const STATUS_BADGE = {
@@ -48,6 +49,7 @@ export default function AdminProductsPage() {
   const updateProduct         = useUpdateAdminProduct()
   const updateStatus          = useUpdateAdminProductStatus()
   const del                   = useDeleteAdminProduct()
+  const formatPrice           = useFormatPrice()
 
   const flatCategories = useMemo(() => flatten(catData || []), [catData])
 
@@ -193,7 +195,7 @@ export default function AdminProductsPage() {
                     <p className="text-xs text-ink-muted mt-0.5">{p.category?.name || '—'}{p.sku && ` · ${p.sku}`}</p>
                   </div>
                   <p className="text-sm text-ink-soft mt-1 md:mt-0">{p.vendor?.name || '—'}</p>
-                  <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatRupiah(p.price)}</p>
+                  <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatPrice(p.price)}</p>
                   <p className={cn('text-sm md:text-right tabular-nums mt-1 md:mt-0', p.stock < 5 && 'text-state-danger font-semibold')}>{p.stock}</p>
                   <div className="mt-2 md:mt-0">
                     <Select value={p.status} onChange={(e) => handleStatusChange(p, e.target.value)} className="h-8 text-xs">

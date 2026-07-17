@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAdminWithdrawals, useUpdateWithdrawalStatus } from '../../hooks/useAdmin'
 import { Badge, Skeleton, EmptyState, Button, Modal, Pagination } from '../../components/ui'
 import { extractErrorMessage } from '../../lib/api'
+import { useFormatPrice } from '../../hooks/useCurrency'
 import { formatRupiah, formatDate, cn } from '../../lib/utils'
 
 const STATUS = {
@@ -24,6 +25,7 @@ export default function AdminWithdrawalsPage() {
   const [page, setPage] = useState(1)
   const { data, isLoading } = useAdminWithdrawals({ status: filter || undefined, page })
   const updateStatus = useUpdateWithdrawalStatus()
+  const formatPrice = useFormatPrice()
 
   const [selected, setSelected] = useState(null)
   const [action, setAction] = useState(null) // 'approved' | 'rejected'
@@ -113,7 +115,7 @@ export default function AdminWithdrawalsPage() {
                     {w.notes && <p className="text-2xs text-ink-muted mt-0.5 italic">"{w.notes}"</p>}
                   </div>
 
-                  <p className="text-sm font-bold tabular-nums md:text-right mt-2 md:mt-0">{formatRupiah(w.amount)}</p>
+                  <p className="text-sm font-bold tabular-nums md:text-right mt-2 md:mt-0">{formatPrice(w.amount)}</p>
 
                   <div className="mt-2 md:mt-0">
                     <Badge variant={s.variant}>{s.label}</Badge>
@@ -175,6 +177,7 @@ export default function AdminWithdrawalsPage() {
               <p><span className="text-ink-muted">Reseller:</span> <strong>{selected.user?.name}</strong></p>
               <p><span className="text-ink-muted">Amount:</span> <strong>{formatRupiah(selected.amount)}</strong></p>
               <p><span className="text-ink-muted">Account:</span> {selected.bank_name} {selected.bank_account_number} a/n {selected.bank_account_name}</p>
+              <p className="text-2xs text-ink-muted pt-1">Always transferred in IDR — this figure never converts.</p>
             </div>
             <div>
               <label className="text-xs font-medium text-ink-soft block mb-1.5">Note for the reseller (optional)</label>
