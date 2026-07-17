@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Setting;
 use Midtrans\Config;
 use Midtrans\Notification;
 use Midtrans\Snap;
@@ -72,10 +73,21 @@ class MidtransService
             ];
         }
 
+        // Samakan expiry Snap dengan window auto-cancel kita (setting order_auto_cancel_hours),
+        // supaya halaman pembayaran Midtrans tidak tetap hidup setelah order sudah kita
+        // batalkan otomatis (stok sudah dikembalikan, komisi sudah dibatalkan) — race condition
+        // kalau customer bayar telat setelah order kita anggap expired.
+        $expiryHours = max(1, (int) Setting::get('order_auto_cancel_hours', 24));
+
         $buildPayload = fn (string $midtransOrderId) => [
             'transaction_details' => [
                 'order_id' => $midtransOrderId,
                 'gross_amount' => $grossAmount,
+            ],
+            'expiry' => [
+                'start_time' => now()->format('Y-m-d H:i:s O'),
+                'unit' => 'hour',
+                'duration' => $expiryHours,
             ],
             'item_details' => $itemDetails,
             'customer_details' => [

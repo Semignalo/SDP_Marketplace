@@ -40,6 +40,7 @@ class SettingController extends Controller
         'bank_account_number' => ['Account Number', 'text', 'Payment'],
         'bank_account_name' => ['Account Holder Name', 'text', 'Payment'],
         'usd_idr_rate' => ['USD to IDR Rate (1 USD = ? Rp, display estimate)', 'number', 'Payment'],
+        'order_auto_cancel_hours' => ['Auto-Cancel Unpaid Orders After (hours)', 'number', 'Orders'],
 
         // Tier Loyalty (5 tiers × 3 fields) — fully customizable by admin
         'tier_1_name' => ['Tier 1 — Name', 'text', 'Tier Loyalty'],
@@ -70,6 +71,7 @@ class SettingController extends Controller
         'shipping_zone2_rate_3kg' => '45000',
         'shipping_zone2_rate_max' => '60000',
         'shipping_zone2_rate_per_kg' => '8000',
+        'order_auto_cancel_hours' => '24',
     ];
 
     public function index(): JsonResponse
