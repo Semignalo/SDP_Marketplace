@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ShoppingCart } from 'lucide-react'
-import { useAdminOrders } from '../../hooks/useAdmin'
+import { useAdminOrders, useAdminOrderCountries } from '../../hooks/useAdmin'
 import { Input, Select, Badge, Pagination, Skeleton, EmptyState } from '../../components/ui'
 import { useFormatPrice } from '../../hooks/useCurrency'
 import { formatDateTime } from '../../lib/utils'
@@ -15,13 +15,38 @@ const STATUS_BADGE = {
   cancelled: { label: 'Cancelled', variant: 'danger' },
 }
 
+const SORT_OPTIONS = [
+  { value: 'created_at:desc', label: 'Newest first' },
+  { value: 'created_at:asc', label: 'Oldest first' },
+  { value: 'status:asc', label: 'Status — needs action first' },
+  { value: 'status:desc', label: 'Status — completed first' },
+  { value: 'shipping_country:asc', label: 'Country A–Z' },
+  { value: 'shipping_country:desc', label: 'Country Z–A' },
+  { value: 'total:desc', label: 'Highest total' },
+  { value: 'total:asc', label: 'Lowest total' },
+]
+
 export default function AdminOrdersPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
+  const [country, setCountry] = useState('')
+  const [sort, setSort] = useState('created_at:desc')
   const [page, setPage] = useState(1)
-  const params = useMemo(() => ({ page, ...(search && { search }), ...(status && { status }) }), [page, search, status])
+
+  const params = useMemo(() => {
+    const [sortBy, sortDir] = sort.split(':')
+    return {
+      page,
+      sort_by: sortBy,
+      sort_dir: sortDir,
+      ...(search && { search }),
+      ...(status && { status }),
+      ...(country && { country }),
+    }
+  }, [page, search, status, country, sort])
 
   const { data, isLoading } = useAdminOrders(params)
+  const { data: countries } = useAdminOrderCountries()
   const formatPrice = useFormatPrice()
 
   return (
@@ -31,16 +56,16 @@ export default function AdminOrdersPage() {
         <p className="text-sm text-ink-muted mt-1">All cross-vendor orders.</p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex-1">
+      <div className="flex flex-col md:flex-row md:flex-wrap gap-3">
+        <div className="flex-1 md:min-w-[220px]">
           <Input
-            placeholder="Search order number..."
+            placeholder="Search order number or customer name..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             leadingIcon={<Search size={14} />}
           />
         </div>
-        <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-56">
+        <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }} className="md:w-52">
           <option value="">All statuses</option>
           <option value="awaiting_quote">Awaiting Shipping Quote</option>
           <option value="pending_payment">Awaiting Payment</option>
@@ -48,6 +73,17 @@ export default function AdminOrdersPage() {
           <option value="shipped">Shipped</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
+        </Select>
+        {/* Sembunyikan kalau semua order dari 1 negara — filternya gak ada gunanya.
+            Otomatis muncul begitu order internasional pertama masuk. */}
+        {countries?.length > 1 && (
+          <Select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1) }} className="md:w-44">
+            <option value="">All countries</option>
+            {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+          </Select>
+        )}
+        <Select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1) }} className="md:w-52">
+          {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
       </div>
 
@@ -82,8 +118,15 @@ export default function AdminOrdersPage() {
                   <div className="mt-2 md:mt-0">
                     <p className="text-sm text-ink-soft">{o.customer?.name || o.shipping_name || '—'}</p>
                     <p className="text-xs text-ink-muted">{o.customer?.email || o.guest_email}</p>
-                    {!o.customer && (o.shipping_name || o.guest_email) && (
-                      <p className="text-2xs text-ink-muted uppercase tracking-eyebrow mt-0.5">Guest</p>
+                    {(o.shipping_country || (!o.customer && (o.shipping_name || o.guest_email))) && (
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {!o.customer && (o.shipping_name || o.guest_email) && (
+                          <span className="text-2xs text-ink-muted uppercase tracking-eyebrow">Guest</span>
+                        )}
+                        {o.shipping_country && (
+                          <span className="text-2xs text-ink-muted uppercase tracking-eyebrow">{o.shipping_country}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="mt-1 md:mt-0">

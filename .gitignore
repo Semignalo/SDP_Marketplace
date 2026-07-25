@@ -19,3 +19,6 @@ Thumbs.db
 
 # Tooling
 .impeccable/
+
+# Dokumen perencanaan internal — repo ini publik, jangan ikut ter-push
+PLAN_NEXT.md

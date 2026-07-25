@@ -189,6 +189,14 @@ export function useAdminOrders(params = {}) {
   })
 }
 
+export function useAdminOrderCountries() {
+  return useQuery({
+    queryKey: ['admin', 'orders', 'countries'],
+    queryFn: async () => (await api.get('/admin/orders/countries')).data.data,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useAdminPendingOrdersCount() {
   return useQuery({
     queryKey: ['admin', 'orders', 'pending-count'],

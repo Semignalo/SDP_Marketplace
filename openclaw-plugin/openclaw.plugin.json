@@ -1,0 +1,36 @@
+{
+  "id": "sdp-marketplace",
+  "name": "SDP Marketplace",
+  "description": "Read-only access ke data SDP Marketplace — ringkasan order, stok menipis, dan pencarian pesanan.",
+  "version": "1.0.0",
+  "contracts": {
+    "tools": ["sdp_summary", "sdp_orders"]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "Base URL API SDP, mis. http://127.0.0.1:8001/api"
+      },
+      "token": {
+        "type": "string",
+        "description": "Nilai ASSISTANT_API_TOKEN dari .env SDP"
+      }
+    }
+  },
+  "uiHints": {
+    "baseUrl": {
+      "label": "SDP API base URL",
+      "placeholder": "http://127.0.0.1:8001/api"
+    },
+    "token": {
+      "label": "Assistant API token",
+      "sensitive": true
+    }
+  }
+}

@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'vendor_admin' => \App\Http\Middleware\EnsureVendorAdmin::class,
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'uploader' => \App\Http\Middleware\EnsureUploader::class,
+            'assistant' => \App\Http\Middleware\EnsureAssistantToken::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

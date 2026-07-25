@@ -1,0 +1,19 @@
+{
+  "name": "openclaw-plugin-sdp-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Plugin OpenClaw read-only untuk SDP Marketplace",
+  "dependencies": {
+    "typebox": "1.1.39"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24-beta.2"
+  },
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2"
+    }
+  }
+}

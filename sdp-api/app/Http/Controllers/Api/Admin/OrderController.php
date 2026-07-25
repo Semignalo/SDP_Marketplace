@@ -22,26 +22,55 @@ use Throwable;
 
 class OrderController extends Controller
 {
+    // Urutan workflow, dipakai kalau admin sort by status. Sengaja bukan alfabet —
+    // order yang butuh aksi admin (awaiting_quote) harus nongol duluan.
+    private const STATUS_ORDER = [
+        'awaiting_quote', 'pending_payment', 'processing', 'shipped', 'completed', 'cancelled',
+    ];
+
     public function index(Request $request): JsonResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'search' => 'nullable|string|max:50',
             'status' => 'nullable|in:pending_payment,awaiting_quote,processing,shipped,completed,cancelled',
+            'country' => 'nullable|string|max:60',
+            'sort_by' => 'nullable|in:created_at,status,shipping_country,total',
+            'sort_dir' => 'nullable|in:asc,desc',
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
         $query = Order::query()
             ->with(['customer:id,name,email', 'reseller:id,name,reseller_code'])
-            ->withCount('items')
-            ->orderByDesc('created_at');
+            ->withCount('items');
 
         if ($request->filled('search')) {
             $s = $request->input('search');
-            $query->where('order_number', 'like', "%{$s}%");
+            // Nama pemesan bisa datang dari 2 tempat: shipping_name (order guest)
+            // atau relasi customer (user terdaftar) — dua-duanya dicari.
+            $query->where(function ($q) use ($s) {
+                $q->where('order_number', 'like', "%{$s}%")
+                    ->orWhere('shipping_name', 'like', "%{$s}%")
+                    ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$s}%"));
+            });
         }
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
+        if ($request->filled('country')) {
+            $query->where('shipping_country', $request->input('country'));
+        }
+
+        $sortBy = $data['sort_by'] ?? 'created_at';
+        $sortDir = $data['sort_dir'] ?? 'desc';
+
+        if ($sortBy === 'status') {
+            $placeholders = implode(',', array_fill(0, count(self::STATUS_ORDER), '?'));
+            $query->orderByRaw("FIELD(status, {$placeholders}) " . $sortDir, self::STATUS_ORDER);
+        } else {
+            $query->orderBy($sortBy, $sortDir);
+        }
+        // Tie-breaker: tanpa ini, baris dengan nilai sort sama bisa loncat antar halaman.
+        $query->orderByDesc('id');
 
         $orders = $query->paginate($request->input('per_page', 20))->withQueryString();
 
@@ -61,6 +90,19 @@ class OrderController extends Controller
         $count = Order::whereIn('status', ['awaiting_quote', 'processing'])->count();
 
         return response()->json(['data' => ['count' => $count]]);
+    }
+
+    /** Daftar negara yang benar-benar ada di order — buat isi dropdown filter admin. */
+    public function countries(): JsonResponse
+    {
+        $countries = Order::query()
+            ->whereNotNull('shipping_country')
+            ->where('shipping_country', '!=', '')
+            ->distinct()
+            ->orderBy('shipping_country')
+            ->pluck('shipping_country');
+
+        return response()->json(['data' => $countries]);
     }
 
     public function show(string $orderNumber): JsonResponse

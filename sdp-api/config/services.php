@@ -46,4 +46,10 @@ return [
         'api_key' => env('RAJAONGKIR_API_KEY', ''),
     ],
 
+    // Endpoint read-only buat asisten personal (OpenClaw). Kosong = endpoint mati.
+    'assistant' => [
+        'token' => env('ASSISTANT_API_TOKEN', ''),
+        'low_stock_threshold' => (int) env('ASSISTANT_LOW_STOCK_THRESHOLD', 5),
+    ],
+
 ];

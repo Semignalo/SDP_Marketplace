@@ -125,6 +125,15 @@ Route::middleware(['auth:sanctum', 'vendor_admin'])->prefix('vendor')->group(fun
     Route::put('/profile', [\App\Http\Controllers\Api\Vendor\ProfileController::class, 'update']);
 });
 
+/*
+ * Asisten personal (OpenClaw) — READ-ONLY, token statis, cuma buat dipakai sendiri.
+ * Jangan tambah route non-GET di grup ini.
+ */
+Route::middleware(['assistant', 'throttle:60,1'])->prefix('assistant')->group(function () {
+    Route::get('/summary', [\App\Http\Controllers\Api\AssistantController::class, 'summary']);
+    Route::get('/orders', [\App\Http\Controllers\Api\AssistantController::class, 'orders']);
+});
+
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/summary', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'summary']);
     Route::get('/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);
@@ -156,6 +165,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/orders', [\App\Http\Controllers\Api\Admin\OrderController::class, 'index']);
     Route::get('/orders/pending-count', [\App\Http\Controllers\Api\Admin\OrderController::class, 'pendingCount']);
+    Route::get('/orders/countries', [\App\Http\Controllers\Api\Admin\OrderController::class, 'countries']);
     Route::get('/orders/{orderNumber}', [\App\Http\Controllers\Api\Admin\OrderController::class, 'show']);
     Route::get('/orders/{orderNumber}/invoice', [\App\Http\Controllers\Api\Admin\OrderController::class, 'invoice']);
     Route::get('/orders/{orderNumber}/delivery-note', [\App\Http\Controllers\Api\Admin\OrderController::class, 'deliveryNote']);
