@@ -74,9 +74,9 @@ export default function AdminOrdersPage() {
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
         </Select>
-        {/* Sembunyikan kalau semua order dari 1 negara — filternya gak ada gunanya.
-            Otomatis muncul begitu order internasional pertama masuk. */}
-        {countries?.length > 1 && (
+        {/* Isinya cuma negara yang benar-benar pernah dipakai customer (DISTINCT dari orders),
+            jadi daftarnya tumbuh sendiri begitu order dari negara baru masuk. */}
+        {countries?.length > 0 && (
           <Select value={country} onChange={(e) => { setCountry(e.target.value); setPage(1) }} className="md:w-44">
             <option value="">All countries</option>
             {countries.map((c) => <option key={c} value={c}>{c}</option>)}
