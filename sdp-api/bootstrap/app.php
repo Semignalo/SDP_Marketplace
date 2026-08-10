@@ -21,7 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {
-        $schedule->command('orders:cancel-expired')->hourly();
+        // Cuma order yang SUDAH di-quote ongkirnya yang bisa auto-cancel (30 hari sejak
+        // quoted_at, lihat CancelExpiredOrders). Order domestik/belum di-quote tidak pernah disentuh.
+        $schedule->command('orders:cancel-expired')->daily();
         $schedule->command('orders:complete-shipped')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions): void {

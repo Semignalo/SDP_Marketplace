@@ -31,9 +31,10 @@ class OrderLifecycleCommandsTest extends TestCase
             'shipping_name' => 'X',
             'shipping_phone' => '08',
             'shipping_address' => 'X',
+            'shipping_country' => 'India',
             'shipping_courier' => 'JNT EZ',
+            'quoted_at' => now()->subDays(31),
         ]);
-        $order->forceFill(['created_at' => now()->subHours(25)])->save();
 
         OrderItem::create([
             'order_id' => $order->id,
@@ -62,7 +63,7 @@ class OrderLifecycleCommandsTest extends TestCase
         $this->assertEquals('cancelled', $commission->fresh()->status);
     }
 
-    public function test_cancel_expired_orders_ignores_recent_pending_orders(): void
+    public function test_cancel_expired_orders_never_touches_orders_that_were_never_quoted(): void
     {
         $customer = User::factory()->create();
         $order = Order::create([
@@ -77,6 +78,32 @@ class OrderLifecycleCommandsTest extends TestCase
             'shipping_address' => 'X',
             'shipping_courier' => 'JNT EZ',
         ]);
+        // Order domestik biasa, gak pernah lewat quote — walau umurnya sudah lama,
+        // gak boleh pernah kena auto-cancel.
+        $order->forceFill(['created_at' => now()->subDays(100)])->save();
+
+        $this->artisan('orders:cancel-expired')->assertSuccessful();
+
+        $this->assertEquals('pending_payment', $order->fresh()->status);
+    }
+
+    public function test_cancel_expired_orders_ignores_recently_quoted_orders(): void
+    {
+        $customer = User::factory()->create();
+        $order = Order::create([
+            'user_id' => $customer->id,
+            'order_number' => 'SDP-QUOTED-' . uniqid(),
+            'status' => 'pending_payment',
+            'subtotal' => 50000,
+            'shipping_cost' => 20000,
+            'total' => 70000,
+            'shipping_name' => 'X',
+            'shipping_phone' => '08',
+            'shipping_address' => 'X',
+            'shipping_country' => 'India',
+            'quoted_at' => now()->subDays(5),
+        ]);
+        $order->forceFill(['created_at' => now()->subDays(40)])->save();
 
         $this->artisan('orders:cancel-expired')->assertSuccessful();
 

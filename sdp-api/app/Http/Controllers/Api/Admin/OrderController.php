@@ -244,6 +244,7 @@ class OrderController extends Controller
                 'shipping_courier' => $data['shipping_courier'] ?? $order->shipping_courier,
                 'total' => (float) $order->subtotal + $data['shipping_cost'],
                 'status' => 'pending_payment',
+                'quoted_at' => now(),
             ]);
         });
 

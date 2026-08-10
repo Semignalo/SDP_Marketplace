@@ -5,27 +5,27 @@ namespace App\Console\Commands;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ResellerCommission;
-use App\Models\Setting;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 #[Signature('orders:cancel-expired')]
-#[Description('Batalkan pesanan pending_payment yang sudah lebih dari N jam (setting order_auto_cancel_hours), restore stok, dan batalkan komisi terkait.')]
+#[Description("Batalkan pesanan pending_payment yang SUDAH DI-QUOTE ongkirnya (quoted_at terisi) tapi belum dibayar lebih dari 30 hari, restore stok, dan batalkan komisi terkait. Order yang belum pernah di-quote (checkout domestik biasa) TIDAK PERNAH di-auto-cancel oleh command ini.")]
 class CancelExpiredOrders extends Command
 {
+    private const QUOTED_ORDER_GRACE_DAYS = 30;
+
     public function handle(): int
     {
-        $hours = (int) Setting::get('order_auto_cancel_hours', 24);
-
         $orders = Order::where('status', 'pending_payment')
-            ->where('created_at', '<', now()->subHours($hours))
+            ->whereNotNull('quoted_at')
+            ->where('quoted_at', '<', now()->subDays(self::QUOTED_ORDER_GRACE_DAYS))
             ->with('items')
             ->get();
 
         foreach ($orders as $order) {
-            DB::transaction(function () use ($order, $hours) {
+            DB::transaction(function () use ($order) {
                 foreach ($order->items as $item) {
                     Product::where('id', $item->product_id)->increment('stock', $item->quantity);
                 }
@@ -34,7 +34,10 @@ class CancelExpiredOrders extends Command
                     ->whereIn('status', ['pending', 'earned'])
                     ->update(['status' => 'cancelled']);
 
-                $order->update(['status' => 'cancelled', 'admin_notes' => "Automatically cancelled — no payment received within {$hours} hours."]);
+                $order->update([
+                    'status' => 'cancelled',
+                    'admin_notes' => 'Automatically cancelled — no payment received within '.self::QUOTED_ORDER_GRACE_DAYS.' days of shipping quote.',
+                ]);
             });
         }
 
