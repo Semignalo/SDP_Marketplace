@@ -362,7 +362,7 @@ export default function CheckoutPage() {
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <Card padding="md">
             <h2 className="eyebrow mb-4">Summary</h2>
-            {tier && (
+            {tier && !isIntl && (
               <div className="mb-4 pb-4 border-b border-line flex items-center gap-2">
                 <TierBadge tier={tier} size="sm" />
                 <span className="text-2xs text-ink-muted">{tier.discount}% discount applied</span>
