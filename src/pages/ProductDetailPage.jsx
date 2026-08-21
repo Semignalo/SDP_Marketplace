@@ -115,7 +115,6 @@ export default function ProductDetailPage() {
               price={price}
               oldPrice={product.compare_at_price}
               memberPrice={product.member_price}
-              tierName={product.tier_name}
               size="lg"
             />
           </div>
@@ -214,7 +213,6 @@ export default function ProductDetailPage() {
               price={price}
               oldPrice={product.compare_at_price}
               memberPrice={product.member_price}
-              tierName={product.tier_name}
               size="md"
             />
           </div>

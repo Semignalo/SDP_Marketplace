@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ResellerController;
 use App\Http\Controllers\Api\ResellerWithdrawalController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\StorefrontController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\WishlistController;
@@ -50,6 +51,10 @@ Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index'
 Route::get('/vendors/{slug}', [VendorController::class, 'show'])->name('vendors.show');
 
 Route::get('/settings/public', [SettingController::class, 'publicIndex'])->name('settings.public');
+// Konteks lokalisasi (negara dari IP + kurs). Public — dipanggil sebelum login.
+Route::get('/storefront/region', [StorefrontController::class, 'region'])->middleware('throttle:120,1');
+// Harga keranjang untuk negara tujuan kirim — dipanggil dari checkout sebelum bayar.
+Route::post('/storefront/reprice', [StorefrontController::class, 'reprice'])->middleware('throttle:120,1');
 Route::get('/checkout/options', [CheckoutController::class, 'options']);
 Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'cities'])->middleware('throttle:60,1');
 Route::get('/rajaongkir/districts', [RajaOngkirController::class, 'districts'])->middleware('throttle:60,1');
@@ -117,6 +122,10 @@ Route::middleware(['auth:sanctum', 'vendor_admin'])->prefix('vendor')->group(fun
     Route::put('/products/{product}', [\App\Http\Controllers\Api\Vendor\ProductController::class, 'update']);
     Route::delete('/products/{product}', [\App\Http\Controllers\Api\Vendor\ProductController::class, 'destroy']);
 
+    // Harga per negara — vendor boleh set sendiri untuk produknya, tanpa approval admin.
+    Route::get('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Vendor\ProductRegionalPriceController::class, 'index']);
+    Route::put('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Vendor\ProductRegionalPriceController::class, 'update']);
+
     Route::get('/orders', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'index']);
     Route::get('/orders/{orderNumber}', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'show']);
     Route::put('/orders/{orderNumber}/tracking', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'updateTracking']);
@@ -162,6 +171,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/products/{product}', [\App\Http\Controllers\Api\Admin\ProductController::class, 'update']);
     Route::put('/products/{product}/status', [\App\Http\Controllers\Api\Admin\ProductController::class, 'updateStatus']);
     Route::delete('/products/{product}', [\App\Http\Controllers\Api\Admin\ProductController::class, 'destroy']);
+
+    Route::get('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Admin\ProductRegionalPriceController::class, 'index']);
+    Route::put('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Admin\ProductRegionalPriceController::class, 'update']);
+
+    Route::get('/shipping-rates', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'index']);
+    Route::post('/shipping-rates', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'store']);
+    Route::put('/shipping-rates/{shippingRate}', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'update']);
+    Route::delete('/shipping-rates/{shippingRate}', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'destroy']);
 
     Route::get('/orders', [\App\Http\Controllers\Api\Admin\OrderController::class, 'index']);
     Route::get('/orders/pending-count', [\App\Http\Controllers\Api\Admin\OrderController::class, 'pendingCount']);

@@ -4,12 +4,14 @@ import Navbar, { MobileMenuDrawer } from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import ReferralCapture from './components/ReferralCapture'
+import RegionPopup from './components/RegionPopup'
 import ProtectedRoute from './components/ProtectedRoute'
 import MobileBottomNav from './components/MobileBottomNav'
 import SupportFab from './components/SupportFab'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Spinner } from './components/ui'
 import { useAuthStore } from './stores/useAuthStore'
+import { useApplyDetectedRegion } from './hooks/useRegion'
 import { getToken } from './lib/api'
 
 // Public pages — eagerly load the most-visited ones (Home, Products) untuk hindari extra round-trip
@@ -67,6 +69,7 @@ const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'))
 const AdminOrderDetailPage = lazy(() => import('./pages/admin/AdminOrderDetailPage'))
 const AdminCommissionsPage = lazy(() => import('./pages/admin/AdminCommissionsPage'))
 const AdminWithdrawalsPage = lazy(() => import('./pages/admin/AdminWithdrawalsPage'))
+const AdminShippingRatesPage = lazy(() => import('./pages/admin/AdminShippingRatesPage'))
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 const AdminActivityLogsPage = lazy(() => import('./pages/admin/AdminActivityLogsPage'))
 
@@ -114,6 +117,8 @@ export default function App() {
 }
 
 function AppShell() {
+  // Terapkan negara hasil deteksi IP sekali di awal (tidak menimpa pilihan manual user).
+  useApplyDetectedRegion()
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">
@@ -201,6 +206,7 @@ function AppShell() {
                 <Route path="pesanan/:orderNumber" element={<AdminOrderDetailPage />} />
                 <Route path="commissions" element={<AdminCommissionsPage />} />
                 <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
+                <Route path="shipping-rates" element={<AdminShippingRatesPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="activity-logs" element={<AdminActivityLogsPage />} />
               </Route>
@@ -216,6 +222,7 @@ function AppShell() {
       <CartDrawer />
       <MobileBottomNav />
       <SupportFab />
+      <RegionPopup />
     </div>
   )
 }

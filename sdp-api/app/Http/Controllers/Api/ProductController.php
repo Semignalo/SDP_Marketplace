@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\ResolvesRegion;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
@@ -11,8 +12,23 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    use ResolvesRegion;
+
     public function __construct(private TierService $tierService)
     {
+    }
+
+    /**
+     * Eager-load override harga HANYA untuk negara yang aktif — satu query tambahan
+     * untuk seluruh halaman, bukan per-produk.
+     */
+    private function regionalPriceEagerLoad(?string $country): array
+    {
+        if ($country === null) {
+            return [];
+        }
+
+        return ['regionalPrices' => fn ($q) => $q->where('country_code', $country)];
     }
 
     /**
@@ -29,8 +45,10 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $this->attachTierContext($request);
+        $country = $this->attachRegionContext($request);
 
         $validated = $request->validate([
+            'country' => 'nullable|string|size:2',
             'category' => 'nullable|string',
             'vendor' => 'nullable|string',
             'min_price' => 'nullable|numeric|min:0',
@@ -43,7 +61,7 @@ class ProductController extends Controller
 
         $query = Product::query()
             ->active()
-            ->with(['vendor', 'category', 'images'])
+            ->with(['vendor', 'category', 'images', ...$this->regionalPriceEagerLoad($country)])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -77,6 +95,13 @@ class ProductController extends Controller
             });
         }
 
+        /*
+         * Catatan: filter min/max price dan sort by price masih memakai kolom `price`
+         * (harga dasar), bukan override regional. Untuk produk yang punya override,
+         * urutan & filter bisa sedikit meleset dari harga yang tampil. Menyamakannya
+         * butuh join ke product_regional_prices — belum dikerjakan karena override
+         * diperkirakan cuma dipakai di sebagian kecil produk.
+         */
         $sort = $validated['sort'] ?? 'newest';
         match ($sort) {
             'oldest' => $query->orderBy('created_at', 'asc'),
@@ -95,10 +120,12 @@ class ProductController extends Controller
     public function show(string $slug, Request $request)
     {
         $this->attachTierContext($request);
+        $country = $this->attachRegionContext($request);
+        $regionalLoad = $this->regionalPriceEagerLoad($country);
 
         $product = Product::query()
             ->active()
-            ->with(['vendor', 'category', 'images'])
+            ->with(['vendor', 'category', 'images', ...$regionalLoad])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('slug', $slug)
@@ -106,7 +133,7 @@ class ProductController extends Controller
 
         $related = Product::query()
             ->active()
-            ->with(['vendor', 'images'])
+            ->with(['vendor', 'images', ...$regionalLoad])
             ->where('id', '!=', $product->id)
             ->where(function ($q) use ($product) {
                 $q->where('category_id', $product->category_id)

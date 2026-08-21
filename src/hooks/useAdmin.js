@@ -303,3 +303,32 @@ export function useUpdateWithdrawalStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'withdrawals'] }),
   })
 }
+
+/* ───────── Shipping Rates (international) ───────── */
+export function useAdminShippingRates() {
+  return useQuery({
+    queryKey: ['admin', 'shipping-rates'],
+    queryFn: async () => (await api.get('/admin/shipping-rates')).data.data,
+  })
+}
+
+export function useSaveAdminShippingRate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      const url = id ? `/admin/shipping-rates/${id}` : '/admin/shipping-rates'
+      const method = id ? 'put' : 'post'
+      const { data } = await api[method](url, payload)
+      return data.data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'shipping-rates'] }),
+  })
+}
+
+export function useDeleteAdminShippingRate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => { await api.delete(`/admin/shipping-rates/${id}`) },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'shipping-rates'] }),
+  })
+}

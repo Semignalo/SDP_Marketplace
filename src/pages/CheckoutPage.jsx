@@ -11,9 +11,12 @@ import { Button, Card, Input, Textarea, Spinner, Modal } from '../components/ui'
 import { Stepper, StepCard, Row } from '../components/checkout/shared'
 import TierBadge from '../components/TierBadge'
 import CitySearchInput from '../components/CitySearchInput'
+import CountrySearchInput from '../components/CountrySearchInput'
+import RepricedNotice from '../components/RepricedNotice'
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { useCartPricing } from '../hooks/useRegion'
 import { calcTierDiscount, calcShippingCost } from '../lib/pricing'
 
 const STEPS = [
@@ -44,7 +47,6 @@ export default function CheckoutPage() {
   const user = useAuthStore((s) => s.user)
   const isReady = useAuthStore((s) => s.isReady)
   const items = useCartStore((s) => s.items)
-  const subtotal = useCartStore((s) => s.subtotal())
   const clearCart = useCartStore((s) => s.clear)
 
   const { data: addresses = [], isLoading: addrLoading } = useAddresses()
@@ -71,6 +73,15 @@ export default function CheckoutPage() {
     }
   }, [addresses, selectedAddressId])
 
+  /*
+   * Harga mengikuti negara TUJUAN KIRIM, bukan region yang sedang dilihat customer —
+   * sama seperti yang dipakai server saat membuat order. Dihitung di sini, sebelum
+   * early return di bawah, karena hook tidak boleh dilewati sebagian render.
+   */
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
+  const pricing = useCartPricing(selectedAddress?.country || 'Indonesia', items)
+  const subtotal = pricing.subtotal
+
   if (isReady && !user) return <Navigate to="/login?next=/checkout" replace />
   if (items.length === 0 && !orderPlacedRef.current) return <Navigate to="/keranjang" replace />
 
@@ -83,19 +94,22 @@ export default function CheckoutPage() {
   const tierDiscount = calcTierDiscount(subtotal, tier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
 
-  const isFreeShipping = subtotalAfterTier >= freeShippingMin
+  const isIntl = isInternational(selectedAddress)
+  // Subsidi free-shipping cuma promo domestik — internasional selalu bayar flat penuh.
+  const isFreeShipping = !isIntl && subtotalAfterTier >= freeShippingMin
   const requiresManual = !!shippingQuote?.requires_manual
   const flatCost = Number(shippingQuote?.cost || 0)
-  // Jika free shipping aktif, subsidi max freeShippingMax — sisa ditanggung customer
-  const shippingCost = requiresManual ? 0 : calcShippingCost(flatCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
+  const shippingCost = requiresManual
+    ? 0
+    : isIntl
+      ? flatCost
+      : calcShippingCost(flatCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId)
-  const isIntl = isInternational(selectedAddress)
-  const finalTotal = (isIntl || requiresManual) ? subtotalAfterTier : total
+  const finalTotal = requiresManual ? subtotalAfterTier : total
 
   const canNext = (s) => {
     if (s === 1) return !!selectedAddressId
-    if (s === 2) return isIntl || !!shippingQuote
+    if (s === 2) return !!shippingQuote
     return true
   }
 
@@ -119,7 +133,7 @@ export default function CheckoutPage() {
       return
     }
     const nextStep = Math.min(3, step + 1)
-    if (nextStep === 2 && selectedAddressId && !isIntl) {
+    if (nextStep === 2 && selectedAddressId) {
       fetchShippingQuote(selectedAddressId)
     }
     setStep(nextStep)
@@ -228,11 +242,7 @@ export default function CheckoutPage() {
 
           {step === 2 && (
             <StepCard title="Shipping Fee">
-              {isIntl ? (
-                <div className="px-4 py-3 bg-state-warning/10 rounded text-xs text-state-warning">
-                  This is an international address — automatic shipping rates aren't available. We'll calculate your shipping manually and email you a quote before payment is required.
-                </div>
-              ) : shippingRatesMut.isPending ? (
+              {shippingRatesMut.isPending ? (
                 <div className="py-8 flex flex-col items-center gap-3">
                   <Spinner />
                   <p className="text-sm text-ink-muted">Calculating shipping...</p>
@@ -280,7 +290,7 @@ export default function CheckoutPage() {
               </StepCard>
 
               <StepCard title="Shipping Fee" action={<button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
-                {isIntl || requiresManual ? (
+                {requiresManual ? (
                   <p className="text-sm text-ink-muted">To be quoted by our team after checkout.</p>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -298,22 +308,26 @@ export default function CheckoutPage() {
               </StepCard>
 
               <StepCard title={`Items (${items.length})`}>
+                <RepricedNotice changed={pricing.changed} country={selectedAddress?.country} />
                 <ul className="divide-y divide-line -my-2">
-                  {items.map((item) => (
-                    <li key={item.product_id} className="py-3 flex gap-3">
-                      <div className="h-14 w-14 bg-paper-warm overflow-hidden rounded shrink-0">
-                        {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-cover" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-1">{item.name}</p>
-                        <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
-                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">
-                          {formatPrice(item.price)} × {item.quantity}
-                        </p>
-                      </div>
-                      <p className="text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
-                    </li>
-                  ))}
+                  {items.map((item) => {
+                    const price = pricing.priceFor(item)
+                    return (
+                      <li key={item.product_id} className="py-3 flex gap-3">
+                        <div className="h-14 w-14 bg-paper-warm overflow-hidden rounded shrink-0">
+                          {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-cover" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm line-clamp-1">{item.name}</p>
+                          <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
+                          <p className="text-xs text-ink-muted mt-0.5 tabular-nums">
+                            {formatPrice(price)} × {item.quantity}
+                          </p>
+                        </div>
+                        <p className="text-sm font-semibold tabular-nums">{formatPrice(price * item.quantity)}</p>
+                      </li>
+                    )
+                  })}
                 </ul>
               </StepCard>
 
@@ -364,7 +378,7 @@ export default function CheckoutPage() {
               )}
               <Row
                 label="Shipping"
-                value={isIntl || requiresManual
+                value={requiresManual
                   ? <span className="text-ink-muted text-xs">To be quoted</span>
                   : shippingQuote
                     ? (shippingCost === 0
@@ -401,11 +415,11 @@ export default function CheckoutPage() {
         <form onSubmit={handleSaveAddress} className="grid sm:grid-cols-2 gap-4">
           <Input label="Label" value={addrForm.label} onChange={(e) => setAddrForm({ ...addrForm, label: e.target.value })} placeholder="Home/Office" error={addrErrors.label} />
           <Input label="Recipient name *" value={addrForm.recipient_name} onChange={(e) => setAddrForm({ ...addrForm, recipient_name: e.target.value })} error={addrErrors.recipient_name} />
-          <Input label="Phone number *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+62..." error={addrErrors.phone} />
-          <Input
+          <Input label="Phone number *" value={addrForm.phone} onChange={(e) => setAddrForm({ ...addrForm, phone: e.target.value })} placeholder="+" error={addrErrors.phone} />
+          <CountrySearchInput
             label="Country *"
             value={addrForm.country}
-            onChange={(e) => setAddrForm({ ...addrForm, country: e.target.value, city_id: isInternational({ country: e.target.value }) ? null : addrForm.city_id })}
+            onChange={(val) => setAddrForm({ ...addrForm, country: val, city_id: isInternational({ country: val }) ? null : addrForm.city_id })}
             error={addrErrors.country}
           />
           {isInternational(addrForm) ? (

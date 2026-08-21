@@ -56,7 +56,6 @@ export default function ProductCard({ product }) {
         price={price}
         oldPrice={product.compare_at_price}
         memberPrice={product.member_price}
-        tierName={product.tier_name}
         size="sm"
       />
     </Link>

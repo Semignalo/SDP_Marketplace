@@ -46,6 +46,19 @@ return [
         'api_key' => env('RAJAONGKIR_API_KEY', ''),
     ],
 
+    /*
+     * GeoLite2 dipakai untuk mendeteksi negara pengunjung (localized storefront).
+     * Databasenya file lokal, bukan API — tidak ada IP pengunjung yang dikirim keluar
+     * dan tidak ada rate limit. File-nya TIDAK ikut di-commit (lihat .gitignore),
+     * jadi harus diunduh terpisah di tiap server. Kalau file tidak ada, deteksi
+     * dilewati dengan aman dan storefront jatuh ke region default.
+     */
+    'maxmind' => [
+        'database_path' => env('MAXMIND_DB_PATH', storage_path('app/geoip/GeoLite2-Country.mmdb')),
+        // Peringatkan di `geoip:status` kalau database sudah lebih tua dari ini.
+        'stale_after_days' => (int) env('MAXMIND_STALE_AFTER_DAYS', 60),
+    ],
+
     // Endpoint read-only buat asisten personal (OpenClaw). Kosong = endpoint mati.
     'assistant' => [
         'token' => env('ASSISTANT_API_TOKEN', ''),

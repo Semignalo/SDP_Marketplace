@@ -5,8 +5,11 @@ import { Badge, SkeletonProductCard, EmptyState } from '../components/ui'
 import { useProducts, useVendors } from '../hooks/useProducts'
 import { calcDiscount } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
+import heroImage from '../assets/homepage/hero.jpg'
+import afterEdit2Image from '../assets/homepage/after-edit-2.png'
+import cstarYeayImage from '../assets/homepage/cstar-yeay.png'
 
-const HERO_IMAGE = 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_2000/v1782316750/Gemini_Generated_Image_28yiw428yiw428yi_svibwy.png'
+const HERO_IMAGE = heroImage
 
 export default function HomePage() {
   const { data: featured, isLoading: loadingFeatured } = useProducts({ per_page: 60, sort: 'newest' })
@@ -324,14 +327,14 @@ function ThreeCardSection() {
       subtitle: 'Beauty essentials that actually work.',
       cta: 'Shop beauty',
       to: '/products',
-      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1782317607/after_edit_2_zdq7qt.png',
+      image: afterEdit2Image,
     },
     {
       title: 'Treat yourself, responsibly.',
       subtitle: 'Great finds under Rp 200K.',
       cta: 'Shop under 200K',
       to: '/products?max_price=200000',
-      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1782317659/cstar_yeay_sbko6b.png',
+      image: cstarYeayImage,
     },
   ]
 

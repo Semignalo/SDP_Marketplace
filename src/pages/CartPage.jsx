@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Trash2, ArrowRight, Truck, Award } from 'lucide-react'
+import { ShoppingBag, Trash2, ArrowRight, Award } from 'lucide-react'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
 import { usePublicSettings } from '../hooks/useProducts'
@@ -21,10 +21,6 @@ export default function CartPage() {
   const tierMaxDiscount = Number(settings?.tier_max_discount_rupiah || 0)
   const tierDiscount = calcTierDiscount(subtotal, tier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
-
-  const freeShippingMin = Number(settings?.shipping_min_free || 150000)
-  const remaining = Math.max(0, freeShippingMin - subtotalAfterTier)
-  const progress = Math.min(100, (subtotalAfterTier / freeShippingMin) * 100)
 
   if (items.length === 0) {
     return (
@@ -166,36 +162,6 @@ export default function CartPage() {
             )}
           </Card>
 
-          {freeShippingMin > 0 && (
-            <Card padding="md" className="bg-paper-soft">
-              <div className="flex items-start gap-2.5">
-                <Truck size={16} className="text-ink-soft mt-0.5 shrink-0" />
-                <div className="flex-1">
-                  {remaining > 0 ? (
-                    <>
-                      <p className="text-xs text-ink-soft">
-                        Add <strong className="text-ink tabular-nums">{formatPrice(remaining)}</strong> more for free shipping.
-                      </p>
-                      <div
-                        className="mt-2 h-1 bg-line rounded-full overflow-hidden"
-                        role="progressbar"
-                        aria-label="Progress to free shipping"
-                        aria-valuenow={Math.round(progress)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      >
-                        <div className="h-full bg-ink transition-all" style={{ width: `${progress}%` }} />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-xs text-state-success font-semibold">
-                      You've got free shipping on this order.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-          )}
         </aside>
       </div>
     </div>

@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // quoted_at, lihat CancelExpiredOrders). Order domestik/belum di-quote tidak pernah disentuh.
         $schedule->command('orders:cancel-expired')->daily();
         $schedule->command('orders:complete-shipped')->daily();
+
+        // Kurs cuma dipakai buat menampilkan harga (penagihan tetap IDR), jadi
+        // 4 jam sekali sudah lebih dari cukup dan hemat kuota API gratisan.
+        $schedule->command('rates:fetch')->everyFourHours();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

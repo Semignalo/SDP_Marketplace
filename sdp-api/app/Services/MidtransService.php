@@ -158,12 +158,16 @@ class MidtransService
         $transactionStatus = $status->transaction_status ?? null;
         $fraudStatus = $status->fraud_status ?? null;
 
+        // 'deny' sengaja TIDAK di-treat sebagai cancel — itu cuma 1 percobaan bayar
+        // gagal (mis. kartu ditolak bank), customer masih harus bisa retry pakai
+        // kartu/metode lain di order yang sama. Hanya 'cancel' (customer batalin
+        // sendiri) dan 'expire' (timeout) yang membatalkan order.
         $next = null;
         if ($transactionStatus === 'capture') {
             $next = $fraudStatus === 'accept' ? 'processing' : null;
         } elseif ($transactionStatus === 'settlement') {
             $next = 'processing';
-        } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+        } elseif (in_array($transactionStatus, ['cancel', 'expire'])) {
             $next = 'cancelled';
         }
 
@@ -195,12 +199,13 @@ class MidtransService
         $fraudStatus = $notif->fraud_status ?? null;
 
         // Mapping reference: https://docs.midtrans.com/reference/webhook-https-notification
+        // 'deny' sengaja TIDAK di-treat sebagai cancel — lihat catatan di checkTransactionStatus().
         $next = null;
         if ($transactionStatus === 'capture') {
             $next = $fraudStatus === 'accept' ? 'processing' : null;
         } elseif ($transactionStatus === 'settlement') {
             $next = 'processing';
-        } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+        } elseif (in_array($transactionStatus, ['cancel', 'expire'])) {
             $next = 'cancelled';
         }
 

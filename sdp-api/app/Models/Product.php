@@ -56,6 +56,33 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function regionalPrices(): HasMany
+    {
+        return $this->hasMany(ProductRegionalPrice::class);
+    }
+
+    /**
+     * Harga dasar (IDR) yang berlaku untuk negara tertentu: override regional kalau ada,
+     * kalau tidak ya harga default produk. Selalu IDR — penagihan tidak pernah pindah mata uang.
+     *
+     * Untuk listing, eager-load dulu relasinya agar tidak N+1:
+     *   ->with(['regionalPrices' => fn ($q) => $q->where('country_code', $code)])
+     */
+    public function effectivePriceIdr(?string $countryCode): float
+    {
+        $base = (float) $this->price;
+
+        if ($countryCode === null || ! in_array($countryCode, config('regions.pricing_countries', []), true)) {
+            return $base;
+        }
+
+        $override = $this->relationLoaded('regionalPrices')
+            ? $this->regionalPrices->firstWhere('country_code', $countryCode)
+            : $this->regionalPrices()->where('country_code', $countryCode)->first();
+
+        return $override ? (float) $override->price_idr : $base;
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

@@ -4,7 +4,7 @@ import { Search, Menu, X, User, ShoppingBag, Heart, LayoutDashboard } from 'luci
 import { useUIStore } from '../stores/useUIStore'
 import { useCartStore } from '../stores/useCartStore'
 import { useAuthStore } from '../stores/useAuthStore'
-import { useCurrencyStore } from '../stores/useCurrencyStore'
+import RegionSwitcher from './RegionSwitcher'
 import { useCategories, usePublicSettings } from '../hooks/useProducts'
 import { cn } from '../lib/utils'
 import { Input, CartBadge } from './ui'
@@ -80,7 +80,7 @@ export default function Navbar() {
         </form>
 
         <nav className="hidden lg:flex items-center gap-1 ml-auto">
-          <CurrencyToggle />
+          <RegionSwitcher />
           <Link to="/wishlist" className="h-10 w-10 rounded inline-flex items-center justify-center text-ink hover:bg-paper-warm transition" aria-label="Wishlist">
             <Heart size={20} strokeWidth={1.6} />
           </Link>
@@ -131,7 +131,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex lg:hidden items-center gap-1.5 ml-auto">
-          <CurrencyToggle />
+          <RegionSwitcher />
           <button
             type="button"
             onClick={openCart}
@@ -146,37 +146,6 @@ export default function Navbar() {
 
       <CategoryStrip categories={categories} />
     </header>
-  )
-}
-
-function CurrencyToggle({ className = '' }) {
-  const currency = useCurrencyStore((s) => s.currency)
-  const setCurrency = useCurrencyStore((s) => s.setCurrency)
-
-  return (
-    <div
-      role="group"
-      aria-label="Switch currency"
-      title="Prices shown for reference only — you'll be charged in IDR at checkout"
-      className={cn(
-        'h-9 inline-flex items-center rounded-pill border border-line bg-paper-soft p-0.5 shrink-0',
-        className,
-      )}
-    >
-      {['IDR', 'USD'].map((c) => (
-        <button
-          key={c}
-          type="button"
-          onClick={() => setCurrency(c)}
-          className={cn(
-            'h-8 px-3 rounded-pill text-2xs font-bold tracking-wide transition',
-            currency === c ? 'bg-ink text-white shadow-card' : 'text-ink-muted hover:text-ink',
-          )}
-        >
-          {c}
-        </button>
-      ))}
-    </div>
   )
 }
 
@@ -300,7 +269,7 @@ export function MobileMenuDrawer() {
       <div className="flex items-center justify-between px-5 h-16 border-b border-line">
         <span className="text-xl font-bold tracking-logo text-ink">SDP</span>
         <div className="flex items-center gap-1">
-          <CurrencyToggle />
+          <RegionSwitcher />
           <button onClick={close} className="text-ink p-2" aria-label="Close">
             <X size={22} />
           </button>

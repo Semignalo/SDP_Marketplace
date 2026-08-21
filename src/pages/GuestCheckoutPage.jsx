@@ -16,9 +16,12 @@ import { loadSnap } from '../lib/snap'
 import { Button, Card, Input, Textarea, Spinner } from '../components/ui'
 import { Stepper, StepCard, Row } from '../components/checkout/shared'
 import CitySearchInput from '../components/CitySearchInput'
+import CountrySearchInput from '../components/CountrySearchInput'
+import RepricedNotice from '../components/RepricedNotice'
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { useCartPricing } from '../hooks/useRegion'
 import { calcShippingCost, calcTierDiscount } from '../lib/pricing'
 
 const STEPS = [
@@ -46,7 +49,6 @@ function isInternational(form) {
 export default function GuestCheckoutPage() {
   const navigate = useNavigate()
   const items = useCartStore((s) => s.items)
-  const subtotal = useCartStore((s) => s.subtotal())
   const clearCart = useCartStore((s) => s.clear)
   const getActiveReferral = useReferralStore((s) => s.getActive)
 
@@ -63,6 +65,14 @@ export default function GuestCheckoutPage() {
   const [notes, setNotes] = useState('')
   const [shippingQuote, setShippingQuote] = useState(null)
   const formatPrice = useFormatPrice()
+
+  /*
+   * Harga mengikuti negara TUJUAN KIRIM, bukan region yang sedang dilihat customer —
+   * sama seperti yang dipakai server saat membuat order. Tanpa ini, customer yang
+   * browsing sebagai negara lain baru tahu harganya berubah setelah order jadi.
+   */
+  const pricing = useCartPricing(form.country, items)
+  const subtotal = pricing.subtotal
 
   // Referral
   const [referralCode, setReferralCode] = useState('')
@@ -88,13 +98,18 @@ export default function GuestCheckoutPage() {
 
   const tierDiscount = calcTierDiscount(subtotal, guestTier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
-  const isFreeShipping = subtotalAfterTier >= freeShippingMin
+  const isIntl = isInternational(form)
+  // Subsidi free-shipping cuma promo domestik — internasional selalu bayar flat penuh.
+  const isFreeShipping = !isIntl && subtotalAfterTier >= freeShippingMin
   const requiresManual = !!shippingQuote?.requires_manual
   const flatCost = Number(shippingQuote?.cost || 0)
-  const shippingCost = requiresManual ? 0 : calcShippingCost(flatCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
+  const shippingCost = requiresManual
+    ? 0
+    : isIntl
+      ? flatCost
+      : calcShippingCost(flatCost, subtotalAfterTier, freeShippingMin, freeShippingMax)
   const total = subtotalAfterTier + shippingCost
-  const isIntl = isInternational(form)
-  const finalTotal = (isIntl || requiresManual) ? subtotalAfterTier : total
+  const finalTotal = requiresManual ? subtotalAfterTier : total
 
   const checkReferral = async (code) => {
     const c = (code || '').trim()
@@ -144,6 +159,7 @@ export default function GuestCheckoutPage() {
     setShippingQuote(null)
     shippingRatesMut.mutate(
       {
+        country: form.country,
         province: form.province,
         items: items.map((it) => ({ product_id: it.product_id, quantity: it.quantity })),
       },
@@ -164,10 +180,6 @@ export default function GuestCheckoutPage() {
         toast.error('That referral code isn\'t valid. Clear it or fix it.')
         return
       }
-      if (isIntl) {
-        setStep(3)
-        return
-      }
       fetchShippingQuote()
       setStep(2)
       return
@@ -185,7 +197,7 @@ export default function GuestCheckoutPage() {
     [form.address, `${form.city}`, form.postal_code].filter(Boolean).join(', ').trim()
 
   const handleSubmit = async () => {
-    if (!isIntl && !shippingQuote) {
+    if (!shippingQuote) {
       toast.error('Please wait for the shipping fee to load')
       return
     }
@@ -266,11 +278,11 @@ export default function GuestCheckoutPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Input label="Recipient name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name} />
                   <Input label="Email *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="for confirmation & order tracking" error={errors.email} />
-                  <Input label="Phone number *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+62..." error={errors.phone} />
-                  <Input
+                  <Input label="Phone number *" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+" error={errors.phone} />
+                  <CountrySearchInput
                     label="Country *"
                     value={form.country}
-                    onChange={(e) => setForm({ ...form, country: e.target.value, city_id: isInternational({ country: e.target.value }) ? null : form.city_id })}
+                    onChange={(val) => setForm({ ...form, country: val, city_id: isInternational({ country: val }) ? null : form.city_id })}
                     error={errors.country}
                   />
                   {isInternational(form) ? (
@@ -372,8 +384,8 @@ export default function GuestCheckoutPage() {
                 <p className="text-sm text-ink-soft mt-2">{fullAddress()}</p>
               </StepCard>
 
-              <StepCard title="Shipping Fee" action={!isIntl && <button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
-                {isIntl || requiresManual ? (
+              <StepCard title="Shipping Fee" action={<button type="button" onClick={() => setStep(2)} className="text-xs text-ink-muted hover:text-ink">Change</button>}>
+                {requiresManual ? (
                   <p className="text-sm text-ink-muted">To be quoted by our team after checkout.</p>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -389,20 +401,24 @@ export default function GuestCheckoutPage() {
               </StepCard>
 
               <StepCard title={`Items (${items.length})`}>
+                <RepricedNotice changed={pricing.changed} country={form.country} />
                 <ul className="divide-y divide-line -my-2">
-                  {items.map((item) => (
-                    <li key={item.product_id} className="py-3 flex gap-3">
-                      <div className="h-14 w-14 bg-paper-warm overflow-hidden rounded shrink-0">
-                        {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-cover" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm line-clamp-1">{item.name}</p>
-                        <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
-                        <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatPrice(item.price)} × {item.quantity}</p>
-                      </div>
-                      <p className="text-sm font-semibold tabular-nums">{formatPrice(item.price * item.quantity)}</p>
-                    </li>
-                  ))}
+                  {items.map((item) => {
+                    const price = pricing.priceFor(item)
+                    return (
+                      <li key={item.product_id} className="py-3 flex gap-3">
+                        <div className="h-14 w-14 bg-paper-warm overflow-hidden rounded shrink-0">
+                          {item.image && <img src={item.image} alt={item.name} className="h-full w-full object-cover" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm line-clamp-1">{item.name}</p>
+                          <p className="text-2xs uppercase tracking-widest text-ink-muted mt-0.5">{item.vendor_name}</p>
+                          <p className="text-xs text-ink-muted mt-0.5 tabular-nums">{formatPrice(price)} × {item.quantity}</p>
+                        </div>
+                        <p className="text-sm font-semibold tabular-nums">{formatPrice(price * item.quantity)}</p>
+                      </li>
+                    )
+                  })}
                 </ul>
               </StepCard>
 
@@ -420,7 +436,7 @@ export default function GuestCheckoutPage() {
 
           <div className="flex justify-between gap-3 pt-2">
             {step > 1 ? (
-              <Button variant="outline" onClick={() => setStep(isIntl && step === 3 ? 1 : step - 1)}>← Back</Button>
+              <Button variant="outline" onClick={() => setStep(step - 1)}>← Back</Button>
             ) : (
               <Link to="/keranjang"><Button variant="ghost">← Cart</Button></Link>
             )}
@@ -447,7 +463,7 @@ export default function GuestCheckoutPage() {
               )}
               <Row
                 label="Shipping"
-                value={isIntl || requiresManual
+                value={requiresManual
                   ? <span className="text-ink-muted text-xs">To be quoted</span>
                   : shippingQuote
                     ? (shippingCost === 0 ? <span className="text-state-success">FREE</span> : formatPrice(shippingCost))

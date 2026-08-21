@@ -13,9 +13,11 @@ use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\InternationalShippingService;
 use App\Services\MidtransService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
+use App\Support\Regions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +33,10 @@ class GuestCheckoutController extends Controller
     /**
      * POST /api/guest/shipping-rates — ongkir flat berdasarkan provinsi tujuan.
      */
-    public function shippingRates(Request $request, ShippingZoneService $zoneService): JsonResponse
+    public function shippingRates(Request $request, ShippingZoneService $zoneService, InternationalShippingService $intlShippingService): JsonResponse
     {
         $data = $request->validate([
+            'country'            => 'nullable|string|max:60',
             'province'           => 'nullable|string|max:120',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
@@ -52,15 +55,19 @@ class GuestCheckoutController extends Controller
         }
         $totalWeight = max(1, $totalWeight);
 
-        $quote = $zoneService->quote($data['province'] ?? null, $totalWeight);
+        $country = $data['country'] ?? 'Indonesia';
+        $isInternational = strcasecmp(trim($country), 'Indonesia') !== 0;
+        $quote = $isInternational
+            ? $intlShippingService->quote($country, $totalWeight)
+            : $zoneService->quote($data['province'] ?? null, $totalWeight);
 
         return response()->json([
             'data' => [
                 'cost'              => $quote['cost'],
                 'requires_manual'   => $quote['requires_manual'],
                 'zone_label'        => $quote['label'],
-                'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
-                'free_shipping_max' => (float) Setting::get('shipping_max_free', 20000),
+                'free_shipping_min' => $isInternational ? 0 : (float) Setting::get('shipping_min_free', 150000),
+                'free_shipping_max' => $isInternational ? 0 : (float) Setting::get('shipping_max_free', 20000),
                 'total_weight'      => $totalWeight,
             ],
         ]);
@@ -69,7 +76,7 @@ class GuestCheckoutController extends Controller
     /**
      * POST /api/guest/orders — buat order guest (tanpa login).
      */
-    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService): JsonResponse
+    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService, InternationalShippingService $intlShippingService): JsonResponse
     {
         $data = $request->validate([
             'guest_email'      => 'required|email|max:160',
@@ -101,9 +108,13 @@ class GuestCheckoutController extends Controller
             }
         }
 
-        $order = DB::transaction(function () use ($data, $shippingCountry, $shippingProvince, $isInternational, $referrer, $referralCode, $tierService, $zoneService) {
+        $order = DB::transaction(function () use ($data, $shippingCountry, $shippingProvince, $isInternational, $referrer, $referralCode, $tierService, $zoneService, $intlShippingService) {
+            // Harga regional mengikuti negara tujuan kirim (lihat CheckoutController::store).
+            $priceCountry = Regions::codeFromName($shippingCountry);
+
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
+                ->with(['regionalPrices' => fn ($q) => $q->where('country_code', $priceCountry)])
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
@@ -124,7 +135,7 @@ class GuestCheckoutController extends Controller
                     throw ValidationException::withMessages(['items' => "Only {$product->stock} left in stock for {$product->name}"]);
                 }
 
-                $unitPrice = (float) $product->price;
+                $unitPrice = $product->effectivePriceIdr($priceCountry);
                 $lineSubtotal = $unitPrice * $line['quantity'];
                 $subtotalBeforeDiscount += $lineSubtotal;
                 $totalWeight += ($product->weight_gram ?? 300) * $line['quantity'];
@@ -143,12 +154,19 @@ class GuestCheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            $zoneQuote = $isInternational ? null : $zoneService->quote($shippingProvince, max(1, $totalWeight));
-            $needsManualQuote = $isInternational || ($zoneQuote['requires_manual'] ?? false);
+            $zoneQuote = $isInternational
+                ? $intlShippingService->quote($shippingCountry, max(1, $totalWeight))
+                : $zoneService->quote($shippingProvince, max(1, $totalWeight));
+            $needsManualQuote = $zoneQuote['requires_manual'] ?? true;
 
             if ($needsManualQuote) {
                 $shippingCost = 0;
                 $total = $subtotal;
+            } elseif ($isInternational) {
+                // Ongkir internasional flat, TIDAK ikut subsidi shipping_min_free/max —
+                // itu promo khusus zona domestik.
+                $shippingCost = (int) $zoneQuote['cost'];
+                $total = $subtotal + $shippingCost;
             } else {
                 $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
                 $shippingMaxFree = (float) Setting::get('shipping_max_free', 20000);
@@ -178,6 +196,9 @@ class GuestCheckoutController extends Controller
                 'shipping_country' => $shippingCountry,
                 'shipping_province' => $shippingProvince,
                 'shipping_courier' => null,
+                // Sama seperti CheckoutController::store — ongkir otomatis tetap dianggap
+                // "sudah di-quote" biar ikut 30 hari grace period auto-cancel.
+                'quoted_at' => ($isInternational && ! $needsManualQuote) ? now() : null,
             ]);
 
             foreach ($orderItemsData as $line) {

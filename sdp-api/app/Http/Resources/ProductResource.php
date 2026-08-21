@@ -9,14 +9,22 @@ class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $country = $request->attributes->get('region_country');
+        $effectivePrice = $this->effectivePriceIdr($country);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->when($this->shouldShowDescription($request), $this->description),
-            'price' => (float) $this->price,
+            // Harga yang berlaku untuk region ini (IDR) — sudah termasuk override regional.
+            'price' => $effectivePrice,
+            // Harga default produk, buat referensi kalau ada override yang berlaku.
+            'base_price' => (float) $this->price,
+            'regional_price_applied' => $effectivePrice !== (float) $this->price,
+            'region_country' => $country,
             'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
-            'member_price' => $this->calculateMemberPrice($request),
+            'member_price' => $this->calculateMemberPrice($request, $effectivePrice),
             'tier_discount_percent' => (float) $request->attributes->get('tier_discount_percent', 0),
             'tier_name' => $request->attributes->get('tier_name'),
             'stock' => $this->stock,
@@ -44,13 +52,13 @@ class ProductResource extends JsonResource
      * bukan per-produk saat browsing, jadi total belanja besar bisa sedikit lebih tinggi dari SUM harga
      * member per-item yang ditampilkan di listing.
      */
-    protected function calculateMemberPrice(Request $request): float
+    protected function calculateMemberPrice(Request $request, float $basePrice): float
     {
         $percent = (float) $request->attributes->get('tier_discount_percent', 0);
         if ($percent <= 0) {
-            return (float) $this->price;
+            return $basePrice;
         }
 
-        return round(((float) $this->price) * (1 - $percent / 100), 2);
+        return round($basePrice * (1 - $percent / 100), 2);
     }
 }

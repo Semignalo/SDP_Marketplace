@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\ResolvesRegion;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
@@ -11,11 +12,19 @@ use Illuminate\Http\Request;
 
 class WishlistController extends Controller
 {
+    use ResolvesRegion;
+
     public function index(Request $request)
     {
+        $country = $this->attachRegionContext($request);
+
         $items = $request->user()
             ->wishlists()
-            ->with(['product.vendor', 'product.images'])
+            ->with([
+                'product.vendor',
+                'product.images',
+                'product.regionalPrices' => fn ($q) => $q->where('country_code', $country),
+            ])
             ->orderByDesc('created_at')
             ->get()
             ->map(fn ($w) => $w->product)

@@ -13,8 +13,10 @@ use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\InternationalShippingService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
+use App\Support\Regions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +48,7 @@ class CheckoutController extends Controller
     /**
      * POST /api/checkout/shipping-rates — hitung ongkir flat berdasarkan zona provinsi tujuan.
      */
-    public function shippingRates(Request $request, ShippingZoneService $zoneService): JsonResponse
+    public function shippingRates(Request $request, ShippingZoneService $zoneService, InternationalShippingService $intlShippingService): JsonResponse
     {
         $data = $request->validate([
             'address_id' => 'required|integer|exists:addresses,id',
@@ -75,15 +77,20 @@ class CheckoutController extends Controller
         }
         $totalWeight = max(1, $totalWeight);
 
-        $quote = $zoneService->quote($address->province, $totalWeight);
+        $isInternational = strcasecmp(trim($address->country ?: 'Indonesia'), 'Indonesia') !== 0;
+        $quote = $isInternational
+            ? $intlShippingService->quote($address->country, $totalWeight)
+            : $zoneService->quote($address->province, $totalWeight);
 
         return response()->json([
             'data' => [
                 'cost'              => $quote['cost'],
                 'requires_manual'   => $quote['requires_manual'],
                 'zone_label'        => $quote['label'],
-                'free_shipping_min' => (float) Setting::get('shipping_min_free', 150000),
-                'free_shipping_max' => (float) Setting::get('shipping_max_free', 20000),
+                // Subsidi free-shipping cuma berlaku domestik — internasional selalu 0/0
+                // biar frontend tidak salah kira ada subsidi yang ikut mengurangi ongkir.
+                'free_shipping_min' => $isInternational ? 0 : (float) Setting::get('shipping_min_free', 150000),
+                'free_shipping_max' => $isInternational ? 0 : (float) Setting::get('shipping_max_free', 20000),
                 'total_weight'      => $totalWeight,
             ],
         ]);
@@ -92,7 +99,7 @@ class CheckoutController extends Controller
     /**
      * POST /api/orders — create order from cart.
      */
-    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService): JsonResponse
+    public function store(Request $request, TierService $tierService, ShippingZoneService $zoneService, InternationalShippingService $intlShippingService): JsonResponse
     {
         $data = $request->validate([
             'address_id' => 'nullable|integer|exists:addresses,id',
@@ -129,10 +136,17 @@ class CheckoutController extends Controller
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
         $resellerId = $user->referrer_id ?: null;
 
-        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $shippingProvince, $isInternational, $resellerId, $tierService, $zoneService) {
+        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $shippingProvince, $isInternational, $resellerId, $tierService, $zoneService, $intlShippingService) {
+            /*
+             * Harga regional ditentukan oleh negara TUJUAN KIRIM, bukan region switcher
+             * di browser — nilai dari client tidak pernah dipercaya untuk menentukan harga.
+             */
+            $priceCountry = Regions::codeFromName($shippingCountry);
+
             // Lock & verify products.
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
+                ->with(['regionalPrices' => fn ($q) => $q->where('country_code', $priceCountry)])
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
@@ -159,7 +173,7 @@ class CheckoutController extends Controller
                     ]);
                 }
 
-                $unitPrice = (float) $product->price;
+                $unitPrice = $product->effectivePriceIdr($priceCountry);
                 $lineSubtotal = $unitPrice * $line['quantity'];
                 $subtotalBeforeDiscount += $lineSubtotal;
                 $totalWeight += ($product->weight_gram ?? 300) * $line['quantity'];
@@ -178,15 +192,24 @@ class CheckoutController extends Controller
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;
 
-            // Ongkir dihitung server-side dari zona provinsi tujuan (flat rate), bukan input client.
-            $zoneQuote = $isInternational ? null : $zoneService->quote($shippingProvince, max(1, $totalWeight));
-            $needsManualQuote = $isInternational || ($zoneQuote['requires_manual'] ?? false);
+            // Ongkir dihitung server-side, bukan input client. Domestik: zona provinsi
+            // (flat rate). Internasional: cocokkan ke shipping_rates by nama negara —
+            // kalau negaranya belum ada rate-nya, tetap jatuh ke manual seperti sebelumnya.
+            $zoneQuote = $isInternational
+                ? $intlShippingService->quote($shippingCountry, max(1, $totalWeight))
+                : $zoneService->quote($shippingProvince, max(1, $totalWeight));
+            $needsManualQuote = $zoneQuote['requires_manual'] ?? true;
 
             if ($needsManualQuote) {
-                // Ongkir belum bisa dihitung otomatis (internasional, atau zona Maluku/Papua) —
+                // Ongkir belum bisa dihitung otomatis (negara/zona belum ada rate-nya) —
                 // order ditahan di awaiting_quote sampai admin input ongkir manual.
                 $shippingCost = 0;
                 $total = $subtotal;
+            } elseif ($isInternational) {
+                // Ongkir internasional flat, TIDAK ikut subsidi shipping_min_free/max —
+                // itu promo khusus zona domestik.
+                $shippingCost = (int) $zoneQuote['cost'];
+                $total = $subtotal + $shippingCost;
             } else {
                 // Shipping cost — subsidi max Rp shipping_max_free jika subtotal >= threshold.
                 $shippingMinFree = (float) Setting::get('shipping_min_free', 150000);
@@ -214,6 +237,13 @@ class CheckoutController extends Controller
                 'shipping_country' => $shippingCountry,
                 'shipping_province' => $shippingProvince,
                 'shipping_courier' => null,
+                /*
+                 * Ongkir internasional yang otomatis ketemu tetap dicatat "sudah di-quote"
+                 * (walau bukan admin manual) — supaya order ini ikut kena 30 hari grace
+                 * period auto-cancel yang sama (lihat CancelExpiredOrders), bukan
+                 * nyangkut selamanya di pending_payment kalau tidak pernah dibayar.
+                 */
+                'quoted_at' => ($isInternational && ! $needsManualQuote) ? now() : null,
             ]);
 
             foreach ($orderItemsData as $line) {

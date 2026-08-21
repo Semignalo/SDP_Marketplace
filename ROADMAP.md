@@ -1,6 +1,6 @@
 # SDP Marketplace — Roadmap Pengembangan
 
-> Terakhir diperbarui: 21 Mei 2026 (sesi 2)
+> Terakhir diperbarui: 11 Agustus 2026
 
 ---
 
@@ -20,12 +20,25 @@
 | 10 | Admin Panel | ✅ Selesai | 4-5 hari |
 | 11 | Polish & UX | ✅ Selesai | 2-3 hari |
 | 12 | Testing & QA | ✅ Selesai | 2 hari |
-| 13 | Deploy ke VPS | 🔲 Belum | 1-2 hari |
+| 13 | Deploy ke VPS | 🔄 VPS live & di-hardening, tapi checklist go-live production (lihat Phase 17) belum lengkap | 1-2 hari |
 | 14 | Tier Loyalty + Role Refactor | ✅ Selesai | 1 hari |
 | 15 | UX Polish + Payment + Invoice | ✅ Selesai | 1 hari |
 | 16 | Email Verifikasi + Midtrans + Cancel + Withdrawal | ✅ Selesai | 2 hari |
-| 17 | Security & Pre-publish Audit | 🔄 Kode selesai, sisanya saat deploy | 2-3 hari |
+| 17 | Security & Pre-publish Audit | 🔄 Kode selesai, checklist "saat deploy" belum diverifikasi ulang | 2-3 hari |
 | 18 | RajaOngkir Integration + Tier Enhancements | ✅ Selesai | 1 hari |
+| 19 | Review & Rating, Guest Checkout, Referral Capture, Cleanup | ✅ Selesai | — |
+| 20 | Redesign UI/UX Total + Kuotasi Ongkir Internasional + Forgot Password | ✅ Selesai | — |
+| 21 | Currency Toggle USD + Checkout/Payment Polish + Translasi English | ✅ Selesai | — |
+| 22 | Sinkronisasi Status Order + Fix Invoice Email | ✅ Selesai | — |
+| 23 | Fitur & Fix Kecil (surat jalan, qty manual, redirect email, Midtrans, cancelled→processing) | ✅ Selesai | — |
+| 24 | Ongkir Flat Rate per Zona + Scaling per KG | ✅ Selesai | — |
+| 25 | Komisi 5%, Harga Member, Tier Override Admin, Activity Log | ✅ Selesai | — |
+| 26 | Fix Tampilan Guest & Kurs Admin, Restyle Invoice PDF | ✅ Selesai | — |
+| 27 | Auto-cancel Window Configurable | ✅ Selesai | — |
+| 28 | Admin Order Filter/Sort/Search + Integrasi OpenClaw (read-only) | ✅ Selesai | — |
+| 29 | Ongkir Express Internasional (data OGB weight-tier) | 🔄 Sedang berjalan — skema `shipping_rates` + seed data staged, belum di-commit, belum ada service/endpoint/UI | 1.5-2 hari |
+
+> Phase 19–28 tidak punya estimasi hari tercatat karena dikerjakan langsung tanpa planning dokumen terpisah — detail per commit ada di bawah. Lihat `PLAN_NEXT.md` untuk rencana lanjutan (kurs realtime, otomasi sheet OGB).
 
 ---
 
@@ -432,8 +445,10 @@ php artisan test
 
 ---
 
-### 🔲 Phase 13 — Deploy ke VPS
+### 🔄 Phase 13 — Deploy ke VPS
 **Goal:** Marketplace live di VPS IDCloudHost.
+
+> **Status 2026-08-11:** VPS `157.10.161.83` sudah live, di-hardening dari sisi SSH/firewall (lihat catatan security di memory, 2026-07-15), dan sudah dipakai untuk kerja lanjutan (Phase 19-28 berjalan di atasnya). Tapi checklist go-live production di bawah **belum semua dicek ulang** — khususnya Midtrans masih pakai sandbox key (lihat Phase 17 checklist item yang masih `[ ]`). Sebelum treat sebagai "selesai penuh", perlu verifikasi satu-satu item di checklist Phase 17.
 
 - Setup VPS 157.10.161.83: PHP 8.2, MySQL 8, Nginx, Node 20, Supervisor
 - Domain + SSL Let's Encrypt
@@ -924,6 +939,150 @@ Frontend:
 
 ---
 
+### ✅ Phase 19 — Review & Rating, Guest Checkout, Referral Capture, Cleanup
+
+**Commit:** `d0c332a`, `6f775a0`
+
+- ✅ Customer bisa kasih rating + ulasan untuk produk yang sudah dibeli; rating rata-rata & jumlah ulasan tampil di detail produk
+- ✅ `compare_at_price` di produk — admin set harga coret/diskon, tampil di `PriceLabel`
+- ✅ Indikator stok terbatas di `ProductCard`/`ProductDetailPage`, stats brand/produk di hero `HomePage`
+- ✅ **Guest checkout** tanpa akun — `GuestCheckoutController`, `GuestCheckoutPage`, `GuestTrackPage`: akses order via `guest_token`, email konfirmasi + link lacak, `snap-token`/`check-status` terpisah dari flow user login
+- ✅ Referral capture global — `?ref=` di URL manapun (bukan cuma `/register`), disimpan ke `useReferralStore` (TTL 30 hari), auto-fill di checkout
+- ✅ `tier_max_discount_rupiah` — cap maksimum diskon tier per order (default Rp 500rb, `0` = tanpa batas), diterapkan di `TierService` + preview client-side (`Cart`/`Checkout`/`GuestCheckoutPage`) via `src/lib/pricing.js`
+- ✅ Konsolidasi 4 query `sum()` summary komisi jadi 1 query agregat di `Admin/CommissionController`
+- ✅ Cleanup dead code: `BuyNowPage.jsx`, `mockData.js`, `ReferralBadge.jsx`, dependency `framer-motion`, 7 method/scope model tak terpakai
+
+---
+
+### ✅ Phase 20 — Redesign UI/UX Total + Kuotasi Ongkir Internasional + Forgot Password
+
+**Commit:** `933e4d0`, `27c7011`, `bc8f8ed`, `665a375`, `c030adf`
+
+- ✅ Komponen UI baru: `Card`, `QuantityStepper`, `StarRating`, shared checkout components; refactor besar Cart/Checkout/Product/Account; copy diubah ke full English
+- ✅ Order lifecycle automation: command auto-cancel order expired & auto-complete order shipped, integrasi tracking kurir RajaOngkir, email notifikasi tiap perubahan status order
+- ✅ Redesign UI/UX menyeluruh (publik, akun, vendor, admin); admin bisa cetak invoice order siapa saja
+- ✅ **Status `awaiting_quote`** — order dengan alamat internasional ditahan sampai admin input ongkir manual, baru lanjut bayar seperti biasa (fondasi untuk flow "Normal" ongkir internasional)
+- ✅ Forgot/reset password — user lama dari import legacy (password random tak diketahui) bisa self-service reset via link email (60 menit, sekali pakai)
+
+---
+
+### ✅ Phase 21 — Currency Toggle USD + Checkout/Payment Polish + Translasi English
+
+**Commit:** `ae157ed`, `e476b51`, `626a15d`, `0c80faa`, `0c05699`, `ae0ff77`, `3b218bb`
+
+- ✅ Toggle mata uang USD untuk customer internasional — estimasi harga tampil USD, pembayaran tetap charge IDR via Midtrans (kurs `usd_idr_rate` di-set admin manual, bukan live rate)
+- ✅ Currency toggle jadi segmented control IDR/USD (dua opsi sekaligus, bukan 1 label), tampil langsung di top bar mobile (sebelumnya cuma di drawer menu)
+- ✅ `MidtransService` — retry token pembayaran lebih robust: `order_id` unik per attempt (`-r2`, `-r3`, dst) menggantikan strategi cancel/expire yang tidak reliable, jadi retry tidak stuck lagi
+- ✅ Order detail (tracking guest, order success, akun) tampilkan breakdown ongkir, metode bayar, tanggal bayar (sebelumnya hanya total)
+- ✅ Tombol "Buy now" → "Checkout"; tombol Checkout arahkan ke keranjang dulu (review item sebelum isi alamat)
+- ✅ Email order internasional (order-confirmation, payment-confirmation, shipping-quote-ready) tampil USD, bukan Rupiah
+- ✅ Semua teks visual diterjemahkan ke English: pesan API, email transaksional, halaman customer, panel admin, panel vendor
+
+---
+
+### ✅ Phase 22 — Sinkronisasi Status Order + Fix Invoice Email
+
+**Commit:** `fed16b6`, `ed832c8`, `049459a`, `eaeb491`, `9e8c436`
+
+- ✅ Judul halaman `GuestTrackPage`/`OrderSuccessPage` sekarang beda untuk processing/shipped/completed (sebelumnya semua bilang "Order Processing")
+- ✅ Email `PaymentConfirmation` lampirkan invoice PDF (`barryvdh/laravel-dompdf`), otomatis USD kalau order internasional
+- ✅ Admin bisa input kurir & no. resi manual tanpa ganti status order; badge jumlah pesanan butuh aksi di sidebar admin (polling); card Amount Due + Pay Now sticky di halaman order customer
+- ✅ **Fix bug:** invoice tidak terkirim ke user login — `Order` model tidak punya relasi `user()`, harus pakai `customer()` (exception di-catch diam-diam sebelumnya)
+- ✅ **Fix bug:** guest checkout tidak pernah kirim invoice saat status jadi `processing` — `GuestCheckoutController::checkStatus` tidak memanggil `PaymentConfirmation` (beda dari `PaymentController` versi user login)
+- ✅ Layout invoice PDF dirapikan — margin halaman, border box, garis tabel header & total
+
+---
+
+### ✅ Phase 23 — Fitur & Fix Kecil
+
+**Commit:** `04c5f95`, `87e91e1`, `e5ec4d1`, `4d2925f`, `1a11124`
+
+- ✅ Quantity selector bisa diketik manual, bukan cuma tombol +/-
+- ✅ Admin bisa download surat jalan PDF dari halaman order detail (alamat kirim, kurir/resi, item+qty tanpa subtotal/total)
+- ✅ **Fix:** link verifikasi email tidak lagi redirect ke domain API mentah (ketangkep Safe Browsing sebagai "Dangerous site") — link sekarang ke frontend, yang panggil API di belakang layar via AJAX; signature Laravel tetap valid karena cuma di-relay
+- ✅ **Fix:** `item_details` sum mismatch Midtrans — tambah line diskon negatif biar `gross_amount` cocok
+- ✅ **Fix:** izinkan transisi status `cancelled` → `processing` supaya order yang bayar setelah kartu decline tidak terkunci permanen
+
+---
+
+### ✅ Phase 24 — Ongkir Flat Rate per Zona + Scaling per KG
+
+**Commit:** `6455db3`, `d218675`
+
+- ✅ Ganti checkout dari live RajaOngkir (banyak opsi kurir, harga kadang aneh karena tarif kargo) ke **flat rate per zona provinsi tujuan**
+- ✅ Zona Maluku/Papua diarahkan ke status `awaiting_quote` (reuse mekanisme order internasional) — admin koordinasi ongkir manual sebelum customer bayar
+- ✅ Rate per-kg (configurable via admin settings) di atas base rate 3kg — sebelumnya tier >3kg flat berapa pun beratnya (order 48pcs vs 13pcs ongkirnya sama)
+
+---
+
+### ✅ Phase 25 — Komisi 5%, Harga Member, Tier Override Admin, Activity Log
+
+**Commit:** `f4a71e1`
+
+- ✅ Komisi reseller diturunkan dari 10% → 5% (seeder + migration data)
+- ✅ Harga listing produk sekarang tampil harga member (setelah diskon tier); guest & user baru mulai di tier **Gold (20%)**, bukan Silver
+- ✅ Admin bisa force-override tier user tertentu (dengan expiry opsional)
+- ✅ Activity log lengkap (`spatie/laravel-activitylog`) untuk aktivitas user & admin, halaman admin baru + export CSV
+
+---
+
+### ✅ Phase 26 — Fix Tampilan Guest & Kurs Admin, Restyle Invoice PDF
+
+**Commit:** `cf1b23c`
+
+- ✅ **Fix:** kolom Customer kosong untuk guest order di admin (orders & detail) — sebelumnya hanya baca relasi `user`, sekarang fallback ke `shipping_name`/`guest_email`
+- ✅ Toggle kurs IDR/USD (`usd_idr_rate`) yang sebelumnya cuma di halaman publik, sekarang ikut tampil di 6 halaman admin (orders, detail, commissions, withdrawals, products, dashboard)
+- ✅ Invoice PDF (lampiran email payment confirmation) direstyle ke layout table biar rendering DomPDF lebih stabil
+
+---
+
+### ✅ Phase 27 — Auto-cancel Window Configurable
+
+**Commit:** `5f7b01b`
+
+- ✅ Setting `order_auto_cancel_hours` — window auto-cancel order `pending_payment` jadi configurable admin (sebelumnya hardcoded 24 jam)
+- ✅ Sinkronkan expiry Snap Midtrans ke setting yang sama, biar halaman pembayaran tidak tetap hidup setelah order sudah di-auto-cancel (stok sudah dikembalikan) — hindari race condition bayar telat
+
+---
+
+### ✅ Phase 28 — Admin Order Filter/Sort/Search + Integrasi OpenClaw (read-only)
+
+**Commit:** `708331f`, `35f8482`, `9cf3fac`
+
+**Admin panel — halaman Pesanan:**
+- ✅ Search diperluas ke nama pemesan (`shipping_name` untuk guest, relasi `customer` untuk user terdaftar)
+- ✅ Filter negara + endpoint `GET /admin/orders/countries`
+- ✅ Sort by `created_at`/`status`/negara/`total`, kolom di-whitelist (bukan input mentah — cegah SQL injection)
+- ✅ Sort status pakai urutan workflow (`awaiting_quote` dulu), bukan alfabet; tie-breaker `orderByDesc(id)` supaya baris tidak loncat antar halaman
+- ✅ **Fix:** dropdown negara tadinya disembunyikan selama order masih 1 negara — jadi fitur tak terlihat sama sekali selagi semua order dari Indonesia; sekarang selalu tampil
+
+**Integrasi OpenClaw (read-only, personal use):**
+- ✅ Endpoint `GET /api/assistant/summary` & `/api/assistant/orders`
+- ✅ Middleware `EnsureAssistantToken` — token statis, **fail-closed 503** kalau token kosong, `hash_equals`, throttle 60/menit
+- ✅ PII dibatasi ke nama pemesan saja — email/telepon/alamat tidak diekspos
+- ✅ `openclaw-mcp/` — MCP server stdio, jalur utama (`docs.openclaw.ai/cli/mcp`)
+- ✅ `openclaw-plugin/` — plugin native, alternatif (boleh dihapus kalau cuma pakai MCP)
+
+**Fix bug penting — auto-cancel order internasional:**
+- ✅ Timer 24 jam auto-cancel dihitung dari `created_at`, tapi kuotasi ongkir manual (internasional/zona khusus) kadang butuh berhari-hari → **91% order yang di-quote langsung ke-cancel dalam hitungan menit** setelah di-quote, customer tidak sempat bayar
+- ✅ **Fix:** auto-cancel sekarang hanya berlaku untuk order yang sudah di-quote (`quoted_at`), dihitung dari `quoted_at` dengan window 30 hari; order yang belum pernah di-quote (checkout domestik biasa) tidak pernah di-auto-cancel
+
+---
+
+### 🔄 Phase 29 — Ongkir Express Internasional (belum di-commit)
+
+**Status:** groundwork data staged di working tree, belum ada logic checkout/UI.
+
+- ✅ Migration `create_shipping_rates_table` — skema **weight-tier** (bukan flat sederhana): `country`, `country_code`, `zone`, `weight_kg`, dimensi (`length/width/height_cm`), `service` (BASIC/EXPRESS), `term` (DDP/DDU/DOMESTIC), `base_rate`, `fsc_percent`, `esc_amount`, `add_fee_custom`, `ogb_fee`, `is_active`
+- ✅ Model `ShippingRate` — accessor `fsc_amount` & `final_price` (kalkulasi otomatis dari komponen biaya)
+- ✅ Seeder `ShippingRateSeeder` — 13 rate riil dari spreadsheet **"QUOTING - OGB X STARINC.xlsx"** (Australia, Canada, France, Germany, Italy, Malaysia ×2 zona, New Zealand, Philippines, Singapore, Sri Lanka, Sweden, UK, USA)
+- 🔲 Belum ada: `InternationalShippingService` untuk pilih rate tier yang sesuai, endpoint quote, integrasi ke `CheckoutController`/`GuestCheckoutController`, halaman admin CRUD rate
+- 🔲 Belum di-commit ke git
+
+> Lihat `PLAN_NEXT.md` Phase 18 untuk rencana lengkap — desain aslinya "flat per negara", tapi data yang sudah di-seed lebih detail (weight-tier), jadi service kalkulasi nanti perlu pilih tier berat yang sesuai, bukan sekadar `base_cost + per_kg`.
+
+---
+
 ## Data Dummy (Seeder)
 
 ### Akun Login
@@ -983,18 +1142,25 @@ Frontend:
 
 ### Settings
 
+> Diperbarui 11 Agustus 2026 sesuai `SettingsSeeder.php` saat ini.
+
 | Key | Value | Keterangan |
 |---|---|---|
-| `reseller_commission_rate` | `10` | Komisi reseller 10% (global) |
+| `reseller_commission_rate` | `5` | Komisi referral 5% (global) — turun dari 10% di Phase 25 |
 | `shipping_min_free` | `150000` | Minimum belanja gratis ongkir Rp 150.000 |
 | `shipping_max_free` | `20000` | Maksimal subsidi ongkir Rp 20.000 |
 | `shipping_flat_default` | `15000` | Ongkir default Rp 15.000 |
-| `rajaongkir_origin_city_id` | `23` | ID kota asal pengiriman di RajaOngkir (default: Bandung) |
+| `rajaongkir_origin_city_id` | `23` | ID kota asal pengiriman di RajaOngkir (default: Bandung) — rate live RajaOngkir sudah diganti flat per zona (Phase 24), key ini sisa dari Phase 18 |
+| `usd_idr_rate` | `16000` | Kurs tampilan USD (estimasi browsing customer internasional) — manual admin-set, bukan live rate. Pembayaran tetap charge IDR |
+| `tier_max_discount_rupiah` | `500000` | Cap maksimum diskon tier per order (Rp). `0` = tanpa batas |
+| `order_auto_cancel_hours` | `24` (default kode, admin-editable) | Window auto-cancel order `pending_payment`; untuk order yang sudah di-quote (`quoted_at`), window terpisah 30 hari (Phase 28) |
 | `site_name` | `SDP Marketplace` | Nama situs |
 | `site_tagline` | `Marketplace multi-brand pilihan kamu` | Tagline |
 | `announce_bar_1` | `Gratis Ongkir min. Rp 150.000` | Info bar atas |
 | `announce_bar_2` | `Brand baru hadir setiap minggu` | Info bar atas |
-| `whatsapp_cs` | `+6281234567890` | Nomor CS |
+| `whatsapp_cs` | `62811253599` | Nomor CS |
+| `email_cs` | `cs@sdp.id` | Email CS |
+| `bank_name` / `bank_account_number` / `bank_account_name` | `BCA` / `1234567890` / `PT SDP Marketplace` | Rekening transfer manual |
 
 ---
 

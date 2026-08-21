@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\GeoLocationService;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -18,6 +19,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        /*
+         * Satu instance per request: GeoLocationService membuka file database GeoLite2
+         * dan memo hasil lookup di dalam dirinya. Kalau tiap pemanggil dapat instance
+         * baru, file-nya dibuka berulang kali dan memo-nya sia-sia.
+         */
+        $this->app->singleton(GeoLocationService::class);
+
         if ($this->app->environment('local')) {
             $this->app->singleton(ResendClientContract::class, function () {
                 $apiKey = ApiKey::from(config('resend.api_key') ?? config('services.resend.key'));

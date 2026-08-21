@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Search, Trash2, Package, ExternalLink, Plus, Pencil } from 'lucide-react'
+import { Search, Trash2, Package, ExternalLink, Plus, Pencil, Globe } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -12,6 +12,7 @@ import { extractErrorMessage } from '../../lib/api'
 import { useFormatPrice } from '../../hooks/useCurrency'
 import { cn } from '../../lib/utils'
 import ImagesEditor from '../../components/ImagesEditor'
+import RegionalPriceEditor from '../../components/RegionalPriceEditor'
 
 const STATUS_BADGE = {
   active: { label: 'Active', variant: 'success' },
@@ -34,6 +35,7 @@ export default function AdminProductsPage() {
   const [form, setForm]       = useState(EMPTY_FORM)
   const [errors, setErrors]   = useState({})
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [regionalTarget, setRegionalTarget] = useState(null)
 
   const params = useMemo(() => ({
     page,
@@ -207,6 +209,15 @@ export default function AdminProductsPage() {
                   <div className="flex items-center justify-end gap-1 mt-2 md:mt-0">
                     <button
                       type="button"
+                      onClick={() => setRegionalTarget(p)}
+                      aria-label={`Regional prices: ${p.name}`}
+                      title="Regional prices"
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
+                      <Globe size={14} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => openEdit(p)}
                       aria-label={`Edit product: ${p.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
@@ -297,6 +308,13 @@ export default function AdminProductsPage() {
           </div>
         </form>
       </Modal>
+
+      <RegionalPriceEditor
+        open={!!regionalTarget}
+        onClose={() => setRegionalTarget(null)}
+        scope="admin"
+        product={regionalTarget}
+      />
 
       <Modal
         open={!!deleteTarget}
