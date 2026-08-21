@@ -190,7 +190,7 @@ function TierCard({ user }) {
           <div className="flex items-center gap-3">
             <TierBadge tier={tier} size="lg" onDark={!!tier} />
             {tier && (
-              <span className="text-sm font-medium text-white/90">{tier.discount}% off every order</span>
+              <span className="text-sm font-medium text-white/90">{tier.discount}% off every domestic order</span>
             )}
           </div>
         </div>

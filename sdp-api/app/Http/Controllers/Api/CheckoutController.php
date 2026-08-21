@@ -187,7 +187,10 @@ class CheckoutController extends Controller
             }
 
             // Apply tier discount ke subtotal (sebelum shipping calc).
-            $tierResult = $tierService->applyDiscount($subtotalBeforeDiscount, $user);
+            // Order internasional tidak ikut sistem tiering.
+            $tierResult = $isInternational
+                ? ['subtotal_after' => $subtotalBeforeDiscount, 'discount' => 0.0, 'tier' => null]
+                : $tierService->applyDiscount($subtotalBeforeDiscount, $user);
             $subtotal = $tierResult['subtotal_after'];
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;

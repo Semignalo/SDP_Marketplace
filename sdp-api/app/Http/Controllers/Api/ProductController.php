@@ -34,18 +34,21 @@ class ProductController extends Controller
     /**
      * Hitung tier efektif user (atau guest = Silver) SEKALI per-request dan simpan di request
      * attributes, supaya ProductResource tidak perlu query ulang per-produk untuk harga member.
+     * Diskon tier tidak berlaku untuk region di luar Indonesia — samakan dengan checkout,
+     * biar harga member yang ditampilkan di listing tidak menjanjikan diskon yang
+     * hilang lagi begitu customer checkout ke alamat internasional.
      */
-    private function attachTierContext(Request $request): void
+    private function attachTierContext(Request $request, ?string $country): void
     {
-        $tier = $this->tierService->resolveTierForUser($request->user('sanctum'));
+        $tier = $country === 'ID' ? $this->tierService->resolveTierForUser($request->user('sanctum')) : null;
         $request->attributes->set('tier_discount_percent', (float) ($tier['discount'] ?? 0));
         $request->attributes->set('tier_name', $tier['name'] ?? null);
     }
 
     public function index(Request $request)
     {
-        $this->attachTierContext($request);
         $country = $this->attachRegionContext($request);
+        $this->attachTierContext($request, $country);
 
         $validated = $request->validate([
             'country' => 'nullable|string|size:2',
@@ -119,8 +122,8 @@ class ProductController extends Controller
 
     public function show(string $slug, Request $request)
     {
-        $this->attachTierContext($request);
         $country = $this->attachRegionContext($request);
+        $this->attachTierContext($request, $country);
         $regionalLoad = $this->regionalPriceEagerLoad($country);
 
         $product = Product::query()

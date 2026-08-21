@@ -149,7 +149,10 @@ class GuestCheckoutController extends Controller
             }
 
             // Guest dapat diskon tier Gold (level 3) — sama dengan tier minimum user terdaftar.
-            $tierResult = $tierService->applyDiscount($subtotalBeforeDiscount, null);
+            // Order internasional tidak ikut sistem tiering.
+            $tierResult = $isInternational
+                ? ['subtotal_after' => $subtotalBeforeDiscount, 'discount' => 0.0, 'tier' => null]
+                : $tierService->applyDiscount($subtotalBeforeDiscount, null);
             $subtotal = $tierResult['subtotal_after'];
             $tierDiscount = $tierResult['discount'];
             $tierName = $tierResult['tier']['name'] ?? null;

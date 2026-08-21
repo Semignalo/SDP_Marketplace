@@ -88,13 +88,13 @@ export default function CheckoutPage() {
   const freeShippingMin = Number(options?.shipping_min_free || 150000)
   const freeShippingMax = Number(options?.shipping_max_free || 20000)
 
-  // Apply tier discount preview (sync with backend logic)
+  const isIntl = isInternational(selectedAddress)
+
+  // Apply tier discount preview (sync with backend logic) — internasional tidak ikut tiering.
   const tier = user?.tier || null
   const tierMaxDiscount = Number(options?.tier_max_discount_rupiah || 0)
-  const tierDiscount = calcTierDiscount(subtotal, tier, tierMaxDiscount)
+  const tierDiscount = isIntl ? 0 : calcTierDiscount(subtotal, tier, tierMaxDiscount)
   const subtotalAfterTier = subtotal - tierDiscount
-
-  const isIntl = isInternational(selectedAddress)
   // Subsidi free-shipping cuma promo domestik — internasional selalu bayar flat penuh.
   const isFreeShipping = !isIntl && subtotalAfterTier >= freeShippingMin
   const requiresManual = !!shippingQuote?.requires_manual

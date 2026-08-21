@@ -96,9 +96,9 @@ export default function GuestCheckoutPage() {
   const guestTier = options?.guest_tier || null
   const tierMaxDiscount = Number(options?.tier_max_discount_rupiah || 0)
 
-  const tierDiscount = calcTierDiscount(subtotal, guestTier, tierMaxDiscount)
-  const subtotalAfterTier = subtotal - tierDiscount
   const isIntl = isInternational(form)
+  const tierDiscount = isIntl ? 0 : calcTierDiscount(subtotal, guestTier, tierMaxDiscount)
+  const subtotalAfterTier = subtotal - tierDiscount
   // Subsidi free-shipping cuma promo domestik — internasional selalu bayar flat penuh.
   const isFreeShipping = !isIntl && subtotalAfterTier >= freeShippingMin
   const requiresManual = !!shippingQuote?.requires_manual
