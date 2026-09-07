@@ -32,6 +32,20 @@ class ProductController extends Controller
     }
 
     /**
+     * Sama seperti regionalPriceEagerLoad(), tapi untuk alokasi stok regional —
+     * dua relasi terpisah karena country_code-nya bisa beda scope (stock terbuka
+     * ke 200 negara, price cuma AU/IN/PH), jadi tetap di-load independen.
+     */
+    private function regionalStockEagerLoad(?string $country): array
+    {
+        if ($country === null) {
+            return [];
+        }
+
+        return ['regionalStocks' => fn ($q) => $q->where('country_code', $country)];
+    }
+
+    /**
      * Hitung tier efektif user (atau guest = Silver) SEKALI per-request dan simpan di request
      * attributes, supaya ProductResource tidak perlu query ulang per-produk untuk harga member.
      * Diskon tier tidak berlaku untuk region di luar Indonesia — samakan dengan checkout,
@@ -64,7 +78,7 @@ class ProductController extends Controller
 
         $query = Product::query()
             ->active()
-            ->with(['vendor', 'category', 'images', ...$this->regionalPriceEagerLoad($country)])
+            ->with(['vendor', 'category', 'images', ...$this->regionalPriceEagerLoad($country), ...$this->regionalStockEagerLoad($country)])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -124,7 +138,7 @@ class ProductController extends Controller
     {
         $country = $this->attachRegionContext($request);
         $this->attachTierContext($request, $country);
-        $regionalLoad = $this->regionalPriceEagerLoad($country);
+        $regionalLoad = [...$this->regionalPriceEagerLoad($country), ...$this->regionalStockEagerLoad($country)];
 
         $product = Product::query()
             ->active()

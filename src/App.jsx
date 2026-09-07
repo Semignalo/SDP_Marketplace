@@ -12,6 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { Spinner } from './components/ui'
 import { useAuthStore } from './stores/useAuthStore'
 import { useApplyDetectedRegion } from './hooks/useRegion'
+import { useCartAvailabilitySync } from './hooks/useCartAvailability'
 import { getToken } from './lib/api'
 
 // Public pages — eagerly load the most-visited ones (Home, Products) untuk hindari extra round-trip
@@ -119,6 +120,8 @@ export default function App() {
 function AppShell() {
   // Terapkan negara hasil deteksi IP sekali di awal (tidak menimpa pilihan manual user).
   useApplyDetectedRegion()
+  // Sinkronkan keranjang tiap kali negara browsing berubah (region switcher/geo-detect).
+  useCartAvailabilitySync()
 
   return (
     <div className="min-h-screen bg-paper flex flex-col">

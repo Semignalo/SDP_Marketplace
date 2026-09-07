@@ -9,6 +9,7 @@ use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductRegionalStock;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
@@ -17,6 +18,7 @@ use App\Services\InternationalShippingService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
 use App\Support\Regions;
+use App\Support\WorldCountries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -143,13 +145,31 @@ class CheckoutController extends Controller
              */
             $priceCountry = Regions::codeFromName($shippingCountry);
 
-            // Lock & verify products.
+            /*
+             * Regional stock ditentukan oleh negara TUJUAN KIRIM juga (bukan region
+             * switcher) — konsisten dengan trust model harga: mencegah orang browsing
+             * sebagai negara "kaya stok" lalu checkout ke negara lain buat akalin alokasi.
+             * Scope-nya beda dari $priceCountry: WorldCountries kenal ~200 negara,
+             * Regions cuma 4 pricing_countries.
+             */
+            $stockCountry = WorldCountries::codeFromName($shippingCountry);
+
+            // Lock & verify products. Urutan lock SELALU products dulu baru
+            // product_regional_stocks di semua tempat yang menyentuh keduanya — hindari deadlock.
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
                 ->with(['regionalPrices' => fn ($q) => $q->where('country_code', $priceCountry)])
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            $regionalStocks = $stockCountry
+                ? ProductRegionalStock::whereIn('product_id', $productIds)
+                    ->where('country_code', $stockCountry)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_id')
+                : collect();
 
             $subtotalBeforeDiscount = 0;
             $totalWeight = 0;
@@ -167,7 +187,20 @@ class CheckoutController extends Controller
                         'items' => "{$product->name} is not available",
                     ]);
                 }
-                if ($product->stock < $line['quantity']) {
+
+                /** @var ProductRegionalStock|null $regionalStock */
+                $regionalStock = $regionalStocks->get($product->id);
+
+                if ($regionalStock !== null) {
+                    // Negara ini punya alokasi khusus — itu yang berlaku, independen dari stock global.
+                    if ($regionalStock->remaining_qty < $line['quantity']) {
+                        throw ValidationException::withMessages([
+                            'items' => $regionalStock->remaining_qty > 0
+                                ? "Only {$regionalStock->remaining_qty} left in stock for {$product->name} in your delivery country"
+                                : "{$product->name} is not available for delivery to your country",
+                        ]);
+                    }
+                } elseif ($product->stock < $line['quantity']) {
                     throw ValidationException::withMessages([
                         'items' => "Only {$product->stock} left in stock for {$product->name}",
                     ]);
@@ -180,6 +213,7 @@ class CheckoutController extends Controller
 
                 $orderItemsData[] = [
                     'product' => $product,
+                    'regional_stock' => $regionalStock,
                     'price' => $unitPrice,
                     'quantity' => $line['quantity'],
                     'subtotal' => $lineSubtotal,
@@ -252,10 +286,13 @@ class CheckoutController extends Controller
             foreach ($orderItemsData as $line) {
                 /** @var Product $product */
                 $product = $line['product'];
+                /** @var ProductRegionalStock|null $regionalStock */
+                $regionalStock = $line['regional_stock'];
 
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
+                    'product_regional_stock_id' => $regionalStock?->id,
                     'vendor_id' => $product->vendor_id,
                     'product_name' => $product->name,
                     'price' => $line['price'],
@@ -263,7 +300,12 @@ class CheckoutController extends Controller
                     'subtotal' => $line['subtotal'],
                 ]);
 
-                $product->decrement('stock', $line['quantity']);
+                if ($regionalStock) {
+                    // products.stock SENGAJA tidak disentuh — dua pool independen.
+                    $regionalStock->decrement('remaining_qty', $line['quantity']);
+                } else {
+                    $product->decrement('stock', $line['quantity']);
+                }
             }
 
             // Reseller commission (status pending sampai order completed).

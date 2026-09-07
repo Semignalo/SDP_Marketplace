@@ -9,6 +9,7 @@ use App\Mail\PaymentConfirmation;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductRegionalStock;
 use App\Models\ResellerCommission;
 use App\Models\Setting;
 use App\Models\User;
@@ -18,6 +19,7 @@ use App\Services\MidtransService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
 use App\Support\Regions;
+use App\Support\WorldCountries;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -112,12 +114,24 @@ class GuestCheckoutController extends Controller
             // Harga regional mengikuti negara tujuan kirim (lihat CheckoutController::store).
             $priceCountry = Regions::codeFromName($shippingCountry);
 
+            // Sama seperti CheckoutController::store — alokasi regional stock ditentukan
+            // oleh negara tujuan kirim, scope negaranya lebih luas (~200) dari harga (4).
+            $stockCountry = WorldCountries::codeFromName($shippingCountry);
+
             $productIds = collect($data['items'])->pluck('product_id')->all();
             $products = Product::whereIn('id', $productIds)
                 ->with(['regionalPrices' => fn ($q) => $q->where('country_code', $priceCountry)])
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            $regionalStocks = $stockCountry
+                ? ProductRegionalStock::whereIn('product_id', $productIds)
+                    ->where('country_code', $stockCountry)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('product_id')
+                : collect();
 
             $subtotalBeforeDiscount = 0;
             $totalWeight = 0;
@@ -131,7 +145,19 @@ class GuestCheckoutController extends Controller
                 if ($product->status !== 'active') {
                     throw ValidationException::withMessages(['items' => "{$product->name} is not available"]);
                 }
-                if ($product->stock < $line['quantity']) {
+
+                /** @var ProductRegionalStock|null $regionalStock */
+                $regionalStock = $regionalStocks->get($product->id);
+
+                if ($regionalStock !== null) {
+                    if ($regionalStock->remaining_qty < $line['quantity']) {
+                        throw ValidationException::withMessages([
+                            'items' => $regionalStock->remaining_qty > 0
+                                ? "Only {$regionalStock->remaining_qty} left in stock for {$product->name} in your delivery country"
+                                : "{$product->name} is not available for delivery to your country",
+                        ]);
+                    }
+                } elseif ($product->stock < $line['quantity']) {
                     throw ValidationException::withMessages(['items' => "Only {$product->stock} left in stock for {$product->name}"]);
                 }
 
@@ -142,6 +168,7 @@ class GuestCheckoutController extends Controller
 
                 $orderItemsData[] = [
                     'product'  => $product,
+                    'regional_stock' => $regionalStock,
                     'price'    => $unitPrice,
                     'quantity' => $line['quantity'],
                     'subtotal' => $lineSubtotal,
@@ -207,10 +234,13 @@ class GuestCheckoutController extends Controller
             foreach ($orderItemsData as $line) {
                 /** @var Product $product */
                 $product = $line['product'];
+                /** @var ProductRegionalStock|null $regionalStock */
+                $regionalStock = $line['regional_stock'];
 
                 OrderItem::create([
                     'order_id'     => $order->id,
                     'product_id'   => $product->id,
+                    'product_regional_stock_id' => $regionalStock?->id,
                     'vendor_id'    => $product->vendor_id,
                     'product_name' => $product->name,
                     'price'        => $line['price'],
@@ -218,7 +248,11 @@ class GuestCheckoutController extends Controller
                     'subtotal'     => $line['subtotal'],
                 ]);
 
-                $product->decrement('stock', $line['quantity']);
+                if ($regionalStock) {
+                    $regionalStock->decrement('remaining_qty', $line['quantity']);
+                } else {
+                    $product->decrement('stock', $line['quantity']);
+                }
             }
 
             // Komisi reseller (pending sampai order completed).

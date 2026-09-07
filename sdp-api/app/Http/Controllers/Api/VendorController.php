@@ -41,6 +41,7 @@ class VendorController extends Controller
                 'category',
                 'images',
                 'regionalPrices' => fn ($q) => $q->where('country_code', $country),
+                'regionalStocks' => fn ($q) => $q->where('country_code', $country),
             ])
             ->orderBy('created_at', 'desc')
             ->paginate(20)

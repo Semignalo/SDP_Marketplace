@@ -11,6 +11,7 @@ class ProductResource extends JsonResource
     {
         $country = $request->attributes->get('region_country');
         $effectivePrice = $this->effectivePriceIdr($country);
+        $regionalStock = $this->regionalStockFor($country);
 
         return [
             'id' => $this->id,
@@ -27,10 +28,17 @@ class ProductResource extends JsonResource
             'member_price' => $this->calculateMemberPrice($request, $effectivePrice),
             'tier_discount_percent' => (float) $request->attributes->get('tier_discount_percent', 0),
             'tier_name' => $request->attributes->get('tier_name'),
+            // Global, SAMA untuk semua user di semua negara — JANGAN dipakai untuk
+            // gating add-to-cart/max-qty di frontend, pakai purchasable_qty/purchasable_in_region.
             'stock' => $this->stock,
             'sku' => $this->sku,
             'status' => $this->status,
             'in_stock' => $this->stock > 0,
+            // Regional stock — null berarti negara ini TIDAK punya alokasi khusus (ikut stock global).
+            'has_regional_stock_limit' => $regionalStock !== null,
+            'regional_stock_remaining' => $regionalStock?->remaining_qty,
+            'purchasable_qty' => $this->availableQtyFor($country),
+            'purchasable_in_region' => $this->availableQtyFor($country) > 0 && $this->status === 'active',
             'rating_avg' => $this->reviews_avg_rating !== null ? round((float) $this->reviews_avg_rating, 1) : null,
             'reviews_count' => (int) ($this->reviews_count ?? 0),
             'primary_image' => $this->whenLoaded('images', fn () => optional($this->images->first())->url),

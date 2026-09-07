@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Package, Globe } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Package, Globe, Boxes } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   useVendorProducts,
@@ -12,6 +12,7 @@ import { extractErrorMessage } from '../../lib/api'
 import { formatRupiah, cn } from '../../lib/utils'
 import ImagesEditor from '../../components/ImagesEditor'
 import RegionalPriceEditor from '../../components/RegionalPriceEditor'
+import RegionalStockEditor from '../../components/RegionalStockEditor'
 
 const EMPTY = {
   name: '',
@@ -53,6 +54,7 @@ export default function VendorProductsPage() {
   const [errors, setErrors] = useState({})
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [regionalTarget, setRegionalTarget] = useState(null)
+  const [stockTarget, setStockTarget] = useState(null)
 
   const flatCategories = useMemo(() => flatten(categories), [categories])
 
@@ -197,6 +199,15 @@ export default function VendorProductsPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setStockTarget(p)}
+                      aria-label={`Regional stock: ${p.name}`}
+                      title="Regional stock"
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
+                      <Boxes size={14} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => openEdit(p)}
                       aria-label={`Edit product: ${p.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
@@ -287,6 +298,13 @@ export default function VendorProductsPage() {
         onClose={() => setRegionalTarget(null)}
         scope="vendor"
         product={regionalTarget}
+      />
+
+      <RegionalStockEditor
+        open={!!stockTarget}
+        onClose={() => setStockTarget(null)}
+        scope="vendor"
+        product={stockTarget}
       />
 
       <Modal

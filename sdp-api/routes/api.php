@@ -55,6 +55,7 @@ Route::get('/settings/public', [SettingController::class, 'publicIndex'])->name(
 Route::get('/storefront/region', [StorefrontController::class, 'region'])->middleware('throttle:120,1');
 // Harga keranjang untuk negara tujuan kirim — dipanggil dari checkout sebelum bayar.
 Route::post('/storefront/reprice', [StorefrontController::class, 'reprice'])->middleware('throttle:120,1');
+Route::post('/storefront/availability', [StorefrontController::class, 'availability'])->middleware('throttle:120,1');
 Route::get('/checkout/options', [CheckoutController::class, 'options']);
 Route::get('/rajaongkir/cities', [RajaOngkirController::class, 'cities'])->middleware('throttle:60,1');
 Route::get('/rajaongkir/districts', [RajaOngkirController::class, 'districts'])->middleware('throttle:60,1');
@@ -126,6 +127,10 @@ Route::middleware(['auth:sanctum', 'vendor_admin'])->prefix('vendor')->group(fun
     Route::get('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Vendor\ProductRegionalPriceController::class, 'index']);
     Route::put('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Vendor\ProductRegionalPriceController::class, 'update']);
 
+    // Alokasi stok per negara — pool terpisah dari stock global, vendor boleh set sendiri.
+    Route::get('/products/{product}/regional-stocks', [\App\Http\Controllers\Api\Vendor\ProductRegionalStockController::class, 'index']);
+    Route::put('/products/{product}/regional-stocks', [\App\Http\Controllers\Api\Vendor\ProductRegionalStockController::class, 'update']);
+
     Route::get('/orders', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'index']);
     Route::get('/orders/{orderNumber}', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'show']);
     Route::put('/orders/{orderNumber}/tracking', [\App\Http\Controllers\Api\Vendor\OrderController::class, 'updateTracking']);
@@ -174,6 +179,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 
     Route::get('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Admin\ProductRegionalPriceController::class, 'index']);
     Route::put('/products/{product}/regional-prices', [\App\Http\Controllers\Api\Admin\ProductRegionalPriceController::class, 'update']);
+
+    Route::get('/products/{product}/regional-stocks', [\App\Http\Controllers\Api\Admin\ProductRegionalStockController::class, 'index']);
+    Route::put('/products/{product}/regional-stocks', [\App\Http\Controllers\Api\Admin\ProductRegionalStockController::class, 'update']);
 
     Route::get('/shipping-rates', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'index']);
     Route::post('/shipping-rates', [\App\Http\Controllers\Api\Admin\ShippingRateController::class, 'store']);

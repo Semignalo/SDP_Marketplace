@@ -14,4 +14,10 @@ export const useUIStore = create((set) => ({
 
   openSearch: () => set({ searchOpen: true }),
   closeSearch: () => set({ searchOpen: false }),
+
+  // Hasil terakhir dari cart auto-sync saat region berubah (lihat useCartAvailability.js)
+  // — dipakai CartAdjustmentNotice buat nunjukin banner persisten kalau toast kelewat.
+  lastCartAdjustment: null,
+  setLastCartAdjustment: (val) => set({ lastCartAdjustment: val }),
+  clearLastCartAdjustment: () => set({ lastCartAdjustment: null }),
 }))

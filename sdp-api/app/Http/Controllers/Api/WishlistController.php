@@ -24,6 +24,7 @@ class WishlistController extends Controller
                 'product.vendor',
                 'product.images',
                 'product.regionalPrices' => fn ($q) => $q->where('country_code', $country),
+                'product.regionalStocks' => fn ($q) => $q->where('country_code', $country),
             ])
             ->orderByDesc('created_at')
             ->get()

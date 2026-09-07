@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductRegionalStock;
 use App\Models\ResellerCommission;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -27,7 +28,14 @@ class CancelExpiredOrders extends Command
         foreach ($orders as $order) {
             DB::transaction(function () use ($order) {
                 foreach ($order->items as $item) {
-                    Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                    // Restore ke pool yang sama tempat dia dipotong dulu — regional kalau
+                    // order ini dipesan dari negara yang punya alokasi khusus, else global.
+                    if ($item->product_regional_stock_id) {
+                        ProductRegionalStock::where('id', $item->product_regional_stock_id)
+                            ->increment('remaining_qty', $item->quantity);
+                    } else {
+                        Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                    }
                 }
 
                 ResellerCommission::where('order_id', $order->id)

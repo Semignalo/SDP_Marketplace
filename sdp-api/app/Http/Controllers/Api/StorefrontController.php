@@ -106,4 +106,55 @@ class StorefrontController extends Controller
             ],
         ]);
     }
+
+    /**
+     * POST /api/storefront/availability — cek regional stock utk negara BROWSING
+     * (dari region switcher/geo-detect), dipakai buat cart auto-sync saat region
+     * berubah. Beda dari reprice(): ini dikunci ke kode negara (bukan nama bebas
+     * shipping_country) dan bukan authoritative — checkout tetap validasi ulang
+     * sendiri (lihat CheckoutController::store) sebelum benar-benar memotong stok.
+     */
+    public function availability(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'country' => 'nullable|string|size:2',
+            'items' => 'required|array|min:1|max:99',
+            'items.*.product_id' => 'required|integer|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1|max:99',
+        ]);
+
+        $country = ! empty($data['country']) ? strtoupper($data['country']) : null;
+
+        $products = Product::whereIn('id', collect($data['items'])->pluck('product_id'))
+            ->with(['regionalStocks' => fn ($q) => $country ? $q->where('country_code', $country) : $q->whereRaw('1 = 0')])
+            ->get()
+            ->keyBy('id');
+
+        $lines = collect($data['items'])->map(function ($line) use ($products, $country) {
+            $product = $products->get($line['product_id']);
+
+            if (! $product) {
+                return [
+                    'product_id' => $line['product_id'],
+                    'available_qty' => 0,
+                    'ok' => false,
+                ];
+            }
+
+            $availableQty = $product->availableQtyFor($country);
+
+            return [
+                'product_id' => $product->id,
+                'available_qty' => $availableQty,
+                'ok' => $availableQty >= $line['quantity'] && $product->status === 'active',
+            ];
+        })->values();
+
+        return response()->json([
+            'data' => [
+                'country' => $country,
+                'lines' => $lines,
+            ],
+        ]);
+    }
 }

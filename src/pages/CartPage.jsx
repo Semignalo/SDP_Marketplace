@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/useAuthStore'
 import { usePublicSettings } from '../hooks/useProducts'
 import { Button, Card, EmptyState, PriceLabel, QuantityStepper } from '../components/ui'
 import TierBadge from '../components/TierBadge'
+import CartAdjustmentNotice from '../components/CartAdjustmentNotice'
 import { calcTierDiscount } from '../lib/pricing'
 import { useFormatPrice } from '../hooks/useCurrency'
 
@@ -25,6 +26,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="container-page py-20">
+        <CartAdjustmentNotice />
         <EmptyState
           icon={<ShoppingBag size={48} strokeWidth={1.2} />}
           title="Your cart's empty."
@@ -42,7 +44,8 @@ export default function CartPage() {
   return (
     <div className="container-page py-8 lg:py-12">
       <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-ink mb-1">Your Cart</h1>
-      <p className="text-sm text-ink-muted mb-8">{items.length} products · {items.reduce((s, i) => s + i.quantity, 0)} items</p>
+      <p className="text-sm text-ink-muted mb-4">{items.length} products · {items.reduce((s, i) => s + i.quantity, 0)} items</p>
+      <CartAdjustmentNotice />
 
       <div className="grid lg:grid-cols-[1fr_360px] gap-8">
         <div>

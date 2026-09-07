@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductRegionalStock;
 use App\Models\ResellerCommission;
 use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
@@ -58,7 +59,12 @@ class OrderController extends Controller
 
         DB::transaction(function () use ($order) {
             foreach ($order->items as $item) {
-                Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                if ($item->product_regional_stock_id) {
+                    ProductRegionalStock::where('id', $item->product_regional_stock_id)
+                        ->increment('remaining_qty', $item->quantity);
+                } else {
+                    Product::where('id', $item->product_id)->increment('stock', $item->quantity);
+                }
             }
 
             ResellerCommission::where('order_id', $order->id)

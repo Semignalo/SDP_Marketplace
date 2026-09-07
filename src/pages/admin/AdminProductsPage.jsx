@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Search, Trash2, Package, ExternalLink, Plus, Pencil, Globe } from 'lucide-react'
+import { Search, Trash2, Package, ExternalLink, Plus, Pencil, Globe, Boxes } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -13,6 +13,7 @@ import { useFormatPrice } from '../../hooks/useCurrency'
 import { cn } from '../../lib/utils'
 import ImagesEditor from '../../components/ImagesEditor'
 import RegionalPriceEditor from '../../components/RegionalPriceEditor'
+import RegionalStockEditor from '../../components/RegionalStockEditor'
 
 const STATUS_BADGE = {
   active: { label: 'Active', variant: 'success' },
@@ -36,6 +37,7 @@ export default function AdminProductsPage() {
   const [errors, setErrors]   = useState({})
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [regionalTarget, setRegionalTarget] = useState(null)
+  const [stockTarget, setStockTarget] = useState(null)
 
   const params = useMemo(() => ({
     page,
@@ -218,6 +220,15 @@ export default function AdminProductsPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setStockTarget(p)}
+                      aria-label={`Regional stock: ${p.name}`}
+                      title="Regional stock"
+                      className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
+                    >
+                      <Boxes size={14} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => openEdit(p)}
                       aria-label={`Edit product: ${p.name}`}
                       className="h-8 w-8 inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-paper-warm rounded"
@@ -314,6 +325,13 @@ export default function AdminProductsPage() {
         onClose={() => setRegionalTarget(null)}
         scope="admin"
         product={regionalTarget}
+      />
+
+      <RegionalStockEditor
+        open={!!stockTarget}
+        onClose={() => setStockTarget(null)}
+        scope="admin"
+        product={stockTarget}
       />
 
       <Modal

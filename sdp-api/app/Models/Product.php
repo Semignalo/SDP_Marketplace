@@ -83,6 +83,39 @@ class Product extends Model
         return $override ? (float) $override->price_idr : $base;
     }
 
+    public function regionalStocks(): HasMany
+    {
+        return $this->hasMany(ProductRegionalStock::class);
+    }
+
+    /**
+     * Baris alokasi stok untuk negara tertentu, atau null kalau negara ini TIDAK
+     * punya override sama sekali (bukan sama dengan "override ada tapi 0").
+     */
+    public function regionalStockFor(?string $countryCode): ?ProductRegionalStock
+    {
+        if ($countryCode === null) {
+            return null;
+        }
+
+        return $this->relationLoaded('regionalStocks')
+            ? $this->regionalStocks->firstWhere('country_code', $countryCode)
+            : $this->regionalStocks()->where('country_code', $countryCode)->first();
+    }
+
+    /**
+     * Qty yang boleh dibeli customer di $countryCode SEKARANG.
+     * - Tidak ada override -> ikut stock global, tanpa batas (behavior lama, tidak berubah).
+     * - Ada override -> remaining_qty pool itu yang berlaku, INDEPENDEN dari stock global
+     *   (products.stock tidak pernah ikut dikurangi/dibatasi oleh angka ini).
+     */
+    public function availableQtyFor(?string $countryCode): int
+    {
+        $override = $this->regionalStockFor($countryCode);
+
+        return $override ? (int) $override->remaining_qty : (int) $this->stock;
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

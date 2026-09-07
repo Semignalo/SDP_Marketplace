@@ -4,6 +4,7 @@ import { ChevronRight, ShieldCheck, Truck, Share2, Star, ShoppingBag } from 'luc
 import { toast } from 'sonner'
 import ProductCard from '../components/ProductCard'
 import WishlistButton from '../components/WishlistButton'
+import RegionalStockNotice from '../components/RegionalStockNotice'
 import { useProduct } from '../hooks/useProducts'
 import { useProductReviews, useReviewEligibility, useSubmitReview } from '../hooks/useReviews'
 import { useCartStore } from '../stores/useCartStore'
@@ -42,13 +43,20 @@ export default function ProductDetailPage() {
   const images = product.images?.length ? product.images : (product.primary_image ? [{ url: product.primary_image }] : [])
   const price = product.price
 
+  // Qty yang boleh dibeli di negara customer — bisa lebih rendah dari product.stock
+  // (global, ditampilkan apa adanya di atas) kalau ada alokasi regional yang berlaku.
+  // JANGAN pakai product.stock/product.in_stock untuk gating — itu selalu sama untuk semua user.
+  const purchasable = product.purchasable_in_region ?? product.in_stock
+  const maxQty = product.purchasable_qty ?? product.stock
+  const blockedByRegion = product.has_regional_stock_limit && product.purchasable_qty === 0
+
   const handleAddToCart = () => {
-    addToCart(product, qty)
+    addToCart(product, Math.min(qty, maxQty))
     toast.success(`Added ${product.name} to cart`)
   }
 
   const handleBuyNow = () => {
-    addToCart(product, qty)
+    addToCart(product, Math.min(qty, maxQty))
     navigate('/keranjang')
   }
 
@@ -144,8 +152,8 @@ export default function ProductDetailPage() {
             <div className="flex items-center justify-between gap-4">
               <QuantityStepper
                 value={qty}
-                max={product.stock}
-                onChange={(n) => setQty(Math.min(Math.max(1, n), product.stock))}
+                max={maxQty}
+                onChange={(n) => setQty(Math.min(Math.max(1, n), maxQty))}
               />
               <p className="text-sm text-ink-muted">
                 Subtotal: <strong className="text-ink tabular-nums">{formatPrice(price * qty)}</strong>
@@ -153,11 +161,13 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {blockedByRegion && <RegionalStockNotice product={product} />}
+
           <div className="mt-6 hidden lg:grid grid-cols-2 gap-3">
-            <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!product.in_stock}>
+            <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!purchasable}>
               Add to cart
             </Button>
-            <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!product.in_stock}>
+            <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!purchasable}>
               Checkout
             </Button>
           </div>
@@ -221,15 +231,15 @@ export default function ProductDetailPage() {
               variant="outline"
               size="md"
               onClick={handleAddToCart}
-              disabled={!product.in_stock}
+              disabled={!purchasable}
               aria-label="Add to cart"
               leadingIcon={<ShoppingBag size={16} />}
               className="px-3"
             >
               Add
             </Button>
-            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!product.in_stock} className="px-5">
-              {product.in_stock ? 'Checkout' : 'Sold out'}
+            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!purchasable} className="px-5">
+              {purchasable ? 'Checkout' : (blockedByRegion ? 'Unavailable' : 'Sold out')}
             </Button>
           </div>
         </div>
