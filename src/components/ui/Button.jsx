@@ -30,25 +30,13 @@ export const Button = forwardRef(function Button(
     trailingIcon = null,
     className = '',
     type = 'button',
+    href,
     ...rest
   },
   ref,
 ) {
-  return (
-    <button
-      ref={ref}
-      type={type}
-      disabled={disabled || loading}
-      className={cn(
-        'inline-flex items-center justify-center gap-2 rounded font-medium tracking-wide transition-all duration-200 ease-soft select-none',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        VARIANTS[variant],
-        SIZES[size],
-        fullWidth && 'w-full',
-        className,
-      )}
-      {...rest}
-    >
+  const content = (
+    <>
       {loading ? (
         <span className="inline-block h-4 w-4 border-2 border-current border-t-transparent rounded-pill animate-spin" />
       ) : (
@@ -56,6 +44,29 @@ export const Button = forwardRef(function Button(
       )}
       {children}
       {!loading && trailingIcon}
+    </>
+  )
+
+  const sharedClassName = cn(
+    'inline-flex items-center justify-center gap-2 rounded font-medium tracking-wide transition-all duration-200 ease-soft select-none',
+    'disabled:opacity-50 disabled:cursor-not-allowed',
+    VARIANTS[variant],
+    SIZES[size],
+    fullWidth && 'w-full',
+    className,
+  )
+
+  if (href) {
+    return (
+      <a ref={ref} href={href} className={sharedClassName} {...rest}>
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <button ref={ref} type={type} disabled={disabled || loading} className={sharedClassName} {...rest}>
+      {content}
     </button>
   )
 })

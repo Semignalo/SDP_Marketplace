@@ -14,6 +14,7 @@ import { Button, Card, PriceLabel, Skeleton, EmptyState, QuantityStepper, Spinne
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { INDIA_STORE_URL, useIsIndia } from '../hooks/useRegion'
 
 export default function ProductDetailPage() {
   const { slug } = useParams()
@@ -24,6 +25,7 @@ export default function ProductDetailPage() {
   const addToCart = useCartStore((s) => s.add)
   const openCart = useUIStore((s) => s.openCart)
   const formatPrice = useFormatPrice()
+  const isIndia = useIsIndia()
 
   if (isLoading) return <ProductDetailSkeleton />
   if (error || !data?.data) {
@@ -147,30 +149,40 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <div className="mt-8 pt-6 border-t border-line">
-            <p className="eyebrow mb-3">Quantity</p>
-            <div className="flex items-center justify-between gap-4">
-              <QuantityStepper
-                value={qty}
-                max={maxQty}
-                onChange={(n) => setQty(Math.min(Math.max(1, n), maxQty))}
-              />
-              <p className="text-sm text-ink-muted">
-                Subtotal: <strong className="text-ink tabular-nums">{formatPrice(price * qty)}</strong>
-              </p>
+          {!isIndia && (
+            <div className="mt-8 pt-6 border-t border-line">
+              <p className="eyebrow mb-3">Quantity</p>
+              <div className="flex items-center justify-between gap-4">
+                <QuantityStepper
+                  value={qty}
+                  max={maxQty}
+                  onChange={(n) => setQty(Math.min(Math.max(1, n), maxQty))}
+                />
+                <p className="text-sm text-ink-muted">
+                  Subtotal: <strong className="text-ink tabular-nums">{formatPrice(price * qty)}</strong>
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
-          {blockedByRegion && <RegionalStockNotice product={product} />}
+          {!isIndia && blockedByRegion && <RegionalStockNotice product={product} />}
 
-          <div className="mt-6 hidden lg:grid grid-cols-2 gap-3">
-            <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!purchasable}>
-              Add to cart
-            </Button>
-            <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!purchasable}>
-              Checkout
-            </Button>
-          </div>
+          {isIndia ? (
+            <div className="mt-6 hidden lg:block">
+              <Button href={INDIA_STORE_URL} target="_blank" rel="noopener noreferrer" variant="accent" size="lg" fullWidth>
+                Shop on our India store
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-6 hidden lg:grid grid-cols-2 gap-3">
+              <Button variant="outline" size="lg" onClick={handleAddToCart} disabled={!purchasable}>
+                Add to cart
+              </Button>
+              <Button variant="accent" size="lg" onClick={handleBuyNow} disabled={!purchasable}>
+                Checkout
+              </Button>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center gap-4 text-xs text-ink-muted">
             <WishlistButton productId={product.id} variant="inline" />
@@ -227,20 +239,28 @@ export default function ProductDetailPage() {
             />
           </div>
           <div className="ml-auto flex items-center gap-2 shrink-0">
-            <Button
-              variant="outline"
-              size="md"
-              onClick={handleAddToCart}
-              disabled={!purchasable}
-              aria-label="Add to cart"
-              leadingIcon={<ShoppingBag size={16} />}
-              className="px-3"
-            >
-              Add
-            </Button>
-            <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!purchasable} className="px-5">
-              {purchasable ? 'Checkout' : (blockedByRegion ? 'Unavailable' : 'Sold out')}
-            </Button>
+            {isIndia ? (
+              <Button href={INDIA_STORE_URL} target="_blank" rel="noopener noreferrer" variant="accent" size="md" className="px-5">
+                Shop on our India store
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={handleAddToCart}
+                  disabled={!purchasable}
+                  aria-label="Add to cart"
+                  leadingIcon={<ShoppingBag size={16} />}
+                  className="px-3"
+                >
+                  Add
+                </Button>
+                <Button variant="accent" size="md" onClick={handleBuyNow} disabled={!purchasable} className="px-5">
+                  {purchasable ? 'Checkout' : (blockedByRegion ? 'Unavailable' : 'Sold out')}
+                </Button>
+              </>
+            )}
           </div>
         </div>
         <div className="h-[env(safe-area-inset-bottom)]" />

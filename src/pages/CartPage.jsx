@@ -6,8 +6,10 @@ import { usePublicSettings } from '../hooks/useProducts'
 import { Button, Card, EmptyState, PriceLabel, QuantityStepper } from '../components/ui'
 import TierBadge from '../components/TierBadge'
 import CartAdjustmentNotice from '../components/CartAdjustmentNotice'
+import IndiaStoreNotice from '../components/IndiaStoreNotice'
 import { calcTierDiscount } from '../lib/pricing'
 import { useFormatPrice } from '../hooks/useCurrency'
+import { useIsIndia } from '../hooks/useRegion'
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items)
@@ -17,6 +19,9 @@ export default function CartPage() {
   const { data: settings } = usePublicSettings()
   const user = useAuthStore((s) => s.user)
   const formatPrice = useFormatPrice()
+  const isIndia = useIsIndia()
+
+  if (isIndia) return <IndiaStoreNotice />
 
   const tier = user?.tier
   const tierMaxDiscount = Number(settings?.tier_max_discount_rupiah || 0)

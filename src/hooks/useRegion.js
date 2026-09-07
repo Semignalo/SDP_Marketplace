@@ -50,6 +50,16 @@ export function useActiveCountry() {
 }
 
 /**
+ * Order dari India diarahkan ke storefront Razorpay eksternal, bukan checkout
+ * lewat SDP — lihat IndiaStoreNotice.
+ */
+export const INDIA_STORE_URL = 'https://pages.razorpay.com/stores/edelis'
+
+export function useIsIndia() {
+  return useActiveCountry() === 'IN'
+}
+
+/**
  * Semua negara untuk dropdown "Choose your country" — bukan cuma 4 yang
  * dilokalkan. Memilih ini TIDAK menentukan kemana barang bisa dikirim (itu
  * tetap manual quote di checkout); murni preferensi tampilan currency.

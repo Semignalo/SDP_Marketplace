@@ -10,8 +10,9 @@ import MobileBottomNav from './components/MobileBottomNav'
 import SupportFab from './components/SupportFab'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Spinner } from './components/ui'
+import IndiaStoreNotice from './components/IndiaStoreNotice'
 import { useAuthStore } from './stores/useAuthStore'
-import { useApplyDetectedRegion } from './hooks/useRegion'
+import { useApplyDetectedRegion, useIsIndia } from './hooks/useRegion'
 import { useCartAvailabilitySync } from './hooks/useCartAvailability'
 import { getToken } from './lib/api'
 
@@ -233,8 +234,10 @@ function AppShell() {
 function CheckoutGate() {
   const user = useAuthStore((s) => s.user)
   const isReady = useAuthStore((s) => s.isReady)
+  const isIndia = useIsIndia()
 
   if (!isReady) return <RouteFallback />
+  if (isIndia) return <IndiaStoreNotice />
   return user ? <CheckoutPage /> : <GuestCheckoutPage />
 }
 
