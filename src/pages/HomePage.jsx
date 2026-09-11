@@ -8,6 +8,11 @@ import { useFormatPrice } from '../hooks/useCurrency'
 import heroImage from '../assets/homepage/hero.jpg'
 import afterEdit2Image from '../assets/homepage/after-edit-2.png'
 import cstarYeayImage from '../assets/homepage/cstar-yeay.png'
+import threeCardDressedImage from '../assets/homepage/three-card-dressed.png'
+import editorialBlockImage from '../assets/homepage/editorial-block.png'
+import styleYourWayAImage from '../assets/homepage/style-your-way-a.png'
+import styleYourWayBImage from '../assets/homepage/style-your-way-b.png'
+import styleYourWayCImage from '../assets/homepage/style-your-way-c.png'
 
 const HERO_IMAGE = heroImage
 
@@ -320,7 +325,7 @@ function ThreeCardSection() {
       subtitle: 'From everyday basics to statement pieces.',
       cta: 'Shop new arrivals',
       to: '/products?sort=newest',
-      image: 'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_700/v1779024419/sdp/products/ttr7qvxu0lai7avtkt6a.webp',
+      image: threeCardDressedImage,
     },
     {
       title: 'Skin first, makeup second.',
@@ -370,11 +375,7 @@ function ThreeCardSection() {
 }
 
 function StyleInTheWildSection() {
-  const photos = [
-    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782317995/IMG_1922_guvsqn.jpg',
-    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782317920/Gemini_Generated_Image_4abje44abje44abj_ccqiwb.png',
-    'https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_500/v1782318051/ce_mishel_dk_j053v5.png',
-  ]
+  const photos = [styleYourWayAImage, styleYourWayBImage, styleYourWayCImage]
 
   return (
     <section className="section-md container-page">
@@ -428,7 +429,7 @@ function EditorialBlock() {
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         <div className="aspect-[4/5] lg:aspect-[3/4] overflow-hidden rounded-lg">
           <img
-            src="https://res.cloudinary.com/ddfantaoj/image/upload/f_auto,q_auto:best,w_1200/v1782317775/tumbnail_isuroi.png"
+            src={editorialBlockImage}
             alt="Curated editorial"
             loading="lazy"
             decoding="async"
