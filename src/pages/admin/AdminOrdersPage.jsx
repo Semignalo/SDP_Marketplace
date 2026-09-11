@@ -31,7 +31,6 @@ export default function AdminOrdersPage() {
   const [status, setStatus] = useState('')
   const [country, setCountry] = useState('')
   const [sort, setSort] = useState('created_at:desc')
-  const [showArchived, setShowArchived] = useState(false)
   const [page, setPage] = useState(1)
 
   const params = useMemo(() => {
@@ -41,11 +40,11 @@ export default function AdminOrdersPage() {
       sort_by: sortBy,
       sort_dir: sortDir,
       ...(search && { search }),
-      ...(status && { status }),
+      ...(status && status !== 'archived' && { status }),
       ...(country && { country }),
-      archived: showArchived ? 'only' : undefined,
+      archived: status === 'archived' ? 'only' : undefined,
     }
-  }, [page, search, status, country, sort, showArchived])
+  }, [page, search, status, country, sort])
 
   const { data, isLoading } = useAdminOrders(params)
   const { data: countries } = useAdminOrderCountries()
@@ -75,6 +74,7 @@ export default function AdminOrdersPage() {
           <option value="shipped">Shipped</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
+          <option value="archived">Archived</option>
         </Select>
         {/* Isinya cuma negara yang benar-benar pernah dipakai customer (DISTINCT dari orders),
             jadi daftarnya tumbuh sendiri begitu order dari negara baru masuk. */}
@@ -87,15 +87,6 @@ export default function AdminOrdersPage() {
         <Select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1) }} className="md:w-52">
           {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
-        <label className="flex items-center gap-2 text-sm text-ink-soft md:ml-auto">
-          <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(e) => { setShowArchived(e.target.checked); setPage(1) }}
-            className="h-4 w-4 accent-ink"
-          />
-          Show archived only
-        </label>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
