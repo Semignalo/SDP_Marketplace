@@ -16,14 +16,14 @@ class DashboardController extends Controller
 {
     public function summary(): JsonResponse
     {
-        $revenue = Order::whereIn('status', ['processing', 'shipped', 'completed'])->sum('total');
-        $ordersCount = Order::count();
-        $ordersPending = Order::where('status', 'pending_payment')->count();
-        $aov = $ordersCount > 0 ? $revenue / max(1, Order::whereIn('status', ['processing', 'shipped', 'completed'])->count()) : 0;
+        $revenue = Order::whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at')->sum('total');
+        $ordersCount = Order::whereNull('archived_at')->count();
+        $ordersPending = Order::where('status', 'pending_payment')->whereNull('archived_at')->count();
+        $aov = $ordersCount > 0 ? $revenue / max(1, Order::whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at')->count()) : 0;
 
         $top_vendors = OrderItem::query()
             ->select('vendor_id', DB::raw('SUM(subtotal) as revenue'), DB::raw('SUM(quantity) as qty'))
-            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed']))
+            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at'))
             ->groupBy('vendor_id')
             ->orderByDesc('revenue')
             ->limit(5)
@@ -40,7 +40,7 @@ class DashboardController extends Controller
 
         $top_products = OrderItem::query()
             ->select('product_id', DB::raw('SUM(quantity) as qty'), DB::raw('SUM(subtotal) as revenue'))
-            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed']))
+            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at'))
             ->groupBy('product_id')
             ->orderByDesc('qty')
             ->limit(5)
@@ -77,6 +77,7 @@ class DashboardController extends Controller
 
         $rows = Order::query()
             ->whereIn('status', ['processing', 'shipped', 'completed'])
+            ->whereNull('archived_at')
             ->where('created_at', '>=', $start)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total) as total'), DB::raw('COUNT(*) as orders'))
             ->groupBy('date')

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText, MapPin, Truck, User, Wallet } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowLeft, FileText, MapPin, Truck, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote } from '../../hooks/useAdmin'
+import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote, useArchiveAdminOrder, useUnarchiveAdminOrder } from '../../hooks/useAdmin'
 import { Badge, Button, Input, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
 import { api, extractErrorMessage } from '../../lib/api'
 import { useFormatPrice } from '../../hooks/useCurrency'
@@ -22,6 +22,8 @@ export default function AdminOrderDetailPage() {
   const { data: order, isLoading, error } = useAdminOrder(orderNumber)
   const update = useUpdateAdminOrderStatus()
   const setQuote = useSetShippingQuote()
+  const archiveOrder = useArchiveAdminOrder()
+  const unarchiveOrder = useUnarchiveAdminOrder()
   const formatPrice = useFormatPrice()
 
   const [status, setStatus] = useState('')
@@ -81,6 +83,24 @@ export default function AdminOrderDetailPage() {
     }
   }
 
+  const handleArchive = async () => {
+    try {
+      await archiveOrder.mutateAsync(orderNumber)
+      toast.success('Order archived')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
+
+  const handleUnarchive = async () => {
+    try {
+      await unarchiveOrder.mutateAsync(orderNumber)
+      toast.success('Order unarchived')
+    } catch (err) {
+      toast.error(extractErrorMessage(err))
+    }
+  }
+
   const handleSendQuote = async () => {
     if (!quoteCost || Number(quoteCost) < 0) {
       toast.error('Enter the shipping cost first')
@@ -115,12 +135,22 @@ export default function AdminOrderDetailPage() {
           </div>
           <div className="flex items-center gap-3">
             <Badge variant={badge.variant}>{badge.label}</Badge>
+            {order.archived_at && <Badge variant="neutral">Archived</Badge>}
             <Link to={`/admin/pesanan/${orderNumber}/invoice`} target="_blank">
               <Button variant="outline" leadingIcon={<FileText size={14} />}>Print Invoice</Button>
             </Link>
             <Button variant="outline" leadingIcon={<Truck size={14} />} onClick={handleDownloadDeliveryNote} loading={downloadingNote}>
               Download Surat Jalan
             </Button>
+            {order.archived_at ? (
+              <Button variant="outline" leadingIcon={<ArchiveRestore size={14} />} onClick={handleUnarchive} loading={unarchiveOrder.isPending}>
+                Unarchive
+              </Button>
+            ) : ['completed', 'cancelled'].includes(order.status) && (
+              <Button variant="outline" leadingIcon={<Archive size={14} />} onClick={handleArchive} loading={archiveOrder.isPending}>
+                Archive
+              </Button>
+            )}
           </div>
         </div>
       </div>

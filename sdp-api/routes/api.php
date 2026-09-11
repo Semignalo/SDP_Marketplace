@@ -195,6 +195,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/orders/{orderNumber}/invoice', [\App\Http\Controllers\Api\Admin\OrderController::class, 'invoice']);
     Route::get('/orders/{orderNumber}/delivery-note', [\App\Http\Controllers\Api\Admin\OrderController::class, 'deliveryNote']);
     Route::put('/orders/{orderNumber}/status', [\App\Http\Controllers\Api\Admin\OrderController::class, 'updateStatus']);
+    Route::post('/orders/{orderNumber}/archive', [\App\Http\Controllers\Api\Admin\OrderController::class, 'archive']);
+    Route::post('/orders/{orderNumber}/unarchive', [\App\Http\Controllers\Api\Admin\OrderController::class, 'unarchive']);
     Route::post('/orders/{orderNumber}/shipping-quote', [\App\Http\Controllers\Api\Admin\OrderController::class, 'setShippingQuote']);
 
     Route::get('/commissions', [\App\Http\Controllers\Api\Admin\CommissionController::class, 'index']);

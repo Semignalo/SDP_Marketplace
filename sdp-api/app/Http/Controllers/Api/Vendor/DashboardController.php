@@ -18,10 +18,11 @@ class DashboardController extends Controller
         $items = OrderItem::where('vendor_id', $vendorId);
 
         $revenue = (clone $items)
-            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed']))
+            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at'))
             ->sum('subtotal');
 
         $ordersCount = (clone $items)
+            ->whereHas('order', fn ($q) => $q->whereNull('archived_at'))
             ->select('order_id')->distinct()->count('order_id');
 
         $productsCount = Product::where('vendor_id', $vendorId)->count();
@@ -30,7 +31,7 @@ class DashboardController extends Controller
 
         // Top 5 products by quantity sold
         $top = OrderItem::where('vendor_id', $vendorId)
-            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed']))
+            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at'))
             ->select('product_id', DB::raw('SUM(quantity) as total_qty'), DB::raw('SUM(subtotal) as total_revenue'))
             ->groupBy('product_id')
             ->orderByDesc('total_qty')
@@ -65,7 +66,7 @@ class DashboardController extends Controller
         $start = now()->subDays($days - 1)->startOfDay();
 
         $rows = OrderItem::where('vendor_id', $vendorId)
-            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->where('created_at', '>=', $start))
+            ->whereHas('order', fn ($q) => $q->whereIn('status', ['processing', 'shipped', 'completed'])->whereNull('archived_at')->where('created_at', '>=', $start))
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->select(DB::raw('DATE(orders.created_at) as date'), DB::raw('SUM(order_items.subtotal) as total'))
             ->groupBy('date')

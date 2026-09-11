@@ -233,6 +233,28 @@ export function useUpdateAdminOrderStatus() {
   })
 }
 
+export function useArchiveAdminOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (orderNumber) => (await api.post(`/admin/orders/${orderNumber}/archive`)).data,
+    onSuccess: (_d, orderNumber) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'order', orderNumber] })
+    },
+  })
+}
+
+export function useUnarchiveAdminOrder() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (orderNumber) => (await api.post(`/admin/orders/${orderNumber}/unarchive`)).data,
+    onSuccess: (_d, orderNumber) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'orders'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'order', orderNumber] })
+    },
+  })
+}
+
 export function useSetShippingQuote() {
   const qc = useQueryClient()
   return useMutation({

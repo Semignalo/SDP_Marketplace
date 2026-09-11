@@ -37,6 +37,8 @@ class OrderController extends Controller
             'sort_by' => 'nullable|in:created_at,status,shipping_country,total',
             'sort_dir' => 'nullable|in:asc,desc',
             'per_page' => 'nullable|integer|min:1|max:100',
+            // Default: order archived disembunyikan biar list utama gak penuh. 'only' buat lihat khusus yang diarsip.
+            'archived' => 'nullable|in:only,include',
         ]);
 
         $query = Order::query()
@@ -55,6 +57,11 @@ class OrderController extends Controller
         }
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
+        }
+        if (($data['archived'] ?? null) === 'only') {
+            $query->whereNotNull('archived_at');
+        } elseif (($data['archived'] ?? null) !== 'include') {
+            $query->whereNull('archived_at');
         }
         if ($request->filled('country')) {
             $query->where('shipping_country', $request->input('country'));
@@ -223,6 +230,51 @@ class OrderController extends Controller
     }
 
     /**
+     * Arsipkan order lama (housekeeping admin) — status asli (completed/cancelled) tetap dipakai
+     * apa adanya untuk revenue, tier loyalty, dan review; archived_at cuma nyembunyiin dari list utama.
+     */
+    public function archive(Request $request, string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+
+        if (! in_array($order->status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'message' => "Only completed or cancelled orders can be archived (current status: '{$order->status}').",
+            ], 422);
+        }
+
+        if ($order->archived_at) {
+            return response()->json(['message' => 'Order is already archived', 'data' => $this->shape($order)]);
+        }
+
+        $order->update(['archived_at' => now()]);
+
+        ActivityLogger::log(
+            'admin.order',
+            "Admin {$request->user()->name} mengarsipkan order {$order->order_number}",
+            $request->user(),
+            $order,
+        );
+
+        return response()->json(['message' => 'Order archived', 'data' => $this->shape($order->fresh())]);
+    }
+
+    public function unarchive(Request $request, string $orderNumber): JsonResponse
+    {
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+        $order->update(['archived_at' => null]);
+
+        ActivityLogger::log(
+            'admin.order',
+            "Admin {$request->user()->name} membatalkan arsip order {$order->order_number}",
+            $request->user(),
+            $order,
+        );
+
+        return response()->json(['message' => 'Order unarchived', 'data' => $this->shape($order->fresh())]);
+    }
+
+    /**
      * Admin input ongkir manual untuk order awaiting_quote (international) lalu lanjut ke pending_payment.
      */
     public function setShippingQuote(Request $request, string $orderNumber): JsonResponse
@@ -267,6 +319,7 @@ class OrderController extends Controller
             'id' => $o->id,
             'order_number' => $o->order_number,
             'status' => $o->status,
+            'archived_at' => $o->archived_at?->toIso8601String(),
             'subtotal' => (float) $o->subtotal,
             'shipping_cost' => (float) $o->shipping_cost,
             'shipping_country' => $o->shipping_country,

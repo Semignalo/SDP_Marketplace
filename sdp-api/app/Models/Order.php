@@ -42,6 +42,7 @@ class Order extends Model
         'payment_gross_amount',
         'admin_notes',
         'quoted_at',
+        'archived_at',
     ];
 
     protected $casts = [
@@ -52,6 +53,7 @@ class Order extends Model
         'payment_gross_amount' => 'decimal:2',
         'payment_verified_at' => 'datetime',
         'quoted_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo

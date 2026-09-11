@@ -31,6 +31,7 @@ export default function AdminOrdersPage() {
   const [status, setStatus] = useState('')
   const [country, setCountry] = useState('')
   const [sort, setSort] = useState('created_at:desc')
+  const [showArchived, setShowArchived] = useState(false)
   const [page, setPage] = useState(1)
 
   const params = useMemo(() => {
@@ -42,8 +43,9 @@ export default function AdminOrdersPage() {
       ...(search && { search }),
       ...(status && { status }),
       ...(country && { country }),
+      archived: showArchived ? 'only' : undefined,
     }
-  }, [page, search, status, country, sort])
+  }, [page, search, status, country, sort, showArchived])
 
   const { data, isLoading } = useAdminOrders(params)
   const { data: countries } = useAdminOrderCountries()
@@ -85,6 +87,15 @@ export default function AdminOrdersPage() {
         <Select value={sort} onChange={(e) => { setSort(e.target.value); setPage(1) }} className="md:w-52">
           {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </Select>
+        <label className="flex items-center gap-2 text-sm text-ink-soft md:ml-auto">
+          <input
+            type="checkbox"
+            checked={showArchived}
+            onChange={(e) => { setShowArchived(e.target.checked); setPage(1) }}
+            className="h-4 w-4 accent-ink"
+          />
+          Show archived only
+        </label>
       </div>
 
       <div className="bg-paper border border-line rounded-lg overflow-hidden">
@@ -140,7 +151,10 @@ export default function AdminOrdersPage() {
                     )}
                   </div>
                   <p className="text-sm md:text-right font-semibold tabular-nums mt-1 md:mt-0">{formatPrice(o.total)}</p>
-                  <div className="mt-2 md:mt-0"><Badge variant={badge.variant}>{badge.label}</Badge></div>
+                  <div className="mt-2 md:mt-0 flex items-center gap-1.5">
+                    <Badge variant={badge.variant}>{badge.label}</Badge>
+                    {o.archived_at && <Badge variant="neutral">Archived</Badge>}
+                  </div>
                   <div className="mt-2 md:mt-0 md:text-right">
                     <Link to={`/admin/pesanan/${o.order_number}`} className="text-xs text-ink-muted hover:text-ink hover:underline">
                       Detail →
