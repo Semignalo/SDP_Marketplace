@@ -2,17 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
 
 /* ───────── Dashboard ───────── */
-export function useAdminSummary() {
+export function useAdminSummary(params = { days: 30 }) {
   return useQuery({
-    queryKey: ['admin', 'summary'],
-    queryFn: async () => (await api.get('/admin/summary')).data.data,
+    queryKey: ['admin', 'summary', params],
+    queryFn: async () => (await api.get('/admin/summary', { params })).data.data,
   })
 }
 
-export function useAdminRevenueChart(days = 30) {
+export function useAdminRevenueChart(params = { days: 30 }) {
   return useQuery({
-    queryKey: ['admin', 'chart', days],
-    queryFn: async () => (await api.get('/admin/revenue-chart', { params: { days } })).data.data,
+    queryKey: ['admin', 'chart', params],
+    queryFn: async () => (await api.get('/admin/revenue-chart', { params })).data.data,
   })
 }
 

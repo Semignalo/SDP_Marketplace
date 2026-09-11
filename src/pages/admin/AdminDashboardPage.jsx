@@ -1,19 +1,61 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Wallet, ShoppingCart, Users, Store, Package, TrendingUp, ArrowRight, Clock } from 'lucide-react'
+import { Wallet, ShoppingCart, Users, Store, Package, TrendingUp, ArrowRight, Clock, Truck } from 'lucide-react'
 import { useAdminSummary, useAdminRevenueChart } from '../../hooks/useAdmin'
-import { Skeleton, EmptyState } from '../../components/ui'
+import { Skeleton, EmptyState, Select, Input } from '../../components/ui'
 import { useFormatPrice, useFormatPriceShort } from '../../hooks/useCurrency'
 import { cn } from '../../lib/utils'
 
+const RANGE_PRESETS = [
+  { value: '7', label: 'Last 7 days' },
+  { value: '30', label: 'Last 30 days' },
+  { value: '90', label: 'Last 90 days' },
+  { value: 'all', label: 'All time' },
+  { value: 'custom', label: 'Custom range' },
+]
+
 export default function AdminDashboardPage() {
-  const { data: s, isLoading } = useAdminSummary()
-  const { data: chart = [], isLoading: chartLoading } = useAdminRevenueChart(30)
+  const [range, setRange] = useState('30')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+
+  const dateParams = useMemo(() => {
+    if (range === 'all') return { all: 1 }
+    if (range === 'custom') return customFrom && customTo ? { date_from: customFrom, date_to: customTo } : { days: 30 }
+    return { days: Number(range) }
+  }, [range, customFrom, customTo])
+
+  const { data: s, isLoading } = useAdminSummary(dateParams)
+  const { data: chart = [], isLoading: chartLoading } = useAdminRevenueChart(dateParams)
   const formatPrice = useFormatPrice()
 
   return (
     <div className="space-y-8">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-base font-semibold text-ink">Dashboard</h1>
+          <p className="text-xs text-ink-muted mt-0.5">Revenue, orders & top sellers — Awaiting Payment and account totals below are always current.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={range} onChange={(e) => setRange(e.target.value)} className="text-xs w-36">
+            {RANGE_PRESETS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+          </Select>
+          {range === 'custom' && (
+            <>
+              <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-36" />
+              <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-36" />
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard icon={<TrendingUp size={18} />} label="Recognized Revenue" value={isLoading ? null : formatPrice(s?.revenue || 0)} accent />
+        <StatCard icon={<Package size={18} />} label="Product Revenue" value={isLoading ? null : formatPrice(s?.revenue_products || 0)} hint="Net of tier discount" />
+        <StatCard icon={<Truck size={18} />} label="Total Shipping" value={isLoading ? null : formatPrice(s?.revenue_shipping || 0)} />
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard icon={<ShoppingCart size={18} />} label="Total Orders" value={isLoading ? null : String(s?.orders_count || 0)} hint={`${s?.orders_pending || 0} awaiting payment`} />
         <StatCard icon={<Wallet size={18} />} label="AOV" value={isLoading ? null : formatPrice(s?.aov || 0)} hint="Average Order Value" />
         <StatCard icon={<Clock size={18} />} label="Awaiting Payment" value={isLoading ? null : String(s?.orders_pending || 0)} danger={!isLoading && s?.orders_pending > 0} />
@@ -27,13 +69,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <section className="bg-paper border border-line rounded-lg p-5 lg:p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-base font-semibold text-ink">30-Day Revenue</h2>
-            <p className="text-xs text-ink-muted mt-0.5">Processing/shipped/completed orders only.</p>
-          </div>
-        </div>
-        {chartLoading ? <Skeleton className="h-48 w-full" /> : <RevenueChart data={chart} />}
+        <h2 className="text-base font-semibold text-ink mb-4">Revenue</h2>
+        {chartLoading ? <Skeleton className="h-32 w-full" /> : <RevenueChart data={chart} />}
       </section>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -124,37 +161,29 @@ function RankList({ loading, items, type }) {
 }
 
 function RevenueChart({ data }) {
-  const formatPrice = useFormatPrice()
   const formatPriceShort = useFormatPriceShort()
 
   if (!data?.length) return null
   const max = Math.max(1, ...data.map((d) => d.total))
-  const total30 = data.reduce((s, d) => s + d.total, 0)
-  const orders30 = data.reduce((s, d) => s + d.orders, 0)
+  const total = data.reduce((s, d) => s + d.total, 0)
+  const orders = data.reduce((s, d) => s + d.orders, 0)
 
   return (
     <div>
-      <div className="flex items-baseline gap-6 flex-wrap">
-        <div>
-          <p className="eyebrow">30-Day Total</p>
-          <p className="text-2xl font-bold tabular-nums">{formatPrice(total30)}</p>
-        </div>
-        <div>
-          <p className="eyebrow">Orders</p>
-          <p className="text-2xl font-bold tabular-nums">{orders30}</p>
-        </div>
-      </div>
+      <p className="text-xs text-ink-muted tabular-nums mb-3">
+        <span className="font-semibold text-ink">{formatPriceShort(total)}</span> · {orders} orders
+      </p>
 
-      <div className="mt-6 flex items-end gap-[3px] h-40">
+      <div className="flex items-end gap-px h-28">
         {data.map((d) => {
           const h = (d.total / max) * 100
           return (
-            <div key={d.date} className="flex-1 group relative" style={{ minWidth: 0 }}>
+            <div key={d.date} className="flex-1 h-full group relative flex flex-col justify-end" style={{ minWidth: 0 }}>
               <div
-                className={cn('w-full rounded-sm transition', d.total > 0 ? 'bg-ink hover:bg-ink-soft' : 'bg-line')}
+                className={cn('w-full transition', d.total > 0 ? 'bg-ink/70 hover:bg-ink' : 'bg-line')}
                 style={{ height: `${Math.max(h, 2)}%` }}
               />
-              <div className="opacity-0 group-hover:opacity-100 absolute -top-14 left-1/2 -translate-x-1/2 z-10 bg-ink text-white text-2xs px-2 py-1 rounded whitespace-nowrap pointer-events-none">
+              <div className="opacity-0 group-hover:opacity-100 absolute -top-11 left-1/2 -translate-x-1/2 z-10 bg-ink text-white text-2xs px-2 py-1 rounded whitespace-nowrap pointer-events-none transition">
                 <p className="tabular-nums font-semibold">{formatPriceShort(d.total)}</p>
                 <p className="opacity-60">{d.orders} orders · {d.date}</p>
               </div>
@@ -162,7 +191,7 @@ function RevenueChart({ data }) {
           )
         })}
       </div>
-      <div className="mt-2 flex justify-between text-2xs text-ink-muted">
+      <div className="mt-1.5 flex justify-between text-2xs text-ink-muted">
         <span>{data[0]?.date}</span>
         <span>{data[data.length - 1]?.date}</span>
       </div>
