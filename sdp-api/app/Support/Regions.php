@@ -47,4 +47,13 @@ class Regions
     {
         return config("regions.countries.{$code}.currency");
     }
+
+    /**
+     * Negara yang checkout-nya diblok sepenuhnya lewat SDP — diarahkan ke storefront
+     * eksternal (India → Razorpay) alih-alih diizinkan checkout normal.
+     */
+    public static function isBlockedCountryCode(?string $code): bool
+    {
+        return $code === 'IN';
+    }
 }

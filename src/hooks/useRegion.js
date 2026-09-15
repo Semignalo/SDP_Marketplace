@@ -60,6 +60,15 @@ export function useIsIndia() {
 }
 
 /**
+ * Cek negara tujuan kirim (nama bebas dari form alamat) apakah India — dipakai di
+ * checkout untuk block berdasarkan alamat yang benar-benar diisi/dipilih, bukan
+ * cuma region browsing seperti useIsIndia().
+ */
+export function isIndiaCountry(name) {
+  return (name || '').trim().toLowerCase() === 'india'
+}
+
+/**
  * Semua negara untuk dropdown "Choose your country" — bukan cuma 4 yang
  * dilokalkan. Memilih ini TIDAK menentukan kemana barang bisa dikirim (itu
  * tetap manual quote di checkout); murni preferensi tampilan currency.

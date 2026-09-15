@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ResellerCommission;
@@ -179,6 +180,69 @@ class CheckoutTest extends TestCase
 
         $this->assertDatabaseCount('reseller_commissions', 0);
         $this->assertDatabaseHas('orders', ['reseller_id' => null]);
+    }
+
+    public function test_order_rejected_for_india_shipping_country(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['stock' => 10]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/orders', [
+            'shipping_name' => 'X',
+            'shipping_phone' => '08',
+            'shipping_address' => 'X',
+            'shipping_country' => 'India',
+            'courier_name' => 'JNT EZ',
+            'shipping_cost' => 16000,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['shipping_country']);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertEquals(10, $product->fresh()->stock);
+    }
+
+    public function test_order_rejected_for_india_shipping_country_case_insensitive(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['stock' => 10]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/orders', [
+            'shipping_name' => 'X',
+            'shipping_phone' => '08',
+            'shipping_address' => 'X',
+            'shipping_country' => ' india ',
+            'courier_name' => 'JNT EZ',
+            'shipping_cost' => 16000,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['shipping_country']);
+    }
+
+    public function test_order_rejected_for_saved_india_address(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['stock' => 10]);
+        $address = Address::create([
+            'user_id' => $user->id,
+            'recipient_name' => 'X',
+            'phone' => '08',
+            'address' => 'X',
+            'city' => 'Mumbai',
+            'country' => 'India',
+            'is_default' => true,
+        ]);
+
+        $response = $this->actingAs($user, 'sanctum')->postJson('/api/orders', [
+            'address_id' => $address->id,
+            'courier_name' => 'JNT EZ',
+            'shipping_cost' => 16000,
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
+
+        $response->assertStatus(422)->assertJsonValidationErrors(['shipping_country']);
+        $this->assertDatabaseCount('orders', 0);
     }
 
     public function test_unauthenticated_user_cannot_create_order(): void

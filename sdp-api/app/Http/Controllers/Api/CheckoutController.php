@@ -145,6 +145,12 @@ class CheckoutController extends Controller
              */
             $priceCountry = Regions::codeFromName($shippingCountry);
 
+            if (Regions::isBlockedCountryCode($priceCountry)) {
+                throw ValidationException::withMessages([
+                    'shipping_country' => "We don't ship to India through SDP — please order from our dedicated India store instead: https://pages.razorpay.com/stores/edelis",
+                ]);
+            }
+
             /*
              * Regional stock ditentukan oleh negara TUJUAN KIRIM juga (bukan region
              * switcher) — konsisten dengan trust model harga: mencegah orang browsing

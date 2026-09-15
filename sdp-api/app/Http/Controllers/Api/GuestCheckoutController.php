@@ -114,6 +114,12 @@ class GuestCheckoutController extends Controller
             // Harga regional mengikuti negara tujuan kirim (lihat CheckoutController::store).
             $priceCountry = Regions::codeFromName($shippingCountry);
 
+            if (Regions::isBlockedCountryCode($priceCountry)) {
+                throw ValidationException::withMessages([
+                    'shipping_country' => "We don't ship to India through SDP — please order from our dedicated India store instead: https://pages.razorpay.com/stores/edelis",
+                ]);
+            }
+
             // Sama seperti CheckoutController::store — alokasi regional stock ditentukan
             // oleh negara tujuan kirim, scope negaranya lebih luas (~200) dari harga (4).
             $stockCountry = WorldCountries::codeFromName($shippingCountry);

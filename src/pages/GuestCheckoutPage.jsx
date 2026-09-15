@@ -21,7 +21,8 @@ import RepricedNotice from '../components/RepricedNotice'
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
-import { useCartPricing } from '../hooks/useRegion'
+import { useCartPricing, isIndiaCountry } from '../hooks/useRegion'
+import IndiaStoreNotice from '../components/IndiaStoreNotice'
 import { calcShippingCost, calcTierDiscount } from '../lib/pricing'
 
 const STEPS = [
@@ -90,6 +91,7 @@ export default function GuestCheckoutPage() {
   }, [])
 
   if (items.length === 0 && !orderPlacedRef.current) return <Navigate to="/keranjang" replace />
+  if (isIndiaCountry(form.country)) return <IndiaStoreNotice />
 
   const freeShippingMin = Number(options?.shipping_min_free || 150000)
   const freeShippingMax = Number(options?.shipping_max_free || 20000)

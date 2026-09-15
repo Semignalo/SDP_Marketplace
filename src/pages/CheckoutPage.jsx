@@ -16,8 +16,9 @@ import RepricedNotice from '../components/RepricedNotice'
 import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
-import { useCartPricing } from '../hooks/useRegion'
+import { useCartPricing, isIndiaCountry } from '../hooks/useRegion'
 import { calcTierDiscount, calcShippingCost } from '../lib/pricing'
+import IndiaStoreNotice from '../components/IndiaStoreNotice'
 
 const STEPS = [
   { id: 1, title: 'Address' },
@@ -84,6 +85,7 @@ export default function CheckoutPage() {
 
   if (isReady && !user) return <Navigate to="/login?next=/checkout" replace />
   if (items.length === 0 && !orderPlacedRef.current) return <Navigate to="/keranjang" replace />
+  if (isIndiaCountry(selectedAddress?.country)) return <IndiaStoreNotice />
 
   const freeShippingMin = Number(options?.shipping_min_free || 150000)
   const freeShippingMax = Number(options?.shipping_max_free || 20000)
@@ -178,6 +180,10 @@ export default function CheckoutPage() {
   const handleSaveAddress = async (e) => {
     e.preventDefault()
     setAddrErrors({})
+    if (isIndiaCountry(addrForm.country)) {
+      setAddrErrors({ country: "We don't ship to India through SDP — use our dedicated India store instead." })
+      return
+    }
     try {
       const saved = await saveAddress.mutateAsync(addrForm)
       toast.success('Address added')
