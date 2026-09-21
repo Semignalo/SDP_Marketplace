@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 
 class ImageUploadService
 {
+    public function __construct(private ImageOptimizer $optimizer) {}
+
     public function isCloudinaryConfigured(): bool
     {
         return filled(config('services.cloudinary.cloud_name'))
@@ -55,8 +57,23 @@ class ImageUploadService
 
     private function uploadToLocal(UploadedFile $file): string
     {
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('products', $filename, 'public');
+        // Foto mentah dari kamera/desain bisa 3–5 MB; simpan versi WebP yang sudah
+        // di-resize. Kalau gagal diproses, fallback ke file asli supaya upload tidak gagal.
+        $webp = $this->optimizer->toWebp($file->getRealPath());
+        $path = null;
+
+        if ($webp !== null) {
+            $candidate = 'products/' . Str::uuid() . '.webp';
+            // Disk 'public' tidak throw kalau gagal tulis — cek hasilnya, jangan kembalikan URL ke file yang tidak ada.
+            if (Storage::disk('public')->put($candidate, $webp)) {
+                $path = $candidate;
+            }
+        }
+
+        if ($path === null) {
+            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('products', $filename, 'public');
+        }
 
         return url(Storage::url($path));
     }
