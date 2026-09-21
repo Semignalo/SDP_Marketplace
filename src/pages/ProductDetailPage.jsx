@@ -76,7 +76,7 @@ export default function ProductDetailPage() {
         )}
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 mb-20">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 mb-20">
         <div>
           <div className="aspect-square bg-paper-warm overflow-hidden rounded-lg shadow-card">
             {images[activeImg]?.url && (
