@@ -5,14 +5,14 @@ import { Badge, SkeletonProductCard, EmptyState } from '../components/ui'
 import { useProducts, useVendors } from '../hooks/useProducts'
 import { calcDiscount } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
-import heroImage from '../assets/homepage/hero.jpg'
-import afterEdit2Image from '../assets/homepage/after-edit-2.png'
-import cstarYeayImage from '../assets/homepage/cstar-yeay.png'
-import threeCardDressedImage from '../assets/homepage/three-card-dressed.png'
-import editorialBlockImage from '../assets/homepage/editorial-block.png'
-import styleYourWayAImage from '../assets/homepage/style-your-way-a.png'
-import styleYourWayBImage from '../assets/homepage/style-your-way-b.png'
-import styleYourWayCImage from '../assets/homepage/style-your-way-c.png'
+import heroImage from '../assets/homepage/hero.webp'
+import afterEdit2Image from '../assets/homepage/after-edit-2.webp'
+import cstarYeayImage from '../assets/homepage/cstar-yeay.webp'
+import threeCardDressedImage from '../assets/homepage/three-card-dressed.webp'
+import editorialBlockImage from '../assets/homepage/editorial-block.webp'
+import styleYourWayAImage from '../assets/homepage/style-your-way-a.webp'
+import styleYourWayBImage from '../assets/homepage/style-your-way-b.webp'
+import styleYourWayCImage from '../assets/homepage/style-your-way-c.webp'
 
 const HERO_IMAGE = heroImage
 
@@ -70,7 +70,7 @@ function Hero({ productCount, vendorCount, avgRating, totalReviews }) {
         fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/60 to-ink/25" />
 
       <div className="relative container-page pb-16 lg:pb-20">
         <p className="text-2xs font-bold uppercase tracking-eyebrow text-white/70 mb-4">
