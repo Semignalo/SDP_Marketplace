@@ -21,6 +21,10 @@ class CheckoutTest extends TestCase
         Setting::set('reseller_commission_rate', '10');
         Setting::set('shipping_min_free', '150000');
         Setting::set('shipping_max_free', '20000');
+        // Checkout inline (tanpa address_id) tidak kirim provinsi ke ShippingZoneService,
+        // jadi selalu jatuh ke zona "Luar Jawa" default — dipatok eksplisit di sini biar
+        // test tidak diam-diam ikut berubah kalau default rate di ShippingZoneService diubah.
+        Setting::set('shipping_zone2_rate_1kg', '35000');
         // Reset tier defaults supaya tier discount tidak ikut campur di test ini
         // (tier_1 Member 0%, semua tier diatas tidak tercapai untuk user baru)
         Setting::set('tier_1_name', 'Member');
@@ -49,16 +53,16 @@ class CheckoutTest extends TestCase
             'shipping_name' => 'Test Recipient',
             'shipping_phone' => '08123456789',
             'shipping_address' => 'Jl. Test No. 1',
-            'courier_name' => 'JNT EZ',
-            'shipping_cost' => 16000,
             'items' => [['product_id' => $product->id, 'quantity' => 2]],
         ]);
 
+        // Ongkir dihitung server-side (ShippingZoneService), bukan dari client.
+        // 100k < 150k threshold → ongkir zona "Luar Jawa" 1kg penuh, tidak disubsidi.
         $response->assertCreated()
             ->assertJsonPath('data.status', 'pending_payment')
             ->assertJsonPath('data.subtotal', 100000)
-            ->assertJsonPath('data.shipping_cost', 16000) // 100k < 150k threshold
-            ->assertJsonPath('data.total', 116000);
+            ->assertJsonPath('data.shipping_cost', 35000)
+            ->assertJsonPath('data.total', 135000);
 
         $this->assertDatabaseHas('orders', [
             'user_id' => $user->id,
@@ -93,15 +97,13 @@ class CheckoutTest extends TestCase
             'shipping_name' => 'X',
             'shipping_phone' => '08',
             'shipping_address' => 'X',
-            'courier_name' => 'JNT EZ',
-            'shipping_cost' => 16000,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
         ]);
 
-        // subtotal 200k >= 150k threshold → subsidi max 20k, ongkir 16k − 20k = 0
+        // subtotal 200k >= 150k threshold → subsidi max 20k, ongkir zona 35k − 20k = 15k
         $response->assertCreated()
-            ->assertJsonPath('data.shipping_cost', 0)
-            ->assertJsonPath('data.total', 200000);
+            ->assertJsonPath('data.shipping_cost', 15000)
+            ->assertJsonPath('data.total', 215000);
     }
 
     public function test_order_rejected_when_stock_insufficient(): void
@@ -123,20 +125,21 @@ class CheckoutTest extends TestCase
         $this->assertEquals(2, $product->fresh()->stock);
     }
 
-    public function test_order_rejected_when_courier_name_missing(): void
+    public function test_order_rejected_when_shipping_name_missing(): void
     {
+        // courier_name & shipping_cost tidak lagi divalidasi — ongkir dihitung
+        // server-side (ShippingZoneService), bukan input client. Field yang masih
+        // wajib tanpa address_id: shipping_name/phone/address (required_without).
         $user = User::factory()->create();
         $product = Product::factory()->create(['stock' => 10]);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/orders', [
-            'shipping_name' => 'X',
             'shipping_phone' => '08',
             'shipping_address' => 'X',
-            'shipping_cost' => 16000,
             'items' => [['product_id' => $product->id, 'quantity' => 1]],
         ]);
 
-        $response->assertStatus(422)->assertJsonValidationErrors(['courier_name']);
+        $response->assertStatus(422)->assertJsonValidationErrors(['shipping_name']);
     }
 
     public function test_referrer_creates_commission_pending(): void
