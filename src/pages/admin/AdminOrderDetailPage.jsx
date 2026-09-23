@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Archive, ArchiveRestore, ArrowLeft, FileText, MapPin, Truck, User, Wallet } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowLeft, FileText, MapPin, Megaphone, Truck, User, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAdminOrder, useUpdateAdminOrderStatus, useSetShippingQuote, useArchiveAdminOrder, useUnarchiveAdminOrder } from '../../hooks/useAdmin'
 import { Badge, Button, Input, Select, Textarea, Skeleton, EmptyState } from '../../components/ui'
@@ -229,6 +229,19 @@ export default function AdminOrderDetailPage() {
           )}
         </InfoCard>
       </div>
+
+      {order.attribution && (
+        <InfoCard icon={<Megaphone size={16} />} title="Ad Source">
+          <p className="text-sm font-semibold">
+            {[order.attribution.utm_source, order.attribution.utm_medium].filter(Boolean).join(' / ') || 'Ad click'}
+          </p>
+          <p className="text-xs text-ink-muted mt-1">
+            Campaign: <span className="text-ink tabular-nums">{order.attribution.utm_campaign || '—'}</span>
+            {order.attribution.utm_content && <> · Ad: <span className="text-ink tabular-nums">{order.attribution.utm_content}</span></>}
+          </p>
+          <p className="text-2xs text-ink-faint mt-1">Clicked {formatDateTime(order.attribution.clicked_at)}</p>
+        </InfoCard>
+      )}
 
       {order.reseller && (
         <InfoCard icon={<Wallet size={16} />} title="Reseller & Commission">

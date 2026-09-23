@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, ArrowDownToLine, Truck, Settings as SettingsIcon, LogOut, ExternalLink, ScrollText,
+  LayoutDashboard, Users, Store, FolderTree, Package, ShoppingCart, Wallet, ArrowDownToLine, Truck, Settings as SettingsIcon, LogOut, ExternalLink, ScrollText, Megaphone,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '../stores/useAuthStore'
@@ -21,6 +21,7 @@ export default function AdminLayout() {
     { to: '/admin/categories', icon: <FolderTree size={16} />, label: 'Categories' },
     { to: '/admin/products', icon: <Package size={16} />, label: 'Products' },
     { to: '/admin/orders', icon: <ShoppingCart size={16} />, label: 'Orders', badge: pendingCount },
+    { to: '/admin/ads', icon: <Megaphone size={16} />, label: 'Ad Attribution' },
     { to: '/admin/commissions', icon: <Wallet size={16} />, label: 'Commissions' },
     { to: '/admin/withdrawals', icon: <ArrowDownToLine size={16} />, label: 'Withdrawals' },
     { to: '/admin/shipping-rates', icon: <Truck size={16} />, label: 'Shipping Rates' },

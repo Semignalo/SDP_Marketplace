@@ -18,6 +18,7 @@ use App\Services\InternationalShippingService;
 use App\Services\MidtransService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
+use App\Support\OrderAttribution;
 use App\Support\Regions;
 use App\Support\WorldCountries;
 use Illuminate\Http\JsonResponse;
@@ -92,7 +93,10 @@ class GuestCheckoutController extends Controller
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1|max:99',
+            ...OrderAttribution::RULES,
         ]);
+
+        $attribution = OrderAttribution::fromRequest($request, $data);
 
         $shippingCountry = $data['shipping_country'] ?? 'Indonesia';
         $isInternational = strcasecmp(trim($shippingCountry), 'Indonesia') !== 0;
@@ -110,7 +114,7 @@ class GuestCheckoutController extends Controller
             }
         }
 
-        $order = DB::transaction(function () use ($data, $shippingCountry, $shippingProvince, $isInternational, $referrer, $referralCode, $tierService, $zoneService, $intlShippingService) {
+        $order = DB::transaction(function () use ($data, $attribution, $shippingCountry, $shippingProvince, $isInternational, $referrer, $referralCode, $tierService, $zoneService, $intlShippingService) {
             // Harga regional mengikuti negara tujuan kirim (lihat CheckoutController::store).
             $priceCountry = Regions::codeFromName($shippingCountry);
 
@@ -213,7 +217,7 @@ class GuestCheckoutController extends Controller
                 $total = $subtotal + $shippingCost;
             }
 
-            $order = Order::create([
+            $order = Order::create($attribution + [
                 'user_id'          => null,
                 'guest_email'      => $data['guest_email'],
                 'guest_token'      => Str::random(48),

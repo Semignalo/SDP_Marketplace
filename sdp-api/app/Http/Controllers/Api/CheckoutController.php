@@ -17,6 +17,7 @@ use App\Services\ActivityLogger;
 use App\Services\InternationalShippingService;
 use App\Services\ShippingZoneService;
 use App\Services\TierService;
+use App\Support\OrderAttribution;
 use App\Support\Regions;
 use App\Support\WorldCountries;
 use Illuminate\Http\JsonResponse;
@@ -113,7 +114,10 @@ class CheckoutController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1|max:99',
+            ...OrderAttribution::RULES,
         ]);
+
+        $attribution = OrderAttribution::fromRequest($request, $data);
 
         $user = $request->user();
 
@@ -138,7 +142,7 @@ class CheckoutController extends Controller
         // Referrer diambil dari profil user (ditetapkan saat register, permanen).
         $resellerId = $user->referrer_id ?: null;
 
-        $order = DB::transaction(function () use ($data, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $shippingProvince, $isInternational, $resellerId, $tierService, $zoneService, $intlShippingService) {
+        $order = DB::transaction(function () use ($data, $attribution, $user, $shippingName, $shippingPhone, $shippingAddress, $shippingCountry, $shippingProvince, $isInternational, $resellerId, $tierService, $zoneService, $intlShippingService) {
             /*
              * Harga regional ditentukan oleh negara TUJUAN KIRIM, bukan region switcher
              * di browser — nilai dari client tidak pernah dipercaya untuk menentukan harga.
@@ -264,7 +268,7 @@ class CheckoutController extends Controller
                 $total = $subtotal + $shippingCost;
             }
 
-            $order = Order::create([
+            $order = Order::create($attribution + [
                 'user_id' => $user->id,
                 'reseller_id' => $resellerId,
                 'order_number' => $this->generateOrderNumber(),

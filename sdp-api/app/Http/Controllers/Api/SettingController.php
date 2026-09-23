@@ -10,6 +10,7 @@ class SettingController extends Controller
     protected array $publicKeys = [
         'site_name',
         'site_tagline',
+        'meta_pixel_id',
         'shipping_min_free',
         'shipping_flat_default',
         'tier_max_discount_rupiah',

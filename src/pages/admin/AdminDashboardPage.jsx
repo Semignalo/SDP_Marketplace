@@ -1,29 +1,14 @@
-import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Wallet, ShoppingCart, Users, Store, Package, TrendingUp, ArrowRight, Clock, Truck } from 'lucide-react'
 import { useAdminSummary, useAdminRevenueChart } from '../../hooks/useAdmin'
-import { Skeleton, EmptyState, Select, Input } from '../../components/ui'
+import { Skeleton, EmptyState } from '../../components/ui'
+import DateRangeFilter, { useDateRange } from '../../components/admin/DateRangeFilter'
 import { useFormatPrice, useFormatPriceShort } from '../../hooks/useCurrency'
 import { cn } from '../../lib/utils'
 
-const RANGE_PRESETS = [
-  { value: '7', label: 'Last 7 days' },
-  { value: '30', label: 'Last 30 days' },
-  { value: '90', label: 'Last 90 days' },
-  { value: 'all', label: 'All time' },
-  { value: 'custom', label: 'Custom range' },
-]
-
 export default function AdminDashboardPage() {
-  const [range, setRange] = useState('30')
-  const [customFrom, setCustomFrom] = useState('')
-  const [customTo, setCustomTo] = useState('')
-
-  const dateParams = useMemo(() => {
-    if (range === 'all') return { all: 1 }
-    if (range === 'custom') return customFrom && customTo ? { date_from: customFrom, date_to: customTo } : { days: 30 }
-    return { days: Number(range) }
-  }, [range, customFrom, customTo])
+  const dateRange = useDateRange()
+  const dateParams = dateRange.params
 
   const { data: s, isLoading } = useAdminSummary(dateParams)
   const { data: chart = [], isLoading: chartLoading } = useAdminRevenueChart(dateParams)
@@ -36,17 +21,7 @@ export default function AdminDashboardPage() {
           <h1 className="text-base font-semibold text-ink">Dashboard</h1>
           <p className="text-xs text-ink-muted mt-0.5">Revenue, orders & top sellers — Awaiting Payment and account totals below are always current.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={range} onChange={(e) => setRange(e.target.value)} className="text-xs w-36">
-            {RANGE_PRESETS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </Select>
-          {range === 'custom' && (
-            <>
-              <Input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="w-36" />
-              <Input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="w-36" />
-            </>
-          )}
-        </div>
+        <DateRangeFilter {...dateRange} />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

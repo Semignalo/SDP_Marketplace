@@ -4,6 +4,7 @@ import Navbar, { MobileMenuDrawer } from './components/Navbar'
 import Footer from './components/Footer'
 import CartDrawer from './components/CartDrawer'
 import ReferralCapture from './components/ReferralCapture'
+import MetaPixel from './components/MetaPixel'
 import RegionPopup from './components/RegionPopup'
 import ProtectedRoute from './components/ProtectedRoute'
 import MobileBottomNav from './components/MobileBottomNav'
@@ -74,6 +75,7 @@ const AdminWithdrawalsPage = lazy(() => import('./pages/admin/AdminWithdrawalsPa
 const AdminShippingRatesPage = lazy(() => import('./pages/admin/AdminShippingRatesPage'))
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'))
 const AdminActivityLogsPage = lazy(() => import('./pages/admin/AdminActivityLogsPage'))
+const AdminAttributionPage = lazy(() => import('./pages/admin/AdminAttributionPage'))
 
 export default function App() {
   const fetchMe = useAuthStore((s) => s.fetchMe)
@@ -129,6 +131,7 @@ function AppShell() {
       <a href="#main-content" className="skip-link">Skip to main content</a>
       <ScrollToTop />
       <ReferralCapture />
+      <MetaPixel />
       <Navbar />
       <main id="main-content" className="flex-1 pb-14 lg:pb-0">
         <ErrorBoundary>
@@ -213,6 +216,7 @@ function AppShell() {
                 <Route path="shipping-rates" element={<AdminShippingRatesPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="activity-logs" element={<AdminActivityLogsPage />} />
+                <Route path="ads" element={<AdminAttributionPage />} />
               </Route>
 
               <Route path="*" element={<NotFoundPage />} />

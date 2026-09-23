@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api'
+import { getAttributionPayload } from '../lib/attribution'
 
 export function useCheckoutOptions() {
   return useQuery({
@@ -25,7 +26,7 @@ export function useCreateOrder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload) => {
-      const { data } = await api.post('/orders', payload)
+      const { data } = await api.post('/orders', { ...payload, attribution: getAttributionPayload() })
       return data.data
     },
     onSuccess: () => {
@@ -40,20 +41,6 @@ export function useSnapToken() {
     mutationFn: async (orderNumber) => {
       const { data } = await api.post(`/orders/${orderNumber}/snap-token`)
       return data.data
-    },
-  })
-}
-
-export function useConfirmPayment() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (orderNumber) => {
-      const { data } = await api.post(`/orders/${orderNumber}/confirm-payment`)
-      return data
-    },
-    onSuccess: (_, orderNumber) => {
-      qc.invalidateQueries({ queryKey: ['order', orderNumber] })
-      qc.invalidateQueries({ queryKey: ['orders'] })
     },
   })
 }

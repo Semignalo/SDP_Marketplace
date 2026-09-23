@@ -19,6 +19,19 @@ class Order extends Model
         'guest_token',
         'reseller_id',
         'referral_code',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_content',
+        'utm_term',
+        'fbclid',
+        'fbc',
+        'fbp',
+        'landing_url',
+        'attributed_at',
+        'client_ip',
+        'client_user_agent',
+        'capi_purchase_sent_at',
         'order_number',
         'midtrans_order_id',
         'status',
@@ -54,6 +67,8 @@ class Order extends Model
         'payment_verified_at' => 'datetime',
         'quoted_at' => 'datetime',
         'archived_at' => 'datetime',
+        'attributed_at' => 'datetime',
+        'capi_purchase_sent_at' => 'datetime',
     ];
 
     public function customer(): BelongsTo

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ChevronRight, ShieldCheck, Truck, Share2, Star, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
@@ -15,6 +15,7 @@ import { extractErrorMessage } from '../lib/api'
 import { cn } from '../lib/utils'
 import { useFormatPrice } from '../hooks/useCurrency'
 import { INDIA_STORE_URL, useIsIndia } from '../hooks/useRegion'
+import { trackEvent } from '../lib/metaPixel'
 
 export default function ProductDetailPage() {
   const { slug } = useParams()
@@ -26,6 +27,20 @@ export default function ProductDetailPage() {
   const openCart = useUIStore((s) => s.openCart)
   const formatPrice = useFormatPrice()
   const isIndia = useIsIndia()
+
+  const viewedId = data?.data?.id
+  const viewedName = data?.data?.name
+  const viewedPrice = data?.data?.price
+  useEffect(() => {
+    if (!viewedId) return
+    trackEvent('ViewContent', {
+      content_type: 'product',
+      content_ids: [String(viewedId)],
+      content_name: viewedName,
+      value: viewedPrice,
+      currency: 'IDR',
+    })
+  }, [viewedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <ProductDetailSkeleton />
   if (error || !data?.data) {

@@ -10,6 +10,7 @@ import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
 import { formatDateTime } from '../lib/utils'
 import { PAYMENT_LABEL } from '../lib/payment'
+import { usePixelPurchase } from '../hooks/usePixelPurchase'
 
 const STATUS_META = {
   awaiting_quote: { label: 'Awaiting Shipping Quote', variant: 'warning', icon: Clock },
@@ -32,6 +33,8 @@ export default function GuestTrackPage() {
 
   const isPending = order?.status === 'pending_payment'
   const isAwaitingQuote = order?.status === 'awaiting_quote'
+
+  usePixelPurchase(order, paidFromCheckout)
 
   const checkAndRefresh = async () => {
     try {

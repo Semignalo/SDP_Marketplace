@@ -36,9 +36,12 @@ class ImageUploadService
         $params    = "folder={$folder}&timestamp={$timestamp}";
         $signature = hash('sha256', $params . $apiSecret);
 
-        $http = app()->environment('local')
-            ? Http::withoutVerifying()
-            : Http::new();
+        // Workaround SSL cert untuk Windows/Laragon dev — tidak dipakai di production.
+        // (Http::new() tidak ada di Laravel — di luar env local, upload Cloudinary akan error.)
+        $http = Http::timeout(30);
+        if (app()->environment('local')) {
+            $http = $http->withoutVerifying();
+        }
 
         $response = $http->attach('file', $file->get(), $file->getClientOriginalName())
             ->post("https://api.cloudinary.com/v1_1/{$cloudName}/image/upload", [

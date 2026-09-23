@@ -10,6 +10,7 @@ import { loadSnap } from '../lib/snap'
 import { useFormatPrice } from '../hooks/useCurrency'
 import { formatDateTime } from '../lib/utils'
 import { PAYMENT_LABEL } from '../lib/payment'
+import { usePixelPurchase } from '../hooks/usePixelPurchase'
 
 const STATUS_META = {
   pending_payment: { label: 'Awaiting Payment', variant: 'warning', icon: Clock },
@@ -29,6 +30,8 @@ export default function OrderSuccessPage() {
   const formatPrice = useFormatPrice()
 
   const isPending = order?.status === 'pending_payment'
+
+  usePixelPurchase(order, paidFromCheckout)
 
   const checkAndRefresh = async () => {
     try {

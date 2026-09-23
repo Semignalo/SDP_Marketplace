@@ -98,7 +98,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/orders', [CheckoutController::class, 'store']);
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
     Route::post('/orders/{orderNumber}/snap-token', [PaymentController::class, 'snapToken'])->middleware('throttle:snap-token');
-    Route::post('/orders/{orderNumber}/confirm-payment', [PaymentController::class, 'confirmPayment']);
     Route::get('/orders/{orderNumber}/check-status', [PaymentController::class, 'checkStatus']);
     Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel']);
 
@@ -151,6 +150,7 @@ Route::middleware(['assistant', 'throttle:60,1'])->prefix('assistant')->group(fu
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/summary', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'summary']);
     Route::get('/revenue-chart', [\App\Http\Controllers\Api\Admin\DashboardController::class, 'revenueChart']);
+    Route::get('/attribution', [\App\Http\Controllers\Api\Admin\AttributionController::class, 'index']);
 
     Route::get('/activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
     Route::get('/activity-logs/export', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'export']);

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { trackEvent } from '../lib/metaPixel'
 
 export const useCartStore = create(
   persist(
@@ -26,6 +27,13 @@ export const useCartStore = create(
           })
         }
         set({ items })
+
+        trackEvent('AddToCart', {
+          content_type: 'product',
+          contents: [{ id: String(product.id), quantity, item_price: product.price }],
+          value: product.price * quantity,
+          currency: 'IDR',
+        })
       },
 
       remove(productId) {

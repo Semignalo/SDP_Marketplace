@@ -16,6 +16,13 @@ export function useAdminRevenueChart(params = { days: 30 }) {
   })
 }
 
+export function useAdminAttribution(params = { days: 30 }) {
+  return useQuery({
+    queryKey: ['admin', 'attribution', params],
+    queryFn: async () => (await api.get('/admin/attribution', { params })).data.data,
+  })
+}
+
 /* ───────── Activity Logs ───────── */
 export function useAdminActivityLogs(params = {}) {
   return useQuery({

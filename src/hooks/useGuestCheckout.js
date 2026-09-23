@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { api } from '../lib/api'
+import { getAttributionPayload } from '../lib/attribution'
 
 // Validasi kode referral (public). Dipakai field referral di checkout.
 export function useValidateReferral() {
@@ -23,7 +24,7 @@ export function useGuestShippingRates() {
 export function useCreateGuestOrder() {
   return useMutation({
     mutationFn: async (payload) => {
-      const { data } = await api.post('/guest/orders', payload)
+      const { data } = await api.post('/guest/orders', { ...payload, attribution: getAttributionPayload() })
       // { data: OrderResource, guest_token }
       return data
     },

@@ -41,6 +41,7 @@ class SettingController extends Controller
         'bank_account_name' => ['Account Holder Name', 'text', 'Payment'],
         'usd_idr_rate' => ['USD to IDR Rate (1 USD = ? Rp, display estimate)', 'number', 'Payment'],
         'order_auto_cancel_hours' => ['Auto-Cancel Unpaid Orders After (hours)', 'number', 'Orders'],
+        'meta_pixel_id' => ['Meta Pixel ID', 'text', 'Marketing'],
 
         // Tier Loyalty (5 tiers × 3 fields) — fully customizable by admin
         'tier_1_name' => ['Tier 1 — Name', 'text', 'Tier Loyalty'],

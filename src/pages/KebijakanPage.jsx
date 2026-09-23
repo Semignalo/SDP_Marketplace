@@ -40,6 +40,7 @@ export default function KebijakanPage() {
             <li><strong>Vendors:</strong> recipient name, address, and phone number are passed to vendors for shipping purposes.</li>
             <li><strong>Midtrans:</strong> transaction data for payment processing.</li>
             <li><strong>Couriers:</strong> recipient name and address for package delivery.</li>
+            <li><strong>Meta:</strong> browsing and purchase events, plus a hashed email and phone number, to measure our ads — see Cookies below.</li>
             <li><strong>Authorities:</strong> when required by law or court order.</li>
           </ul>
           We do not sell your personal data to third parties for marketing purposes.
@@ -69,8 +70,12 @@ export default function KebijakanPage() {
         </Section>
 
         <Section title="8. Cookies">
-          We use localStorage to store session tokens and user preferences (e.g. cart state).
-          We do not use third-party cookies for ad tracking.
+          We use localStorage to store session tokens and preferences — your cart, your region, and
+          which ad brought you here (kept for 7 days).
+          We also use the Meta Pixel and Meta’s Conversions API to measure our ads. They receive page views,
+          product views, add-to-cart and purchase events, and — when you order — your email and phone number,
+          hashed before they leave our server. Meta may set its own cookies for this. We don’t run the Pixel
+          for visitors browsing from India.
         </Section>
 
         <Section title="9. Changes to This Policy">

@@ -59,6 +59,22 @@ return [
         'stale_after_days' => (int) env('MAXMIND_STALE_AFTER_DAYS', 60),
     ],
 
+    /*
+     * Meta Ads: Conversions API (Purchase server-side) + Marketing API (baca spend).
+     * Pixel ID TIDAK di sini — dibaca dari settings `meta_pixel_id` (dipakai frontend juga).
+     * Token sengaja di .env, bukan tabel settings: settings tampil di GET /admin/settings
+     * dan tercatat di activity log. Kosong = fitur terkait mati diam-diam.
+     */
+    'meta' => [
+        'graph_version' => env('META_GRAPH_VERSION', 'v21.0'),
+        // Dipakai sebagai event_source_url CAPI kalau order tidak punya landing_url.
+        'site_url' => env('META_SITE_URL', 'https://marketplace.starincofficial.id'),
+        'capi_access_token' => env('META_CAPI_ACCESS_TOKEN', ''),
+        'test_event_code' => env('META_CAPI_TEST_EVENT_CODE', ''),
+        'ads_access_token' => env('META_ADS_ACCESS_TOKEN', ''),
+        'ad_account_id' => env('META_AD_ACCOUNT_ID', ''),
+    ],
+
     // Endpoint read-only buat asisten personal (OpenClaw). Kosong = endpoint mati.
     'assistant' => [
         'token' => env('ASSISTANT_API_TOKEN', ''),

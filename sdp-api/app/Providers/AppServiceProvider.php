@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Observers\OrderObserver;
 use App\Services\GeoLocationService;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -45,6 +47,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Order::observe(OrderObserver::class);
+
         // Brute-force protection: 5 attempts per minute per IP
         RateLimiter::for('auth', function (Request $request) {
             return Limit::perMinute(5)->by($request->ip());

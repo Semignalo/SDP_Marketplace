@@ -344,6 +344,15 @@ class OrderController extends Controller
             $base['payment_channel'] = $o->payment_channel;
             $base['payment_gross_amount'] = $o->payment_gross_amount ? (float) $o->payment_gross_amount : null;
             $base['admin_notes'] = $o->admin_notes;
+            $base['attribution'] = $o->attributed_at ? [
+                'utm_source' => $o->utm_source,
+                'utm_medium' => $o->utm_medium,
+                'utm_campaign' => $o->utm_campaign,
+                'utm_content' => $o->utm_content,
+                'utm_term' => $o->utm_term,
+                'landing_url' => $o->landing_url,
+                'clicked_at' => $o->attributed_at->toIso8601String(),
+            ] : null;
             $base['items'] = $o->items->map(fn ($item) => [
                 'id' => $item->id,
                 'product_name' => $item->product_name,
