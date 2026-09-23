@@ -31,6 +31,7 @@ class ProductResource extends JsonResource
             // Global, SAMA untuk semua user di semua negara — JANGAN dipakai untuk
             // gating add-to-cart/max-qty di frontend, pakai purchasable_qty/purchasable_in_region.
             'stock' => $this->stock,
+            'weight_gram' => (int) $this->weight_gram,
             'sku' => $this->sku,
             'status' => $this->status,
             'in_stock' => $this->stock > 0,

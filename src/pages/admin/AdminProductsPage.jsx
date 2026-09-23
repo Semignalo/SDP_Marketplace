@@ -23,7 +23,7 @@ const STATUS_BADGE = {
 
 const EMPTY_FORM = {
   vendor_id: '', name: '', slug: '', category_id: '', description: '',
-  price: '', compare_at_price: '', stock: '', sku: '', status: 'active', images: [],
+  price: '', compare_at_price: '', stock: '', weight_gram: '', sku: '', status: 'active', images: [],
 }
 
 export default function AdminProductsPage() {
@@ -75,6 +75,7 @@ export default function AdminProductsPage() {
       price:       String(p.price || ''),
       compare_at_price: p.compare_at_price ? String(p.compare_at_price) : '',
       stock:       String(p.stock ?? ''),
+      weight_gram: String(p.weight_gram ?? ''),
       sku:         p.sku || '',
       status:      p.status || 'active',
       images:      (p.images || []).map((im) => im.url),
@@ -95,6 +96,7 @@ export default function AdminProductsPage() {
       price:       Number(form.price),
       compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
       stock:       Number(form.stock),
+      weight_gram: form.weight_gram ? Number(form.weight_gram) : undefined,
       sku:         form.sku || undefined,
       status:      form.status,
       images:      form.images.filter(Boolean),
@@ -295,6 +297,9 @@ export default function AdminProductsPage() {
 
             {/* Stock */}
             <Input label="Stock *" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="0" required error={errors.stock?.[0]} />
+
+            {/* Weight */}
+            <Input label="Berat (gram)" type="number" min="1" value={form.weight_gram} onChange={(e) => setForm({ ...form, weight_gram: e.target.value })} placeholder="300" error={errors.weight_gram?.[0]} />
 
             {/* SKU */}
             <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Optional" />

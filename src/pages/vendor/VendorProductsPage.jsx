@@ -21,6 +21,7 @@ const EMPTY = {
   description: '',
   price: '',
   stock: 0,
+  weight_gram: '',
   sku: '',
   status: 'active',
   images: [],
@@ -74,6 +75,7 @@ export default function VendorProductsPage() {
       description: p.description || '',
       price: String(p.price ?? ''),
       stock: p.stock ?? 0,
+      weight_gram: String(p.weight_gram ?? ''),
       sku: p.sku || '',
       status: p.status || 'active',
       images: (p.images || []).map((im) => im.url),
@@ -91,6 +93,7 @@ export default function VendorProductsPage() {
         ...form,
         price: Number(form.price),
         stock: Number(form.stock),
+        weight_gram: form.weight_gram ? Number(form.weight_gram) : undefined,
         category_id: Number(form.category_id),
         images: form.images.filter(Boolean),
       })
@@ -265,6 +268,7 @@ export default function VendorProductsPage() {
           <Input label="Price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="0" error={errors.price} />
           <Input label="Stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} error={errors.stock} />
 
+          <Input label="Berat (gram)" type="number" min="1" value={form.weight_gram} onChange={(e) => setForm({ ...form, weight_gram: e.target.value })} placeholder="300" error={errors.weight_gram} />
           <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} error={errors.sku} />
 
           <Select label="Status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} error={errors.status}>

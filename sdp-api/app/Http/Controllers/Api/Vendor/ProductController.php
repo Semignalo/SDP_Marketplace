@@ -55,6 +55,7 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:5000',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'weight_gram' => 'nullable|integer|min:1|max:50000',
             'sku' => 'nullable|string|max:60',
             'status' => 'required|in:active,draft,archived',
             'images' => 'nullable|array|max:8',
@@ -70,6 +71,7 @@ class ProductController extends Controller
                 'description' => $data['description'] ?? null,
                 'price' => $data['price'],
                 'stock' => $data['stock'],
+                'weight_gram' => $data['weight_gram'] ?? 300,
                 'sku' => $data['sku'] ?? null,
                 'status' => $data['status'],
             ]);
@@ -92,6 +94,7 @@ class ProductController extends Controller
             'description' => 'nullable|string|max:5000',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
+            'weight_gram' => 'nullable|integer|min:1|max:50000',
             'sku' => 'nullable|string|max:60',
             'status' => 'required|in:active,draft,archived',
             'images' => 'nullable|array|max:8',

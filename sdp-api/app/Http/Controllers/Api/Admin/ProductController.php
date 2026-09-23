@@ -54,6 +54,7 @@ class ProductController extends Controller
             'price'       => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0|gt:price',
             'stock'       => 'required|integer|min:0',
+            'weight_gram' => 'nullable|integer|min:1|max:50000',
             'sku'         => 'nullable|string|max:60',
             'status'      => 'required|in:active,draft,archived',
             'images'      => 'nullable|array|max:8',
@@ -70,6 +71,7 @@ class ProductController extends Controller
                 'price'       => $data['price'],
                 'compare_at_price' => $data['compare_at_price'] ?? null,
                 'stock'       => $data['stock'],
+                'weight_gram' => $data['weight_gram'] ?? 300,
                 'sku'         => $data['sku'] ?? null,
                 'status'      => $data['status'],
             ]);
@@ -93,6 +95,7 @@ class ProductController extends Controller
             'price'       => 'required|numeric|min:0',
             'compare_at_price' => 'nullable|numeric|min:0|gt:price',
             'stock'       => 'required|integer|min:0',
+            'weight_gram' => 'nullable|integer|min:1|max:50000',
             'sku'         => 'nullable|string|max:60',
             'status'      => 'required|in:active,draft,archived',
             'images'      => 'nullable|array|max:8',
