@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Pencil, Trash2, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -38,6 +38,20 @@ export default function AdminShippingRatesPage() {
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [deleteTarget, setDeleteTarget] = useState(null)
+
+  // API sudah sort by country lalu weight_kg, jadi baris per negara pasti berurutan —
+  // tinggal hitung groupSize buat rowSpan nama negara, tanpa perlu sort ulang di sini.
+  const groupedRows = useMemo(() => {
+    return rates.map((r, i) => {
+      const isNewGroup = i === 0 || rates[i - 1].country !== r.country
+      let groupSize = 1
+      if (isNewGroup) {
+        groupSize = 0
+        for (let j = i; j < rates.length && rates[j].country === r.country; j++) groupSize++
+      }
+      return { ...r, isFirstOfGroup: isNewGroup, isGroupDivider: isNewGroup && i !== 0, groupSize }
+    })
+  }, [rates])
 
   const openCreate = () => {
     setEditing(null)
@@ -157,14 +171,23 @@ export default function AdminShippingRatesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {rates.map((r) => (
-                  <tr key={r.id} className={cn('hover:bg-paper-soft', !r.is_active && 'opacity-50')}>
-                    <td className="px-5 py-3">
-                      <p className="font-medium text-ink">{r.country}</p>
-                      {r.zone && <p className="text-2xs text-ink-muted mt-0.5">{r.zone}</p>}
-                    </td>
+                {groupedRows.map((r) => (
+                  <tr
+                    key={r.id}
+                    className={cn(
+                      'hover:bg-paper-soft',
+                      !r.is_active && 'opacity-50',
+                      r.isGroupDivider && 'border-t-2 border-line',
+                    )}
+                  >
+                    {r.isFirstOfGroup && (
+                      <td className="px-5 py-3 align-top" rowSpan={r.groupSize}>
+                        <p className="font-medium text-ink">{r.country}</p>
+                      </td>
+                    )}
                     <td className="px-5 py-3 text-ink-soft tabular-nums">
                       {r.weight_kg >= 999 ? 'Any weight' : `up to ${r.weight_kg}kg`}
+                      {r.zone && <span className="block text-2xs text-ink-muted mt-0.5">{r.zone}</span>}
                     </td>
                     <td className="px-5 py-3 text-ink-soft">{r.service} · {r.term}</td>
                     <td className="px-5 py-3 text-right font-semibold tabular-nums">{formatRupiah(r.final_price)}</td>
