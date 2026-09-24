@@ -20,6 +20,8 @@ class AttributionController extends Controller
     // Sama dengan definisi revenue di DashboardController::summary().
     private const PAID_STATUSES = ['processing', 'shipped', 'completed'];
 
+    private const PAID_MEDIUMS = ['paid', 'cpc', 'ppc', 'paid_social', 'paid-social', 'paidsocial', 'ads'];
+
     public function index(Request $request, MetaAdsService $metaAds): JsonResponse
     {
         [$start, $end] = $this->resolveDateRange($request);
@@ -36,12 +38,13 @@ class AttributionController extends Controller
             ->whereNotNull('attributed_at')
             ->select(
                 'utm_source',
+                'utm_medium',
                 'utm_campaign',
                 'utm_content',
                 DB::raw('COUNT(*) as orders'),
                 DB::raw('SUM(total) as revenue'),
             )
-            ->groupBy('utm_source', 'utm_campaign', 'utm_content')
+            ->groupBy('utm_source', 'utm_medium', 'utm_campaign', 'utm_content')
             ->get();
 
         $spendStatus = $metaAds->isConfigured() ? 'ok' : 'not_configured';
@@ -61,9 +64,26 @@ class AttributionController extends Controller
             $nameIndex[$this->normalize($campaign['name'])] = (string) $cid;
         }
 
-        // 1. Kelompokkan order beriklan per campaign, lalu per iklan (utm_content).
+        // 1. Pisahkan iklan berbayar dari klik organik (link bio, story, dll), lalu kelompokkan
+        //    yang berbayar per campaign dan per iklan (utm_content).
         $groups = [];
+        $organic = [];
         foreach ($attributed as $row) {
+            if (! $this->isPaid($row->utm_medium, $row->utm_campaign, $metaCampaigns, $nameIndex)) {
+                $organicKey = implode('|', [strtolower((string) $row->utm_source), strtolower((string) $row->utm_medium), (string) $row->utm_content]);
+                $organic[$organicKey] ??= [
+                    'source' => $row->utm_source,
+                    'medium' => $row->utm_medium,
+                    'content' => $row->utm_content,
+                    'orders' => 0,
+                    'revenue' => 0.0,
+                ];
+                $organic[$organicKey]['orders'] += (int) $row->orders;
+                $organic[$organicKey]['revenue'] += (float) $row->revenue;
+
+                continue;
+            }
+
             $key = (string) ($row->utm_campaign ?? '');
             $adKey = (string) ($row->utm_content ?? '');
 
@@ -120,6 +140,11 @@ class AttributionController extends Controller
         $adRevenue = array_sum(array_column($rows, 'revenue'));
         $totalSpend = $spend !== null ? array_sum(array_column($metaCampaigns, 'spend')) : null;
 
+        $organic = array_values($organic);
+        usort($organic, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
+        $organicOrders = array_sum(array_column($organic, 'orders'));
+        $organicRevenue = (float) array_sum(array_column($organic, 'revenue'));
+
         return response()->json([
             'data' => [
                 'range' => ['from' => $start->toDateString(), 'to' => $end->toDateString()],
@@ -130,12 +155,15 @@ class AttributionController extends Controller
                     'revenue' => $totalRevenue,
                     'ad_orders' => $adOrders,
                     'ad_revenue' => (float) $adRevenue,
-                    'direct_orders' => $totalOrders - $adOrders,
-                    'direct_revenue' => $totalRevenue - (float) $adRevenue,
+                    'organic_orders' => $organicOrders,
+                    'organic_revenue' => $organicRevenue,
+                    'direct_orders' => $totalOrders - $adOrders - $organicOrders,
+                    'direct_revenue' => $totalRevenue - (float) $adRevenue - $organicRevenue,
                     'spend' => $totalSpend,
                     'roas' => $this->roas((float) $adRevenue, $totalSpend, $currency),
                 ],
                 'campaigns' => $rows,
+                'organic' => $organic,
             ],
         ]);
     }
@@ -221,6 +249,29 @@ class AttributionController extends Controller
         }
 
         return $nameIndex[$this->normalize($key)] ?? null;
+    }
+
+    /**
+     * Iklan berbayar = utm_medium berlabel paid, ATAU utm_campaign berupa ID campaign Meta
+     * (angka panjang / cocok dengan campaign di akun iklan). Sisanya organik.
+     * fbclid sengaja tidak dipakai: Instagram menambahkannya juga ke klik organik (link bio).
+     *
+     * @param  array<int|string, array{name: string}>  $metaCampaigns
+     * @param  array<string, string>  $nameIndex
+     */
+    private function isPaid(?string $medium, ?string $campaign, array $metaCampaigns, array $nameIndex): bool
+    {
+        if (in_array(strtolower(trim((string) $medium)), self::PAID_MEDIUMS, true)) {
+            return true;
+        }
+
+        $campaign = trim((string) $campaign);
+        if ($campaign === '') {
+            return false;
+        }
+
+        return preg_match('/^\d{10,}$/', $campaign) === 1
+            || $this->matchCampaignId($campaign, $metaCampaigns, $nameIndex) !== null;
     }
 
     /** Nama campaign Meta ↔ UTM statis: abaikan huruf besar/kecil dan pemisah. */

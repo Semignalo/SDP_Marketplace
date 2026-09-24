@@ -272,7 +272,7 @@ class MetaAttributionTest extends TestCase
 
     public function test_attribution_report_works_without_meta_credentials(): void
     {
-        $this->makePaidOrder(['status' => 'processing', 'utm_source' => 'meta', 'utm_campaign' => 'linktree-ig', 'attributed_at' => now()]);
+        $this->makePaidOrder(['status' => 'processing', 'utm_source' => 'meta', 'utm_medium' => 'paid', 'utm_campaign' => 'linktree-ig', 'attributed_at' => now()]);
 
         $admin = User::factory()->create(['role' => 'admin']);
         $data = $this->actingAs($admin, 'sanctum')
@@ -284,6 +284,36 @@ class MetaAttributionTest extends TestCase
         $this->assertNull($data['totals']['spend']);
         $this->assertSame('linktree-ig', $data['campaigns'][0]['name']);
         $this->assertSame(1, $data['campaigns'][0]['orders']);
+    }
+
+    public function test_organic_click_is_reported_separately_from_paid_ads(): void
+    {
+        // Link bio Instagram: ada utm + fbclid, tapi bukan iklan berbayar.
+        $this->makePaidOrder(['status' => 'processing', 'total' => 385260, 'utm_source' => 'ig', 'utm_medium' => 'social', 'utm_content' => 'link_in_bio', 'fbclid' => 'abc', 'attributed_at' => now()]);
+        // Iklan berbayar: dikenali dari utm_medium.
+        $this->makePaidOrder(['status' => 'processing', 'total' => 100000, 'utm_source' => 'meta', 'utm_medium' => 'Paid', 'utm_campaign' => 'promo-oktober', 'attributed_at' => now()]);
+        // Iklan berbayar: dikenali dari ID campaign Meta (angka panjang), tanpa utm_medium.
+        $this->makePaidOrder(['status' => 'processing', 'total' => 50000, 'utm_source' => 'meta', 'utm_campaign' => '120210000000012345', 'attributed_at' => now()]);
+        $this->makePaidOrder(['status' => 'processing', 'total' => 25000]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $data = $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/attribution?days=7')
+            ->assertOk()
+            ->json('data');
+
+        $this->assertSame(4, $data['totals']['orders']);
+        $this->assertSame(2, $data['totals']['ad_orders']);
+        $this->assertEquals(150000, $data['totals']['ad_revenue']);
+        $this->assertSame(1, $data['totals']['organic_orders']);
+        $this->assertEquals(385260, $data['totals']['organic_revenue']);
+        $this->assertSame(1, $data['totals']['direct_orders']);
+        $this->assertEquals(25000, $data['totals']['direct_revenue']);
+
+        $this->assertCount(1, $data['organic']);
+        $this->assertSame('ig', $data['organic'][0]['source']);
+        $this->assertSame('link_in_bio', $data['organic'][0]['content']);
+        $this->assertNotContains('(no campaign)', array_column($data['campaigns'], 'name'));
     }
 
     public function test_attribution_report_is_admin_only(): void

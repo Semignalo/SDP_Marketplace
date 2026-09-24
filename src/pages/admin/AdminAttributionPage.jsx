@@ -28,7 +28,7 @@ export default function AdminAttributionPage() {
         <div>
           <h1 className="text-base font-semibold text-ink">Ad Attribution</h1>
           <p className="text-xs text-ink-muted mt-0.5">
-            Paid orders and revenue by ad campaign — last click within 7 days. Sales come from SDP orders; spend comes from Meta.
+            Paid orders and revenue by ad campaign — last click within 7 days. Sales come from SDP orders; spend comes from Meta. Clicks from bio links and other free sources are listed under Organic.
           </p>
         </div>
         <DateRangeFilter {...dateRange} />
@@ -47,7 +47,7 @@ export default function AdminAttributionPage() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Stat icon={<TrendingUp size={18} />} label="Ad Revenue" value={isLoading ? null : formatPrice(totals?.ad_revenue || 0)} hint={`${adShare}% of all revenue`} accent />
-        <Stat icon={<ShoppingCart size={18} />} label="Ad Orders" value={isLoading ? null : String(totals?.ad_orders || 0)} hint={`${totals?.direct_orders || 0} direct / other`} />
+        <Stat icon={<ShoppingCart size={18} />} label="Ad Orders" value={isLoading ? null : String(totals?.ad_orders || 0)} hint={`${totals?.organic_orders || 0} organic / ${totals?.direct_orders || 0} direct`} />
         <Stat icon={<Wallet size={18} />} label="Ad Spend" value={isLoading ? null : formatSpend(totals?.spend)} hint="From Meta" />
         <Stat icon={<Percent size={18} />} label="ROAS" value={isLoading ? null : formatRoas(totals?.roas)} hint="Ad revenue ÷ spend" />
       </div>
@@ -65,8 +65,8 @@ export default function AdminAttributionPage() {
           <div className="p-8">
             <EmptyState
               icon={<Megaphone size={36} strokeWidth={1.2} />}
-              title="No ad orders yet"
-              description="Orders from links with UTM parameters will show up here once they’re paid."
+              title="No paid ad orders yet"
+              description="Ad links need utm_medium=paid (or a Meta campaign ID as utm_campaign). Orders show up here once they’re paid."
             />
           </div>
         ) : (
@@ -96,6 +96,40 @@ export default function AdminAttributionPage() {
           </div>
         )}
       </section>
+
+      {data?.organic?.length > 0 && (
+        <section className="bg-paper border border-line rounded-lg">
+          <div className="px-5 py-4 border-b border-line">
+            <h2 className="text-base font-semibold text-ink">Organic</h2>
+            <p className="text-xs text-ink-muted mt-0.5">Free clicks (bio links, stories, etc.) — not counted in Ad Revenue or ROAS.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-2xs font-bold uppercase tracking-eyebrow text-ink-muted border-b border-line">
+                  <th className="px-5 py-3">Source</th>
+                  <th className="px-3 py-3 text-right">Orders</th>
+                  <th className="px-5 py-3 text-right">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.organic.map((o) => (
+                  <tr key={`${o.source}|${o.medium}|${o.content}`} className="border-b border-line last:border-0">
+                    <td className="px-5 py-3">
+                      <span className="text-ink font-medium line-clamp-1">
+                        {[o.source, o.medium].filter(Boolean).join(' / ') || 'Unknown'}
+                      </span>
+                      {o.content && <span className="block text-2xs text-ink-muted">{o.content}</span>}
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums">{o.orders}</td>
+                    <td className="px-5 py-3 text-right tabular-nums font-semibold">{formatPrice(o.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </div>
   )
 }
